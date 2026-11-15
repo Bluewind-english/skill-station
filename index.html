@@ -2437,20 +2437,24 @@ function login(){
      <button class="key glass" onclick="pinTyped='';go('home')" style="font-size:22px">✕</button><button class="key glass" onclick="pinKey('0')">0</button><button class="key glass" onclick="pinKey('del')" style="font-size:22px">⌫</button></div>
    <div class="err" id="cErr"></div></div>`;return}
   if(STAFF){viewRole=STAFF.role==='rh'?'rh':'dir';panelTab='geral';detail=null;screen='panel';return render()}
-  const T=LG[plang];
+  const T={pt:{pw:'Senha',rh:'RH',dir:'Diretoria',t:'Entrar',who:'Quem vai entrar?'},en:{pw:'Password',rh:'HR',dir:'Management',t:'Sign in',who:'Who is signing in?'},es:{pw:'Contraseña',rh:'RR. HH.',dir:'Dirección',t:'Entrar',who:'¿Quién va a entrar?'}}[plang];
   app.innerHTML=`<div class="center fade">
    <div style="display:flex;justify-content:center;margin-bottom:10px">${plFlags()}</div>
    <div style="display:flex;justify-content:center">${logo(.55)}</div>
    <h2 style="margin-top:14px;font-size:26px">${PL('panel')}</h2>
    <form class="form glass" style="padding:20px;margin-top:16px;text-align:left" onsubmit="event.preventDefault();doLogin()">
-     <label>${T.email}</label><input id="lgE" type="email" autocomplete="username">
-     <label>${T.pw}</label><input id="lgP" type="password" autocomplete="current-password">
+     <label>${T.who}</label>
+     <div class="role" style="justify-content:center"><button type="button" id="lgR" class="${loginWho==='rh'?'on':''}" onclick="loginWho='rh';document.getElementById('lgR').classList.add('on');document.getElementById('lgD').classList.remove('on')" style="flex:1;font-size:16px;padding:10px">${T.rh}</button><button type="button" id="lgD" class="${loginWho==='dir'?'on':''}" onclick="loginWho='dir';document.getElementById('lgD').classList.add('on');document.getElementById('lgR').classList.remove('on')" style="flex:1;font-size:16px;padding:10px">${T.dir}</button></div>
+     <label style="margin-top:6px">${T.pw}</label><input id="lgP" type="password" autocomplete="current-password">
      <button class="btn" style="width:100%;margin-top:8px">${T.t}</button>
      <div class="err" id="lgErr"></div></form>
    <button class="btn ghost small" style="margin-top:14px" onclick="go('home')">✕</button></div>`;
 }
-async function doLogin(){const T=LG[plang];const e=document.getElementById('lgE').value.trim(),p=document.getElementById('lgP').value;
-  const r=await SB.auth.signInWithPassword({email:e,password:p});if(r.error){document.getElementById('lgErr').textContent=T.bad;return}
+let loginWho='rh';
+const LOGIN_EMAIL={rh:'rh@skillstation.app',dir:'diretoria@skillstation.app'};
+async function doLogin(){const T=LG[plang];const p=document.getElementById('lgP').value;
+  const r=await SB.auth.signInWithPassword({email:LOGIN_EMAIL[loginWho],password:p});
+  if(r.error){document.getElementById('lgErr').textContent={pt:'Senha incorreta.',en:'Wrong password.',es:'Contraseña incorrecta.'}[plang];return}
   await loadStaff();if(!STAFF){document.getElementById('lgErr').textContent=T.noStaff;await SB.auth.signOut();return}
   viewRole=STAFF.role==='rh'?'rh':'dir';panelTab='geral';detail=null;go('panel')}
 
