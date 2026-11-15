@@ -1,2 +1,2 @@
-# skill-station
-Bluewind Skill Station – Show what you know
+# Bluewind Skill Station
+Show what you know.
