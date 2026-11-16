@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Bluewind Skill Station</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="favicon.png?v=2">
@@ -4040,7 +4040,7 @@ const psyBlocks=a=>{const m={};['log','att','vis','mem','beh'].forEach(b=>{const
 const hasPsy=c=>typeof c.psyScore==='number';
 
 /* ---------- navegação ---------- */
-function render(){({home,code,demoProf,confirm:confirmS,notme,terms,refused,photo,how,pickRole,test,done,abandoned,login,panel})[screen]()}
+function render(){({home,code,demoProf,confirm:confirmS,notme,terms,refused,photo,how,pickRole,test,done,abandoned,login,panel})[screen]();updBack()}
 function confirmS(){
   const p=profBy(cand.role);
   app.innerHTML=`<div class="center fade"><div class="glass" style="padding:28px">
@@ -4118,6 +4118,7 @@ function phRender(){
    ${phStep==='consent'?'':`<button class="btn ghost small" style="margin-top:12px" onclick="cand.photo=null;go('how')">${t('skip')}</button>`}</div></div>`;
   if(phStep==='shoot')startCam();
   if(phStep==='adjust')initAdj();
+  updBack();
 }
 function contactNext(){
   const a=(document.getElementById('cAddr').value||'').trim(),p=(document.getElementById('cPhone').value||'').trim();
@@ -4314,6 +4315,153 @@ function panel(){
   panelBase();
   if(MASTER&&detail===null){const ph=document.querySelector('#app .ph');if(ph)ph.insertAdjacentHTML('afterend',`<div class="card glass" style="margin:0 0 12px;border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)"><b style="color:#fcd34d">🔑 ${PL('master')}</b></div>`)}
 }
+
+/* =====================================================================
+   16/11/2026 (2): sem zoom e sem seleção de texto no celular; botão Voltar em todas as telas
+   (com gesto de voltar do celular); Turbine ativada por voz
+   ===================================================================== */
+(function(){const st=document.createElement('style');st.textContent=`
+html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;padding-bottom:84px}
+input,textarea,select{-webkit-user-select:text;user-select:text;font-size:16px!important}
+.navBack{position:fixed;left:14px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:25;display:flex;align-items:center;gap:8px;padding:12px 18px;border-radius:999px;font-size:16px;font-weight:600;color:#e6f6ff;background:rgba(2,20,40,.78);border:1px solid rgba(34,211,238,.45);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:0 6px 22px rgba(0,0,0,.35)}
+.navBack:active{transform:scale(.97)}
+.wakeOn{border-color:rgba(34,211,238,.9)!important;box-shadow:0 0 0 3px rgba(34,211,238,.25)}
+.wakeDot{position:fixed;right:18px;top:calc(14px + env(safe-area-inset-top));z-index:26;padding:6px 12px;border-radius:999px;font-size:13px;color:#a5f3fc;background:rgba(2,20,40,.8);border:1px solid rgba(34,211,238,.5)}
+`;document.head.appendChild(st)})();
+
+/* ---------- VOLTAR ---------- */
+const BACKL={pt:'Voltar',en:'Back',es:'Volver'};
+function backTarget(){
+  switch(screen){
+    case 'code':return()=>{typed='';go('home')};
+    case 'login':return()=>go('home');
+    case 'refused':return()=>go('home');
+    case 'notme':return()=>go('home');
+    case 'terms':return()=>go('confirm');
+    case 'photo':return()=>{if(phStep==='consent')go('terms');else{stopCam();phStep='consent';phRender()}};
+    case 'how':return()=>go('photo');
+    case 'panel':
+      if(detail!==null)return()=>{detail=null;render()};
+      if(panelTab!=='geral')return()=>{panelTab='geral';newCode=null;render()};
+      return null;
+    default:return null; /* tela inicial, teste em andamento, escolha da função, fim: sem voltar */
+  }
+}
+function navBack(){const f=backTarget();if(f){try{speechSynthesis.cancel()}catch(e){}f()}}
+function updBack(){
+  let b=document.getElementById('navBack');const f=backTarget();
+  if(!f){if(b)b.remove();return}
+  const lbl=BACKL[screen==='panel'||screen==='login'?plang:lang]||'Voltar';
+  if(!b){b=document.createElement('button');b.id='navBack';b.className='navBack';b.onclick=navBack;document.body.appendChild(b)}
+  b.innerHTML=`← ${lbl}`;
+}
+/* gesto/botão de voltar do celular (iPhone: deslizar da borda; Android: botão voltar) */
+try{history.pushState({sk:1},'')}catch(e){}
+window.addEventListener('popstate',()=>{navBack();try{history.pushState({sk:1},'')}catch(e){}});
+/* app instalado na tela inicial (sem gesto do navegador): deslizar da borda esquerda para a direita */
+(function(){const standalone=window.navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);if(!standalone)return;
+  let sx=0,sy=0,on=false;
+  document.addEventListener('touchstart',e=>{const t=e.touches[0];on=t.clientX<28;sx=t.clientX;sy=t.clientY},{passive:true});
+  document.addEventListener('touchend',e=>{if(!on)return;on=false;const t=e.changedTouches[0];if(t.clientX-sx>80&&Math.abs(t.clientY-sy)<70)navBack()},{passive:true});
+})();
+
+/* ---------- TURBINE POR VOZ ---------- */
+const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
+const VOZ={pt:{mic:'Falar com a Turbine',wake:'Ativar por voz',wakeOff:'Desativar voz',hint:'Diga “Turbine” e a pergunta. Ex.: “Turbine, quem são os melhores laminadores?”',on:'🎙️ Ouvindo “Turbine”',noSR:'Este navegador não tem reconhecimento de voz. Use o Chrome ou o Safari atualizado.',deny:'O microfone foi bloqueado. Libere o microfone para este site nas configurações do navegador.'},
+ en:{mic:'Talk to Turbine',wake:'Voice activation',wakeOff:'Turn off voice',hint:'Say “Turbine” and your question. E.g. “Turbine, who are the best laminators?”',on:'🎙️ Listening for “Turbine”',noSR:'This browser has no speech recognition. Use an updated Chrome or Safari.',deny:'The microphone is blocked. Allow the microphone for this site in the browser settings.'},
+ es:{mic:'Hablar con Turbine',wake:'Activar por voz',wakeOff:'Desactivar voz',hint:'Diga “Turbine” y la pregunta. Ej.: “Turbine, ¿quiénes son los mejores laminadores?”',on:'🎙️ Escuchando “Turbine”',noSR:'Este navegador no tiene reconocimiento de voz. Use Chrome o Safari actualizado.',deny:'El micrófono está bloqueado. Permita el micrófono para este sitio en la configuración del navegador.'}};
+const srLang=()=>({pt:'pt-BR',en:'en-US',es:'es-US'}[plang]);
+let wakeOn=false,wakeRec=null,oneRec=null,tbBusyVoice=false;
+try{wakeOn=localStorage.getItem('sk_wake')==='1'}catch(e){}
+const WAKE_RE=/\b(turbine|turbina|turbi|turbinho|turbin|terbine|turban)\b[\s,.:!?-]*/i;
+function wakeAllowed(){return wakeOn&&SRC&&screen==='panel'&&!tbBusyVoice&&tbState!=='speaking'&&tbState!=='thinking'}
+function wakeStart(){
+  if(!wakeAllowed()||wakeRec)return;
+  try{const r=new SRC();r.lang=srLang();r.continuous=true;r.interimResults=false;
+    r.onresult=e=>{for(let i=e.resultIndex;i<e.results.length;i++){if(!e.results[i].isFinal)continue;const txt=e.results[i][0].transcript||'';const m=txt.match(WAKE_RE);
+      if(m){const rest=txt.slice(m.index+m[0].length).trim();wakeStop();detail=null;panelTab='turbine';render();
+        if(rest.length>3)tbAsk(rest);else setTimeout(()=>tbListenOnce(),250);return}}};
+    r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed'){wakeOn=false;try{localStorage.setItem('sk_wake','0')}catch(x){}alertBox(VOZ[plang].deny);render()}};
+    r.onend=()=>{wakeRec=null;setTimeout(wakeStart,400)};
+    wakeRec=r;r.start();
+  }catch(e){wakeRec=null}
+  wakeBadge();
+}
+function wakeStop(){const r=wakeRec;wakeRec=null;if(r){r.onend=null;try{r.abort()}catch(e){}}wakeBadge()}
+function wakeBadge(){let d=document.getElementById('wakeDot');const show=wakeOn&&SRC&&screen==='panel';
+  if(!show){if(d)d.remove();return}
+  if(!d){d=document.createElement('div');d.id='wakeDot';d.className='wakeDot';document.body.appendChild(d)}d.textContent=VOZ[plang].on}
+function wakeToggle(){
+  if(!SRC){alertBox(VOZ[plang].noSR);return}
+  wakeOn=!wakeOn;try{localStorage.setItem('sk_wake',wakeOn?'1':'0')}catch(e){}
+  if(wakeOn)wakeStart();else wakeStop();render();
+}
+function tbListenOnce(){
+  if(DICT){return tbMicDict()}
+  if(!SRC){alertBox(VOZ[plang].noSR);return}
+  if(oneRec){try{oneRec.stop()}catch(e){}return}
+  wakeStop();tbBusyVoice=true;try{speechSynthesis.cancel()}catch(e){}
+  const i=document.getElementById('tbIn');if(i)i.value='';
+  const r=new SRC();r.lang=srLang();r.continuous=false;r.interimResults=true;let fin='';
+  r.onresult=e=>{let t='';for(let k=0;k<e.results.length;k++){t+=e.results[k][0].transcript;if(e.results[k].isFinal)fin=t}const el=document.getElementById('tbIn');if(el)el.value=t.replace(WAKE_RE,'')};
+  r.onerror=e=>{if(e.error==='not-allowed'||e.error==='service-not-allowed')alertBox(VOZ[plang].deny)};
+  r.onend=()=>{oneRec=null;tbBusyVoice=false;if(tbState==='listening')setOrb('idle');const el=document.getElementById('tbIn');const q=((el&&el.value)||fin).replace(WAKE_RE,'').trim();if(q)tbAsk(q);else setTimeout(wakeStart,300)};
+  oneRec=r;setOrb('listening');try{r.start()}catch(e){oneRec=null;tbBusyVoice=false;setOrb('idle')}
+}
+function tbMicDict(){const i=document.getElementById('tbIn');if(!i)return;i.dataset.base='';i.value='';
+  if(tbState==='listening'){DICT.stop().catch(()=>{});return}
+  try{DICT.start().catch(()=>setOrb('idle'))}catch(e){setOrb('idle')}}
+function tbMic(){tbListenOnce()}
+function tbSay(text){const plain=text.replace(/\*\*/g,'').slice(0,1900);const done=()=>{if(tbState==='speaking')setOrb('idle');setTimeout(wakeStart,500)};
+  wakeStop();
+  if(TTS){setOrb('speaking');TTS.speak(plain,{language:{pt:'pt-BR',en:'en',es:'es'}[plang],voice:'glassy'}).catch(()=>{}).finally(done);return}
+  try{const u=new SpeechSynthesisUtterance(plain);u.lang=srLang();u.onstart=()=>setOrb('speaking');u.onend=done;u.onerror=done;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){done()}}
+function pTurbine(){
+  const T=PL('tb'),V=VOZ[plang],canVoice=!!(DICT||SRC);
+  return `<div class="card glass tbWrap" style="margin-top:0">
+   <div class="tbHead"><div id="orb" class="orb ${tbState}"><i></i><i></i><i></i><b></b></div>
+     <div><h2 style="font-size:28px;letter-spacing:.04em">TURBINE</h2><p class="muted" id="orbLbl">${T[tbState]||T.idle}</p>
+     <p class="demo" style="margin-top:4px">${T.excl}${SAMPLE?'':T.demo}</p></div></div>
+   ${SRC?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 10px"><button class="btn ghost small ${wakeOn?'wakeOn':''}" onclick="wakeToggle()">${wakeOn?'🔕 '+V.wakeOff:'👂 '+V.wake}</button><span class="muted" style="font-size:13px;flex:1;min-width:200px">${V.hint}</span></div>`:''}
+   <div id="tbLog" class="tbLog">${tbHist.length?tbHist.map(tbBubble).join(''):`<div class="tbMsg ai">${T.hello}</div>`}</div>
+   <div class="tbSugg">${T.sugg.map(q=>`<button class="tab" onclick="tbAsk('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>
+   <div class="tbBar">
+     ${canVoice?`<button class="tbMic" onclick="tbMic()" title="${V.mic}" aria-label="${V.mic}">🎙️</button>`:''}
+     <input id="tbIn" placeholder="${T.ph}" onkeydown="if(event.key==='Enter'&&this.value.trim())tbAsk(this.value.trim())">
+     <button class="btn small" onclick="const i=document.getElementById('tbIn');if(i.value.trim())tbAsk(i.value.trim())">${T.send}</button>
+     <button class="tbMic" onclick="tbSpeak=!tbSpeak;this.textContent=tbSpeak?'🔊':'🔇';if(!tbSpeak){try{TTS&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}}">${tbSpeak?'🔊':'🔇'}</button>
+   </div></div>`;
+}
+/* dados para a IA: inclui psicotécnico, segurança e a função cadastrada */
+function tbData(){return CANDS.map(c=>{const fs=finalScore(c);return{nome:c.name,profissao:profName(c.role,plang),funcao_cadastrada_pelo_rh:c.roleRH&&c.roleRH!==c.role?profName(c.roleRH,plang):null,situacao:STL[plang][effStatus(c)],
+  psicotecnico:hasPsy(c)?c.psyScore:null,psicotecnico_passou:hasPsy(c)?!!c.psyPass:null,nota_teste:hasTest(c)?c.score:null,nota_final:fs?fs.v:null,seguranca_do_trabalho:hasSst(c)?c.sstScore:null,
+  entrevista:intPct(c),pratica:pracPct(c),modulos:c.modules?Object.fromEntries(Object.entries(c.modules).map(([k,v])=>[modL(k),v])):null,alerta_seguranca:!!c.crit,saidas_de_tela:c.exits||0,cadastro:fmtDTL(c.createdAt)}})}
+/* respostas sem IA (no site): agora também por nome, psicotécnico e segurança */
+const nrm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function tbLocal(q){
+  const ql=nrm(q);if(!CANDS.length)return'Ainda não há candidatos cadastrados.';
+  const hit=CANDS.filter(c=>{const n=nrm(c.name).split(/\s+/);return ql.includes(nrm(c.name))||n.some(w=>w.length>2&&new RegExp('\\b'+w+'\\b').test(ql))});
+  if(hit.length){return hit.slice(0,3).map(c=>{const fs=finalScore(c);const parts=[`${c.name} — ${profName(c.role)}`];
+    if(c.roleRH&&c.roleRH!==c.role)parts.push(`(cadastrado pelo RH como ${profName(c.roleRH)})`);
+    parts.push(`Situação: ${STL.pt[effStatus(c)]}.`);
+    if(hasPsy(c))parts.push(`Psicotécnico: ${c.psyScore} (${c.psyPass?'passou':'reprovado'}).`);
+    if(hasTest(c))parts.push(`Teste da função: ${c.score}${fs?`, nota final ${fs.v}`:''}.`);
+    if(hasSst(c))parts.push(`Segurança do trabalho: ${c.sstScore}.`);
+    if(c.crit)parts.push('Errou pergunta eliminatória de segurança.');
+    return parts.join(' ')}).join('\n')}
+  const prof=PROFS.find(p=>new RegExp('\\b'+nrm(p.n.pt).split(' ')[0].slice(0,6)).test(ql));
+  const pool=prof?CANDS.filter(c=>c.role===prof.id):CANDS;
+  if(/psico/.test(ql)){const L=pool.filter(hasPsy).sort((a,b)=>b.psyScore-a.psyScore);return L.length?`Psicotécnico${prof?' ('+prof.n.pt+')':''}: ${L.slice(0,5).map((c,i)=>`${i+1}. ${c.name} ${c.psyScore}${c.psyPass?'':' (reprovado)'}`).join('; ')}.`:'Ainda não há resultados do psicotécnico.'}
+  if(/alerta|eliminat/.test(ql)){const a=pool.filter(c=>c.crit);return a.length?`Há ${a.length} alerta(s) de segurança: ${a.map(c=>c.name+' ('+profName(c.role)+')').join(', ')}. Recomendo revisão antes de avançar.`:'Nenhum alerta de segurança no momento.'}
+  if(/seguranc|epi/.test(ql)){const L=pool.filter(hasSst).sort((a,b)=>b.sstScore-a.sstScore);return L.length?`Segurança do trabalho${prof?' ('+prof.n.pt+')':''}: ${L.slice(0,5).map((c,i)=>`${i+1}. ${c.name} ${c.sstScore}`).join('; ')}.`:'Ainda não há resultados de segurança do trabalho.'}
+  const L2=pool.filter(hasTest).map(c=>({...c,s:finalScore(c).v})).sort((a,b)=>b.s-a.s);
+  if(!L2.length)return prof?`Ainda não há testes concluídos para ${prof.n.pt}.`:'Ainda não há testes concluídos para eu analisar.';
+  if(/resum/.test(ql)){const ap=L2.filter(c=>c.s>=75).length;return `Temos ${CANDS.length} candidatos cadastrados e ${L2.length} testes concluídos: ${ap} aptos, ${L2.filter(c=>c.s>=55&&c.s<75).length} aptos com treinamento e ${L2.filter(c=>c.s<55).length} não aptos. Melhor nota: ${L2[0].name}, com ${L2[0].s}.`}
+  if(/fraco|pior/.test(ql)){const w=L2.filter(c=>c.s<75);return w.length?`Abaixo de 75: ${w.map(c=>c.name+' ('+profName(c.role)+', '+c.s+')').join('; ')}.`:'Nenhum candidato abaixo de 75.'}
+  return `Os melhores${prof?' em '+prof.n.pt:''} agora: ${L2.slice(0,3).map((c,i)=>(i+1)+'. '+c.name+' ('+profName(c.role)+') com '+c.s).join('; ')}.`}
+/* ligar/desligar a escuta ao entrar e sair do painel */
+setInterval(()=>{if(screen!=='panel'&&wakeRec)wakeStop();else if(screen==='panel'&&wakeOn&&!wakeRec)wakeStart();wakeBadge()},1500);
 
 render();
 </script>
