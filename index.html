@@ -1553,7 +1553,7 @@ async function abandon(reason,silent){
 
 function setLang(k){lang=k;document.querySelectorAll('.lang[data-lg]').forEach(b=>b.classList.toggle('on',b.dataset.lg===k));const s=document.getElementById('startTxt');if(s)s.innerHTML=`${t('start')}<small>${t('startSub')}</small>`}
 /* ---------- TELA: CÓDIGO ---------- */
-function code(err){
+function codeBase(err){
   app.innerHTML=`<div class="center fade">
    <div style="display:flex;justify-content:center">${logo(.6)}</div>
    <h2 style="margin-top:14px;font-size:28px">${t('code')}</h2><p class="muted" style="margin-top:6px">${t('codeSub')}</p>
@@ -1990,7 +1990,7 @@ function login(){
      <button class="key glass" onclick="pinTyped='';go('home')" style="font-size:22px">✕</button><button class="key glass" onclick="pinKey('0')">0</button><button class="key glass" onclick="pinKey('del')" style="font-size:22px">⌫</button></div>
    <div class="err" id="cErr"></div></div>`;
 }
-async function pinKey(k){
+async function pinKeyBase(k){
   if(k==='del')pinTyped=pinTyped.slice(0,-1);else if(pinTyped.length<4)pinTyped+=k;
   if(pinTyped.length<4)return codeUpd(pinTyped,'');
   codeUpd(pinTyped,'');const p=pinTyped;pinTyped='';const cfg=await getConfig();
@@ -2000,7 +2000,7 @@ async function pinKey(k){
 }
 
 /* ---- painel ---- */
-function panel(){
+function panelBase(){
   if(detail!==null)return candDetail();
   const tabs=['geral','ranking','lista','turbine',...(viewRole==='rh'?['novo','config']:[])];
   let body='';
@@ -2053,7 +2053,7 @@ function pNovo(){
    <button class="btn" style="width:100%;margin-top:16px" onclick="gen()">${PL('gen')}</button>
    <div id="genOut">${newCode?genOut():''}</div></div>`;
 }
-function genOut(){return `<div style="margin-top:20px;text-align:center"><p class="muted">${PL('codeFor')} <b>${escH(newCode.name)}</b> · ${profName(newCode.role)}</p><div class="bigcode">${newCode.code}</div><p class="muted" style="font-size:14px">${PL('once')(fmtDTL(newCode.exp))}</p></div>`}
+function genOutBase(){return `<div style="margin-top:20px;text-align:center"><p class="muted">${PL('codeFor')} <b>${escH(newCode.name)}</b> · ${profName(newCode.role)}</p><div class="bigcode">${newCode.code}</div><p class="muted" style="font-size:14px">${PL('once')(fmtDTL(newCode.exp))}</p></div>`}
 async function gen(){
   const name=(document.getElementById('nn').value||'').trim();
   if(!name){alertBox(PL('needName'));return}if(!newProf){alertBox(PL('needProf'));return}
@@ -2079,7 +2079,7 @@ async function savePins(){const a=document.getElementById('p1').value.trim(),b=d
   try{await DBX.doc('config/main').set(nc);alertBox(PL('pinOk'));document.getElementById('p1').value='';document.getElementById('p2').value=''}catch(e){alertBox(PL('saveErr'))}}
 
 /* ---- ficha ---- */
-function candDetail(){
+function candDetailBase(){
   const c=CANDS.find(x=>x.id===detail);if(!c){detail=null;return panel()}
   const s=effStatus(c),p=profBy(c.role),rh=viewRole==='rh',fs=finalScore(c);const [sl,sb]=stL(s);
   const ph=c.photo?`<img src="${c.photo}" class="cPhoto" alt="">`:`<div class="cPhoto ini">${escH((c.name||'?')[0])}</div>`;
@@ -2096,6 +2096,7 @@ function candDetail(){
   }else if(s==='abandonado'||s==='em_andamento'){
     const a=c.answers||[];testBlock=`<div class="card glass"><h3>${s==='abandonado'?PL('abT'):PL('runT')}</h3><p class="muted">${s==='abandonado'?PL('abTxt')(fmtDTL(c.abandonedAt),escH(c.abandonReason||'—'),(c.lastQ||0)+1,c.total||'?'):PL('runTxt')(fmtDTL(c.startedAt))}${PL('ansTxt')(a.length,a.filter(x=>x.ok).length)}</p>
       ${rh&&s==='abandonado'?`<button class="btn small" style="margin-top:12px" onclick="reissue('${c.id}')">${PL('reissue')}</button><p class="muted" style="font-size:12px;margin-top:6px">${PL('reissueNote')}</p>`:''}</div>`;
+  }else if(s==='psico_reprovado'||s==='recusou'){testBlock=''
   }else{
     testBlock=`<div class="card glass"><h3>${PL('waitT')}</h3><p class="muted">${PL('accCode')}: <b style="font-size:22px;color:var(--cyan)">${c.code}</b> · ${PL('until')} ${fmtDTL(c.codeExp)}</p></div>`;
   }
@@ -2451,7 +2452,7 @@ async function initDB(){
     SB=window.supabase.createClient(SB_URL,SB_KEY);DBX=sbAdapter();dbMode='nuvem';
     try{const s=await SB.auth.getSession();if(s.data.session)await loadStaff()}catch(e){}
   }else{DBX=memDB();dbMode='local'}
-  DBX.collection('candidates').onSnapshot(s=>{CANDS=s.docs.map(d=>({id:d.id,...d.data()}));if(screen==='panel'&&!document.activeElement?.matches?.('input,textarea,select'))render()},e=>{dbMode='erro';if(screen==='panel')render()});
+  DBX.collection('candidates').onSnapshot(s=>{if(window.MASTER)return;CANDS=s.docs.map(d=>({id:d.id,...d.data()}));if(screen==='panel'&&!document.activeElement?.matches?.('input,textarea,select'))render()},e=>{dbMode='erro';if(screen==='panel')render()});
 }
 async function loadStaff(){const u=(await SB.auth.getUser()).data.user;if(!u){STAFF=null;return}
   const r=await SB.from('staff').select('role').eq('user_id',u.id).maybeSingle();STAFF=r.data?{role:r.data.role,email:u.email}:null;
@@ -2515,13 +2516,1689 @@ function login(){
 }
 let loginWho='rh';
 const LOGIN_EMAIL={rh:'rh@skillstation.app',dir:'diretoria@skillstation.app'};
-async function doLogin(){const T=LG[plang];const p=document.getElementById('lgP').value;
+async function doLoginBase(){const T=LG[plang];const p=document.getElementById('lgP').value;
   const r=await SB.auth.signInWithPassword({email:LOGIN_EMAIL[loginWho],password:p});
   if(r.error){document.getElementById('lgErr').textContent={pt:'Senha incorreta.',en:'Wrong password.',es:'Contraseña incorrecta.'}[plang];return}
   await loadStaff();if(!STAFF){document.getElementById('lgErr').textContent=T.noStaff;await SB.auth.signOut();return}
   viewRole=STAFF.role==='rh'?'rh':'dir';panelTab='geral';detail=null;go('panel')}
 
-async function logoutPanel(){detail=null;if(SB_ON){try{await SB.auth.signOut()}catch(e){}STAFF=null;CANDS=[]}go('home')}
+async function logoutPanelBase(){detail=null;if(SB_ON){try{await SB.auth.signOut()}catch(e){}STAFF=null;CANDS=[]}go('home')}
+
+/* QRCode for JavaScript - Copyright (c) 2009 Kazuhiko Arase - MIT license - http://www.d-project.com/ (via qrcode-terminal) */
+window.QRGEN=(function(){var M={};function R(n){n=n.replace('./','');return M[n]}
+(function(){var module={exports:{}},require=R;
+module.exports = {
+    MODE_NUMBER :       1 << 0,
+    MODE_ALPHA_NUM :    1 << 1,
+    MODE_8BIT_BYTE :    1 << 2,
+    MODE_KANJI :        1 << 3
+};
+
+M['QRMode']=module.exports})();
+(function(){var module={exports:{}},require=R;
+module.exports = {
+	L : 1,
+	M : 0,
+	Q : 3,
+	H : 2
+};
+
+
+M['QRErrorCorrectLevel']=module.exports})();
+(function(){var module={exports:{}},require=R;
+module.exports = {
+	PATTERN000 : 0,
+	PATTERN001 : 1,
+	PATTERN010 : 2,
+	PATTERN011 : 3,
+	PATTERN100 : 4,
+	PATTERN101 : 5,
+	PATTERN110 : 6,
+	PATTERN111 : 7
+};
+
+M['QRMaskPattern']=module.exports})();
+(function(){var module={exports:{}},require=R;
+var QRMath = {
+
+	glog : function(n) {
+	
+		if (n < 1) {
+			throw new Error("glog(" + n + ")");
+		}
+		
+		return QRMath.LOG_TABLE[n];
+	},
+	
+	gexp : function(n) {
+	
+		while (n < 0) {
+			n += 255;
+		}
+	
+		while (n >= 256) {
+			n -= 255;
+		}
+	
+		return QRMath.EXP_TABLE[n];
+	},
+	
+	EXP_TABLE : new Array(256),
+	
+	LOG_TABLE : new Array(256)
+
+};
+	
+for (var i = 0; i < 8; i++) {
+	QRMath.EXP_TABLE[i] = 1 << i;
+}
+for (var i = 8; i < 256; i++) {
+	QRMath.EXP_TABLE[i] = QRMath.EXP_TABLE[i - 4]
+		^ QRMath.EXP_TABLE[i - 5]
+		^ QRMath.EXP_TABLE[i - 6]
+		^ QRMath.EXP_TABLE[i - 8];
+}
+for (var i = 0; i < 255; i++) {
+	QRMath.LOG_TABLE[QRMath.EXP_TABLE[i] ] = i;
+}
+
+module.exports = QRMath;
+
+M['QRMath']=module.exports})();
+(function(){var module={exports:{}},require=R;
+var QRMath = require('./QRMath');
+
+function QRPolynomial(num, shift) {
+	if (num.length === undefined) {
+		throw new Error(num.length + "/" + shift);
+	}
+
+	var offset = 0;
+
+	while (offset < num.length && num[offset] === 0) {
+		offset++;
+	}
+
+	this.num = new Array(num.length - offset + shift);
+	for (var i = 0; i < num.length - offset; i++) {
+		this.num[i] = num[i + offset];
+	}
+}
+
+QRPolynomial.prototype = {
+
+	get : function(index) {
+		return this.num[index];
+	},
+	
+	getLength : function() {
+		return this.num.length;
+	},
+	
+	multiply : function(e) {
+	
+		var num = new Array(this.getLength() + e.getLength() - 1);
+	
+		for (var i = 0; i < this.getLength(); i++) {
+			for (var j = 0; j < e.getLength(); j++) {
+				num[i + j] ^= QRMath.gexp(QRMath.glog(this.get(i) ) + QRMath.glog(e.get(j) ) );
+			}
+		}
+	
+		return new QRPolynomial(num, 0);
+	},
+	
+	mod : function(e) {
+	
+		if (this.getLength() - e.getLength() < 0) {
+			return this;
+		}
+	
+		var ratio = QRMath.glog(this.get(0) ) - QRMath.glog(e.get(0) );
+	
+		var num = new Array(this.getLength() );
+		
+		for (var i = 0; i < this.getLength(); i++) {
+			num[i] = this.get(i);
+		}
+		
+		for (var x = 0; x < e.getLength(); x++) {
+			num[x] ^= QRMath.gexp(QRMath.glog(e.get(x) ) + ratio);
+		}
+	
+		// recursive call
+		return new QRPolynomial(num, 0).mod(e);
+	}
+};
+
+module.exports = QRPolynomial;
+
+M['QRPolynomial']=module.exports})();
+(function(){var module={exports:{}},require=R;
+var QRMode = require('./QRMode');
+
+function QR8bitByte(data) {
+	this.mode = QRMode.MODE_8BIT_BYTE;
+	this.data = data;
+}
+
+QR8bitByte.prototype = {
+
+	getLength : function() {
+		return this.data.length;
+	},
+	
+	write : function(buffer) {
+		for (var i = 0; i < this.data.length; i++) {
+			// not JIS ...
+			buffer.put(this.data.charCodeAt(i), 8);
+		}
+	}
+};
+
+module.exports = QR8bitByte;
+
+M['QR8bitByte']=module.exports})();
+(function(){var module={exports:{}},require=R;
+function QRBitBuffer() {
+	this.buffer = [];
+	this.length = 0;
+}
+
+QRBitBuffer.prototype = {
+
+	get : function(index) {
+		var bufIndex = Math.floor(index / 8);
+		return ( (this.buffer[bufIndex] >>> (7 - index % 8) ) & 1) == 1;
+	},
+	
+	put : function(num, length) {
+		for (var i = 0; i < length; i++) {
+			this.putBit( ( (num >>> (length - i - 1) ) & 1) == 1);
+		}
+	},
+	
+	getLengthInBits : function() {
+		return this.length;
+	},
+	
+	putBit : function(bit) {
+	
+		var bufIndex = Math.floor(this.length / 8);
+		if (this.buffer.length <= bufIndex) {
+			this.buffer.push(0);
+		}
+	
+		if (bit) {
+			this.buffer[bufIndex] |= (0x80 >>> (this.length % 8) );
+		}
+	
+		this.length++;
+	}
+};
+
+module.exports = QRBitBuffer;
+
+M['QRBitBuffer']=module.exports})();
+(function(){var module={exports:{}},require=R;
+var QRErrorCorrectLevel = require('./QRErrorCorrectLevel');
+
+function QRRSBlock(totalCount, dataCount) {
+	this.totalCount = totalCount;
+	this.dataCount  = dataCount;
+}
+
+QRRSBlock.RS_BLOCK_TABLE = [
+
+	// L
+	// M
+	// Q
+	// H
+
+	// 1
+	[1, 26, 19],
+	[1, 26, 16],
+	[1, 26, 13],
+	[1, 26, 9],
+	
+	// 2
+	[1, 44, 34],
+	[1, 44, 28],
+	[1, 44, 22],
+	[1, 44, 16],
+
+	// 3
+	[1, 70, 55],
+	[1, 70, 44],
+	[2, 35, 17],
+	[2, 35, 13],
+
+	// 4		
+	[1, 100, 80],
+	[2, 50, 32],
+	[2, 50, 24],
+	[4, 25, 9],
+	
+	// 5
+	[1, 134, 108],
+	[2, 67, 43],
+	[2, 33, 15, 2, 34, 16],
+	[2, 33, 11, 2, 34, 12],
+	
+	// 6
+	[2, 86, 68],
+	[4, 43, 27],
+	[4, 43, 19],
+	[4, 43, 15],
+	
+	// 7		
+	[2, 98, 78],
+	[4, 49, 31],
+	[2, 32, 14, 4, 33, 15],
+	[4, 39, 13, 1, 40, 14],
+	
+	// 8
+	[2, 121, 97],
+	[2, 60, 38, 2, 61, 39],
+	[4, 40, 18, 2, 41, 19],
+	[4, 40, 14, 2, 41, 15],
+	
+	// 9
+	[2, 146, 116],
+	[3, 58, 36, 2, 59, 37],
+	[4, 36, 16, 4, 37, 17],
+	[4, 36, 12, 4, 37, 13],
+	
+	// 10		
+	[2, 86, 68, 2, 87, 69],
+	[4, 69, 43, 1, 70, 44],
+	[6, 43, 19, 2, 44, 20],
+	[6, 43, 15, 2, 44, 16],
+
+	// 11
+	[4, 101, 81],
+	[1, 80, 50, 4, 81, 51],
+	[4, 50, 22, 4, 51, 23],
+	[3, 36, 12, 8, 37, 13],
+
+	// 12
+	[2, 116, 92, 2, 117, 93],
+	[6, 58, 36, 2, 59, 37],
+	[4, 46, 20, 6, 47, 21],
+	[7, 42, 14, 4, 43, 15],
+
+	// 13
+	[4, 133, 107],
+	[8, 59, 37, 1, 60, 38],
+	[8, 44, 20, 4, 45, 21],
+	[12, 33, 11, 4, 34, 12],
+
+	// 14
+	[3, 145, 115, 1, 146, 116],
+	[4, 64, 40, 5, 65, 41],
+	[11, 36, 16, 5, 37, 17],
+	[11, 36, 12, 5, 37, 13],
+
+	// 15
+	[5, 109, 87, 1, 110, 88],
+	[5, 65, 41, 5, 66, 42],
+	[5, 54, 24, 7, 55, 25],
+	[11, 36, 12],
+
+	// 16
+	[5, 122, 98, 1, 123, 99],
+	[7, 73, 45, 3, 74, 46],
+	[15, 43, 19, 2, 44, 20],
+	[3, 45, 15, 13, 46, 16],
+
+	// 17
+	[1, 135, 107, 5, 136, 108],
+	[10, 74, 46, 1, 75, 47],
+	[1, 50, 22, 15, 51, 23],
+	[2, 42, 14, 17, 43, 15],
+
+	// 18
+	[5, 150, 120, 1, 151, 121],
+	[9, 69, 43, 4, 70, 44],
+	[17, 50, 22, 1, 51, 23],
+	[2, 42, 14, 19, 43, 15],
+
+	// 19
+	[3, 141, 113, 4, 142, 114],
+	[3, 70, 44, 11, 71, 45],
+	[17, 47, 21, 4, 48, 22],
+	[9, 39, 13, 16, 40, 14],
+
+	// 20
+	[3, 135, 107, 5, 136, 108],
+	[3, 67, 41, 13, 68, 42],
+	[15, 54, 24, 5, 55, 25],
+	[15, 43, 15, 10, 44, 16],
+
+	// 21
+	[4, 144, 116, 4, 145, 117],
+	[17, 68, 42],
+	[17, 50, 22, 6, 51, 23],
+	[19, 46, 16, 6, 47, 17],
+
+	// 22
+	[2, 139, 111, 7, 140, 112],
+	[17, 74, 46],
+	[7, 54, 24, 16, 55, 25],
+	[34, 37, 13],
+
+	// 23
+	[4, 151, 121, 5, 152, 122],
+	[4, 75, 47, 14, 76, 48],
+	[11, 54, 24, 14, 55, 25],
+	[16, 45, 15, 14, 46, 16],
+
+	// 24
+	[6, 147, 117, 4, 148, 118],
+	[6, 73, 45, 14, 74, 46],
+	[11, 54, 24, 16, 55, 25],
+	[30, 46, 16, 2, 47, 17],
+
+	// 25
+	[8, 132, 106, 4, 133, 107],
+	[8, 75, 47, 13, 76, 48],
+	[7, 54, 24, 22, 55, 25],
+	[22, 45, 15, 13, 46, 16],
+
+	// 26
+	[10, 142, 114, 2, 143, 115],
+	[19, 74, 46, 4, 75, 47],
+	[28, 50, 22, 6, 51, 23],
+	[33, 46, 16, 4, 47, 17],
+
+	// 27
+	[8, 152, 122, 4, 153, 123],
+	[22, 73, 45, 3, 74, 46],
+	[8, 53, 23, 26, 54, 24],
+	[12, 45, 15, 28, 46, 16],
+
+	// 28
+	[3, 147, 117, 10, 148, 118],
+	[3, 73, 45, 23, 74, 46],
+	[4, 54, 24, 31, 55, 25],
+	[11, 45, 15, 31, 46, 16],
+
+	// 29
+	[7, 146, 116, 7, 147, 117],
+	[21, 73, 45, 7, 74, 46],
+	[1, 53, 23, 37, 54, 24],
+	[19, 45, 15, 26, 46, 16],
+
+	// 30
+	[5, 145, 115, 10, 146, 116],
+	[19, 75, 47, 10, 76, 48],
+	[15, 54, 24, 25, 55, 25],
+	[23, 45, 15, 25, 46, 16],
+
+	// 31
+	[13, 145, 115, 3, 146, 116],
+	[2, 74, 46, 29, 75, 47],
+	[42, 54, 24, 1, 55, 25],
+	[23, 45, 15, 28, 46, 16],
+
+	// 32
+	[17, 145, 115],
+	[10, 74, 46, 23, 75, 47],
+	[10, 54, 24, 35, 55, 25],
+	[19, 45, 15, 35, 46, 16],
+
+	// 33
+	[17, 145, 115, 1, 146, 116],
+	[14, 74, 46, 21, 75, 47],
+	[29, 54, 24, 19, 55, 25],
+	[11, 45, 15, 46, 46, 16],
+
+	// 34
+	[13, 145, 115, 6, 146, 116],
+	[14, 74, 46, 23, 75, 47],
+	[44, 54, 24, 7, 55, 25],
+	[59, 46, 16, 1, 47, 17],
+
+	// 35
+	[12, 151, 121, 7, 152, 122],
+	[12, 75, 47, 26, 76, 48],
+	[39, 54, 24, 14, 55, 25],
+	[22, 45, 15, 41, 46, 16],
+
+	// 36
+	[6, 151, 121, 14, 152, 122],
+	[6, 75, 47, 34, 76, 48],
+	[46, 54, 24, 10, 55, 25],
+	[2, 45, 15, 64, 46, 16],
+
+	// 37
+	[17, 152, 122, 4, 153, 123],
+	[29, 74, 46, 14, 75, 47],
+	[49, 54, 24, 10, 55, 25],
+	[24, 45, 15, 46, 46, 16],
+
+	// 38
+	[4, 152, 122, 18, 153, 123],
+	[13, 74, 46, 32, 75, 47],
+	[48, 54, 24, 14, 55, 25],
+	[42, 45, 15, 32, 46, 16],
+
+	// 39
+	[20, 147, 117, 4, 148, 118],
+	[40, 75, 47, 7, 76, 48],
+	[43, 54, 24, 22, 55, 25],
+	[10, 45, 15, 67, 46, 16],
+
+	// 40
+	[19, 148, 118, 6, 149, 119],
+	[18, 75, 47, 31, 76, 48],
+	[34, 54, 24, 34, 55, 25],
+	[20, 45, 15, 61, 46, 16]
+];
+
+QRRSBlock.getRSBlocks = function(typeNumber, errorCorrectLevel) {
+	
+	var rsBlock = QRRSBlock.getRsBlockTable(typeNumber, errorCorrectLevel);
+	
+	if (rsBlock === undefined) {
+		throw new Error("bad rs block @ typeNumber:" + typeNumber + "/errorCorrectLevel:" + errorCorrectLevel);
+	}
+
+	var length = rsBlock.length / 3;
+	
+	var list = [];
+	
+	for (var i = 0; i < length; i++) {
+
+		var count = rsBlock[i * 3 + 0];
+		var totalCount = rsBlock[i * 3 + 1];
+		var dataCount  = rsBlock[i * 3 + 2];
+
+		for (var j = 0; j < count; j++) {
+			list.push(new QRRSBlock(totalCount, dataCount) );	
+		}
+	}
+	
+	return list;
+};
+
+QRRSBlock.getRsBlockTable = function(typeNumber, errorCorrectLevel) {
+
+	switch(errorCorrectLevel) {
+	case QRErrorCorrectLevel.L :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 0];
+	case QRErrorCorrectLevel.M :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 1];
+	case QRErrorCorrectLevel.Q :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 2];
+	case QRErrorCorrectLevel.H :
+		return QRRSBlock.RS_BLOCK_TABLE[(typeNumber - 1) * 4 + 3];
+	default :
+		return undefined;
+	}
+};
+
+module.exports = QRRSBlock;
+
+M['QRRSBlock']=module.exports})();
+(function(){var module={exports:{}},require=R;
+var QRMode = require('./QRMode');
+var QRPolynomial = require('./QRPolynomial');
+var QRMath = require('./QRMath');
+var QRMaskPattern = require('./QRMaskPattern');
+
+var QRUtil = {
+
+    PATTERN_POSITION_TABLE : [
+        [],
+        [6, 18],
+        [6, 22],
+        [6, 26],
+        [6, 30],
+        [6, 34],
+        [6, 22, 38],
+        [6, 24, 42],
+        [6, 26, 46],
+        [6, 28, 50],
+        [6, 30, 54],        
+        [6, 32, 58],
+        [6, 34, 62],
+        [6, 26, 46, 66],
+        [6, 26, 48, 70],
+        [6, 26, 50, 74],
+        [6, 30, 54, 78],
+        [6, 30, 56, 82],
+        [6, 30, 58, 86],
+        [6, 34, 62, 90],
+        [6, 28, 50, 72, 94],
+        [6, 26, 50, 74, 98],
+        [6, 30, 54, 78, 102],
+        [6, 28, 54, 80, 106],
+        [6, 32, 58, 84, 110],
+        [6, 30, 58, 86, 114],
+        [6, 34, 62, 90, 118],
+        [6, 26, 50, 74, 98, 122],
+        [6, 30, 54, 78, 102, 126],
+        [6, 26, 52, 78, 104, 130],
+        [6, 30, 56, 82, 108, 134],
+        [6, 34, 60, 86, 112, 138],
+        [6, 30, 58, 86, 114, 142],
+        [6, 34, 62, 90, 118, 146],
+        [6, 30, 54, 78, 102, 126, 150],
+        [6, 24, 50, 76, 102, 128, 154],
+        [6, 28, 54, 80, 106, 132, 158],
+        [6, 32, 58, 84, 110, 136, 162],
+        [6, 26, 54, 82, 110, 138, 166],
+        [6, 30, 58, 86, 114, 142, 170]
+    ],
+
+    G15 : (1 << 10) | (1 << 8) | (1 << 5) | (1 << 4) | (1 << 2) | (1 << 1) | (1 << 0),
+    G18 : (1 << 12) | (1 << 11) | (1 << 10) | (1 << 9) | (1 << 8) | (1 << 5) | (1 << 2) | (1 << 0),
+    G15_MASK : (1 << 14) | (1 << 12) | (1 << 10)    | (1 << 4) | (1 << 1),
+
+    getBCHTypeInfo : function(data) {
+        var d = data << 10;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) >= 0) {
+            d ^= (QRUtil.G15 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G15) ) );    
+        }
+        return ( (data << 10) | d) ^ QRUtil.G15_MASK;
+    },
+
+    getBCHTypeNumber : function(data) {
+        var d = data << 12;
+        while (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) >= 0) {
+            d ^= (QRUtil.G18 << (QRUtil.getBCHDigit(d) - QRUtil.getBCHDigit(QRUtil.G18) ) );    
+        }
+        return (data << 12) | d;
+    },
+
+    getBCHDigit : function(data) {
+
+        var digit = 0;
+
+        while (data !== 0) {
+            digit++;
+            data >>>= 1;
+        }
+
+        return digit;
+    },
+
+    getPatternPosition : function(typeNumber) {
+        return QRUtil.PATTERN_POSITION_TABLE[typeNumber - 1];
+    },
+
+    getMask : function(maskPattern, i, j) {
+        
+        switch (maskPattern) {
+            
+        case QRMaskPattern.PATTERN000 : return (i + j) % 2 === 0;
+        case QRMaskPattern.PATTERN001 : return i % 2 === 0;
+        case QRMaskPattern.PATTERN010 : return j % 3 === 0;
+        case QRMaskPattern.PATTERN011 : return (i + j) % 3 === 0;
+        case QRMaskPattern.PATTERN100 : return (Math.floor(i / 2) + Math.floor(j / 3) ) % 2 === 0;
+        case QRMaskPattern.PATTERN101 : return (i * j) % 2 + (i * j) % 3 === 0;
+        case QRMaskPattern.PATTERN110 : return ( (i * j) % 2 + (i * j) % 3) % 2 === 0;
+        case QRMaskPattern.PATTERN111 : return ( (i * j) % 3 + (i + j) % 2) % 2 === 0;
+
+        default :
+            throw new Error("bad maskPattern:" + maskPattern);
+        }
+    },
+
+    getErrorCorrectPolynomial : function(errorCorrectLength) {
+
+        var a = new QRPolynomial([1], 0);
+
+        for (var i = 0; i < errorCorrectLength; i++) {
+            a = a.multiply(new QRPolynomial([1, QRMath.gexp(i)], 0) );
+        }
+
+        return a;
+    },
+
+    getLengthInBits : function(mode, type) {
+
+        if (1 <= type && type < 10) {
+
+            // 1 - 9
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 10;
+            case QRMode.MODE_ALPHA_NUM  : return 9;
+            case QRMode.MODE_8BIT_BYTE  : return 8;
+            case QRMode.MODE_KANJI      : return 8;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 27) {
+
+            // 10 - 26
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 12;
+            case QRMode.MODE_ALPHA_NUM  : return 11;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 10;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else if (type < 41) {
+
+            // 27 - 40
+
+            switch(mode) {
+            case QRMode.MODE_NUMBER     : return 14;
+            case QRMode.MODE_ALPHA_NUM  : return 13;
+            case QRMode.MODE_8BIT_BYTE  : return 16;
+            case QRMode.MODE_KANJI      : return 12;
+            default :
+                throw new Error("mode:" + mode);
+            }
+
+        } else {
+            throw new Error("type:" + type);
+        }
+    },
+
+    getLostPoint : function(qrCode) {
+        
+        var moduleCount = qrCode.getModuleCount();
+        var lostPoint = 0;
+        var row = 0; 
+        var col = 0;
+
+        
+        // LEVEL1
+        
+        for (row = 0; row < moduleCount; row++) {
+
+            for (col = 0; col < moduleCount; col++) {
+
+                var sameCount = 0;
+                var dark = qrCode.isDark(row, col);
+
+                for (var r = -1; r <= 1; r++) {
+
+                    if (row + r < 0 || moduleCount <= row + r) {
+                        continue;
+                    }
+
+                    for (var c = -1; c <= 1; c++) {
+
+                        if (col + c < 0 || moduleCount <= col + c) {
+                            continue;
+                        }
+
+                        if (r === 0 && c === 0) {
+                            continue;
+                        }
+
+                        if (dark === qrCode.isDark(row + r, col + c) ) {
+                            sameCount++;
+                        }
+                    }
+                }
+
+                if (sameCount > 5) {
+                    lostPoint += (3 + sameCount - 5);
+                }
+            }
+        }
+
+        // LEVEL2
+
+        for (row = 0; row < moduleCount - 1; row++) {
+            for (col = 0; col < moduleCount - 1; col++) {
+                var count = 0;
+                if (qrCode.isDark(row,     col    ) ) count++;
+                if (qrCode.isDark(row + 1, col    ) ) count++;
+                if (qrCode.isDark(row,     col + 1) ) count++;
+                if (qrCode.isDark(row + 1, col + 1) ) count++;
+                if (count === 0 || count === 4) {
+                    lostPoint += 3;
+                }
+            }
+        }
+
+        // LEVEL3
+
+        for (row = 0; row < moduleCount; row++) {
+            for (col = 0; col < moduleCount - 6; col++) {
+                if (qrCode.isDark(row, col) && 
+                        !qrCode.isDark(row, col + 1) && 
+                         qrCode.isDark(row, col + 2) && 
+                         qrCode.isDark(row, col + 3) && 
+                         qrCode.isDark(row, col + 4) && 
+                        !qrCode.isDark(row, col + 5) && 
+                         qrCode.isDark(row, col + 6) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount - 6; row++) {
+                if (qrCode.isDark(row, col) &&
+                        !qrCode.isDark(row + 1, col) &&
+                         qrCode.isDark(row + 2, col) &&
+                         qrCode.isDark(row + 3, col) &&
+                         qrCode.isDark(row + 4, col) &&
+                        !qrCode.isDark(row + 5, col) &&
+                         qrCode.isDark(row + 6, col) ) {
+                    lostPoint += 40;
+                }
+            }
+        }
+
+        // LEVEL4
+        
+        var darkCount = 0;
+
+        for (col = 0; col < moduleCount; col++) {
+            for (row = 0; row < moduleCount; row++) {
+                if (qrCode.isDark(row, col) ) {
+                    darkCount++;
+                }
+            }
+        }
+        
+        var ratio = Math.abs(100 * darkCount / moduleCount / moduleCount - 50) / 5;
+        lostPoint += ratio * 10;
+
+        return lostPoint;       
+    }
+
+};
+
+module.exports = QRUtil;
+
+M['QRUtil']=module.exports})();
+(function(){var module={exports:{}},require=R;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+var QR8bitByte = require('./QR8bitByte');
+var QRUtil = require('./QRUtil');
+var QRPolynomial = require('./QRPolynomial');
+var QRRSBlock = require('./QRRSBlock');
+var QRBitBuffer = require('./QRBitBuffer');
+
+function QRCode(typeNumber, errorCorrectLevel) {
+	this.typeNumber = typeNumber;
+	this.errorCorrectLevel = errorCorrectLevel;
+	this.modules = null;
+	this.moduleCount = 0;
+	this.dataCache = null;
+	this.dataList = [];
+}
+
+QRCode.prototype = {
+	
+	addData : function(data) {
+		var newData = new QR8bitByte(data);
+		this.dataList.push(newData);
+		this.dataCache = null;
+	},
+	
+	isDark : function(row, col) {
+		if (row < 0 || this.moduleCount <= row || col < 0 || this.moduleCount <= col) {
+			throw new Error(row + "," + col);
+		}
+		return this.modules[row][col];
+	},
+
+	getModuleCount : function() {
+		return this.moduleCount;
+	},
+	
+	make : function() {
+		// Calculate automatically typeNumber if provided is < 1
+		if (this.typeNumber < 1 ){
+			var typeNumber = 1;
+			for (typeNumber = 1; typeNumber < 40; typeNumber++) {
+				var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, this.errorCorrectLevel);
+
+				var buffer = new QRBitBuffer();
+				var totalDataCount = 0;
+				for (var i = 0; i < rsBlocks.length; i++) {
+					totalDataCount += rsBlocks[i].dataCount;
+				}
+
+				for (var x = 0; x < this.dataList.length; x++) {
+					var data = this.dataList[x];
+					buffer.put(data.mode, 4);
+					buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+					data.write(buffer);
+				}
+				if (buffer.getLengthInBits() <= totalDataCount * 8)
+					break;
+			}
+			this.typeNumber = typeNumber;
+		}
+		this.makeImpl(false, this.getBestMaskPattern() );
+	},
+	
+	makeImpl : function(test, maskPattern) {
+		
+		this.moduleCount = this.typeNumber * 4 + 17;
+		this.modules = new Array(this.moduleCount);
+		
+		for (var row = 0; row < this.moduleCount; row++) {
+			
+			this.modules[row] = new Array(this.moduleCount);
+			
+			for (var col = 0; col < this.moduleCount; col++) {
+				this.modules[row][col] = null;//(col + row) % 3;
+			}
+		}
+	
+		this.setupPositionProbePattern(0, 0);
+		this.setupPositionProbePattern(this.moduleCount - 7, 0);
+		this.setupPositionProbePattern(0, this.moduleCount - 7);
+		this.setupPositionAdjustPattern();
+		this.setupTimingPattern();
+		this.setupTypeInfo(test, maskPattern);
+		
+		if (this.typeNumber >= 7) {
+			this.setupTypeNumber(test);
+		}
+	
+		if (this.dataCache === null) {
+			this.dataCache = QRCode.createData(this.typeNumber, this.errorCorrectLevel, this.dataList);
+		}
+	
+		this.mapData(this.dataCache, maskPattern);
+	},
+
+	setupPositionProbePattern : function(row, col)  {
+		
+		for (var r = -1; r <= 7; r++) {
+			
+			if (row + r <= -1 || this.moduleCount <= row + r) continue;
+			
+			for (var c = -1; c <= 7; c++) {
+				
+				if (col + c <= -1 || this.moduleCount <= col + c) continue;
+				
+				if ( (0 <= r && r <= 6 && (c === 0 || c === 6) ) || 
+                     (0 <= c && c <= 6 && (r === 0 || r === 6) ) || 
+                     (2 <= r && r <= 4 && 2 <= c && c <= 4) ) {
+					this.modules[row + r][col + c] = true;
+				} else {
+					this.modules[row + r][col + c] = false;
+				}
+			}		
+		}		
+	},
+	
+	getBestMaskPattern : function() {
+	
+		var minLostPoint = 0;
+		var pattern = 0;
+	
+		for (var i = 0; i < 8; i++) {
+			
+			this.makeImpl(true, i);
+	
+			var lostPoint = QRUtil.getLostPoint(this);
+	
+			if (i === 0 || minLostPoint >  lostPoint) {
+				minLostPoint = lostPoint;
+				pattern = i;
+			}
+		}
+	
+		return pattern;
+	},
+	
+	createMovieClip : function(target_mc, instance_name, depth) {
+	
+		var qr_mc = target_mc.createEmptyMovieClip(instance_name, depth);
+		var cs = 1;
+	
+		this.make();
+
+		for (var row = 0; row < this.modules.length; row++) {
+			
+			var y = row * cs;
+			
+			for (var col = 0; col < this.modules[row].length; col++) {
+	
+				var x = col * cs;
+				var dark = this.modules[row][col];
+			
+				if (dark) {
+					qr_mc.beginFill(0, 100);
+					qr_mc.moveTo(x, y);
+					qr_mc.lineTo(x + cs, y);
+					qr_mc.lineTo(x + cs, y + cs);
+					qr_mc.lineTo(x, y + cs);
+					qr_mc.endFill();
+				}
+			}
+		}
+		
+		return qr_mc;
+	},
+
+	setupTimingPattern : function() {
+		
+		for (var r = 8; r < this.moduleCount - 8; r++) {
+			if (this.modules[r][6] !== null) {
+				continue;
+			}
+			this.modules[r][6] = (r % 2 === 0);
+		}
+	
+		for (var c = 8; c < this.moduleCount - 8; c++) {
+			if (this.modules[6][c] !== null) {
+				continue;
+			}
+			this.modules[6][c] = (c % 2 === 0);
+		}
+	},
+	
+	setupPositionAdjustPattern : function() {
+	
+		var pos = QRUtil.getPatternPosition(this.typeNumber);
+		
+		for (var i = 0; i < pos.length; i++) {
+		
+			for (var j = 0; j < pos.length; j++) {
+			
+				var row = pos[i];
+				var col = pos[j];
+				
+				if (this.modules[row][col] !== null) {
+					continue;
+				}
+				
+				for (var r = -2; r <= 2; r++) {
+				
+					for (var c = -2; c <= 2; c++) {
+					
+						if (Math.abs(r) === 2 || 
+                            Math.abs(c) === 2 ||
+                            (r === 0 && c === 0) ) {
+							this.modules[row + r][col + c] = true;
+						} else {
+							this.modules[row + r][col + c] = false;
+						}
+					}
+				}
+			}
+		}
+	},
+	
+	setupTypeNumber : function(test) {
+	
+		var bits = QRUtil.getBCHTypeNumber(this.typeNumber);
+        var mod;
+	
+		for (var i = 0; i < 18; i++) {
+			mod = (!test && ( (bits >> i) & 1) === 1);
+			this.modules[Math.floor(i / 3)][i % 3 + this.moduleCount - 8 - 3] = mod;
+		}
+	
+		for (var x = 0; x < 18; x++) {
+			mod = (!test && ( (bits >> x) & 1) === 1);
+			this.modules[x % 3 + this.moduleCount - 8 - 3][Math.floor(x / 3)] = mod;
+		}
+	},
+	
+	setupTypeInfo : function(test, maskPattern) {
+	
+		var data = (this.errorCorrectLevel << 3) | maskPattern;
+		var bits = QRUtil.getBCHTypeInfo(data);
+        var mod;
+	
+		// vertical		
+		for (var v = 0; v < 15; v++) {
+	
+			mod = (!test && ( (bits >> v) & 1) === 1);
+	
+			if (v < 6) {
+				this.modules[v][8] = mod;
+			} else if (v < 8) {
+				this.modules[v + 1][8] = mod;
+			} else {
+				this.modules[this.moduleCount - 15 + v][8] = mod;
+			}
+		}
+	
+		// horizontal
+		for (var h = 0; h < 15; h++) {
+	
+			mod = (!test && ( (bits >> h) & 1) === 1);
+			
+			if (h < 8) {
+				this.modules[8][this.moduleCount - h - 1] = mod;
+			} else if (h < 9) {
+				this.modules[8][15 - h - 1 + 1] = mod;
+			} else {
+				this.modules[8][15 - h - 1] = mod;
+			}
+		}
+	
+		// fixed module
+		this.modules[this.moduleCount - 8][8] = (!test);
+	
+	},
+	
+	mapData : function(data, maskPattern) {
+		
+		var inc = -1;
+		var row = this.moduleCount - 1;
+		var bitIndex = 7;
+		var byteIndex = 0;
+		
+		for (var col = this.moduleCount - 1; col > 0; col -= 2) {
+	
+			if (col === 6) col--;
+	
+			while (true) {
+	
+				for (var c = 0; c < 2; c++) {
+					
+					if (this.modules[row][col - c] === null) {
+						
+						var dark = false;
+	
+						if (byteIndex < data.length) {
+							dark = ( ( (data[byteIndex] >>> bitIndex) & 1) === 1);
+						}
+	
+						var mask = QRUtil.getMask(maskPattern, row, col - c);
+	
+						if (mask) {
+							dark = !dark;
+						}
+						
+						this.modules[row][col - c] = dark;
+						bitIndex--;
+	
+						if (bitIndex === -1) {
+							byteIndex++;
+							bitIndex = 7;
+						}
+					}
+				}
+								
+				row += inc;
+	
+				if (row < 0 || this.moduleCount <= row) {
+					row -= inc;
+					inc = -inc;
+					break;
+				}
+			}
+		}
+		
+	}
+
+};
+
+QRCode.PAD0 = 0xEC;
+QRCode.PAD1 = 0x11;
+
+QRCode.createData = function(typeNumber, errorCorrectLevel, dataList) {
+	
+	var rsBlocks = QRRSBlock.getRSBlocks(typeNumber, errorCorrectLevel);
+	
+	var buffer = new QRBitBuffer();
+	
+	for (var i = 0; i < dataList.length; i++) {
+		var data = dataList[i];
+		buffer.put(data.mode, 4);
+		buffer.put(data.getLength(), QRUtil.getLengthInBits(data.mode, typeNumber) );
+		data.write(buffer);
+	}
+
+	// calc num max data.
+	var totalDataCount = 0;
+	for (var x = 0; x < rsBlocks.length; x++) {
+		totalDataCount += rsBlocks[x].dataCount;
+	}
+
+	if (buffer.getLengthInBits() > totalDataCount * 8) {
+		throw new Error("code length overflow. (" + 
+            buffer.getLengthInBits() + 
+            ">" +  
+            totalDataCount * 8 + 
+            ")");
+	}
+
+	// end code
+	if (buffer.getLengthInBits() + 4 <= totalDataCount * 8) {
+		buffer.put(0, 4);
+	}
+
+	// padding
+	while (buffer.getLengthInBits() % 8 !== 0) {
+		buffer.putBit(false);
+	}
+
+	// padding
+	while (true) {
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD0, 8);
+		
+		if (buffer.getLengthInBits() >= totalDataCount * 8) {
+			break;
+		}
+		buffer.put(QRCode.PAD1, 8);
+	}
+
+	return QRCode.createBytes(buffer, rsBlocks);
+};
+
+QRCode.createBytes = function(buffer, rsBlocks) {
+
+	var offset = 0;
+	
+	var maxDcCount = 0;
+	var maxEcCount = 0;
+	
+	var dcdata = new Array(rsBlocks.length);
+	var ecdata = new Array(rsBlocks.length);
+	
+	for (var r = 0; r < rsBlocks.length; r++) {
+
+		var dcCount = rsBlocks[r].dataCount;
+		var ecCount = rsBlocks[r].totalCount - dcCount;
+
+		maxDcCount = Math.max(maxDcCount, dcCount);
+		maxEcCount = Math.max(maxEcCount, ecCount);
+		
+		dcdata[r] = new Array(dcCount);
+		
+		for (var i = 0; i < dcdata[r].length; i++) {
+			dcdata[r][i] = 0xff & buffer.buffer[i + offset];
+		}
+		offset += dcCount;
+		
+		var rsPoly = QRUtil.getErrorCorrectPolynomial(ecCount);
+		var rawPoly = new QRPolynomial(dcdata[r], rsPoly.getLength() - 1);
+
+		var modPoly = rawPoly.mod(rsPoly);
+		ecdata[r] = new Array(rsPoly.getLength() - 1);
+		for (var x = 0; x < ecdata[r].length; x++) {
+            var modIndex = x + modPoly.getLength() - ecdata[r].length;
+			ecdata[r][x] = (modIndex >= 0)? modPoly.get(modIndex) : 0;
+		}
+
+	}
+	
+	var totalCodeCount = 0;
+	for (var y = 0; y < rsBlocks.length; y++) {
+		totalCodeCount += rsBlocks[y].totalCount;
+	}
+
+	var data = new Array(totalCodeCount);
+	var index = 0;
+
+	for (var z = 0; z < maxDcCount; z++) {
+		for (var s = 0; s < rsBlocks.length; s++) {
+			if (z < dcdata[s].length) {
+				data[index++] = dcdata[s][z];
+			}
+		}
+	}
+
+	for (var xx = 0; xx < maxEcCount; xx++) {
+		for (var t = 0; t < rsBlocks.length; t++) {
+			if (xx < ecdata[t].length) {
+				data[index++] = ecdata[t][xx];
+			}
+		}
+	}
+
+	return data;
+
+};
+
+module.exports = QRCode;
+
+M['index']=module.exports})();
+var Q=M['index'],L=M['QRErrorCorrectLevel'];return function(text){var q=new Q(-1,L.M);q.addData(text);q.make();var n=q.getModuleCount(),g=[];for(var r=0;r<n;r++){var row=[];for(var c=0;c<n;c++)row.push(q.isDark(r,c));g.push(row)}return g}})();
+/* =====================================================================
+   MELHORIAS 16/11/2026: termo de consentimento + assinatura, endereço/telefone,
+   psicotécnico (etapa 1, corte 50%, nota separada e nunca mostrada ao candidato),
+   QR Code, anti-cola ao sair do app, ranking do psicotécnico, senha master 0000 (demonstração)
+   ===================================================================== */
+const TERMS_VER='2026-11-16';
+const TERMS={
+ pt:{title:'Termo de Consentimento',sub:'Bluewind Technology – Pensacola, FL · Bluewind Skill Station',
+  intro:'Antes de começar, leia com atenção. Ao marcar “Li e concordo” e assinar, você autoriza a Bluewind Technology a coletar e usar as informações abaixo somente para este processo seletivo.',
+  items:[['Dados coletados','Nome, foto do rosto, endereço, telefone, a função pretendida, suas respostas, o tempo de cada resposta, as notas e o registro de saída do aplicativo durante o teste.'],
+   ['Para que servem','Apenas para avaliar sua candidatura a uma vaga na Bluewind e entrar em contato com você sobre este processo.'],
+   ['Quem pode ver','Somente o RH e a diretoria da Bluewind, com acesso protegido por senha. Seus dados não são vendidos nem compartilhados com outras empresas.'],
+   ['Notas','As notas dos testes são de uso interno da empresa e não são mostradas a você no aplicativo.'],
+   ['Como o teste funciona','O teste tem etapas, e a continuidade depende do resultado de cada etapa. Seu código de acesso vale uma única vez.'],
+   ['Regra contra cola','Durante o teste, não saia do aplicativo, não abra outros apps ou sites e não peça ajuda a outras pessoas. Se você sair do aplicativo, o código expira e o teste é encerrado e registrado como abandonado.'],
+   ['Onde ficam guardados','Em um banco de dados na nuvem com acesso restrito, pelo tempo exigido por lei para registros de contratação. Depois disso, são apagados.'],
+   ['Participação voluntária','Você não é obrigado a aceitar. Se não aceitar, avise o RH para combinar outra forma de avaliação.'],
+   ['Adaptações','Se você precisar de alguma adaptação para fazer o teste (por exemplo, por deficiência, leitura ou idioma), fale com o RH antes de começar.'],
+   ['Seus direitos','Você pode pedir ao RH para ver ou corrigir seus dados pessoais.']],
+  decl:'Li e entendi este termo e concordo com a coleta e o uso dos meus dados para este processo seletivo.',
+  agree:'Li e concordo',sign:'Assine com o dedo no quadro abaixo',clear:'Limpar assinatura',ok:'Aceitar e continuar',no:'Não concordo',
+  needAll:'Marque “Li e concordo” e assine para continuar.',refT:'Tudo bem',refS:'Sem o aceite do termo, o teste não pode começar. Fale com o RH para combinar outra forma de avaliação.',
+  signedBy:'Assinado por',on:'em'},
+ en:{title:'Consent Form',sub:'Bluewind Technology – Pensacola, FL · Bluewind Skill Station',
+  intro:'Please read carefully before you start. By checking “I have read and agree” and signing, you allow Bluewind Technology to collect and use the information below only for this hiring process.',
+  items:[['Information collected','Your name, a photo of your face, address, phone number, the position you are applying for, your answers, the time for each answer, your scores, and a record of leaving the app during the test.'],
+   ['Why we use it','Only to evaluate your application for a job at Bluewind and to contact you about this process.'],
+   ['Who can see it','Only Bluewind HR and management, with password-protected access. Your information is not sold or shared with other companies.'],
+   ['Scores','Test scores are for internal company use and are not shown to you in the app.'],
+   ['How the test works','The test has stages, and moving on depends on the result of each stage. Your access code can be used only once.'],
+   ['No-cheating rule','During the test, do not leave the app, do not open other apps or websites, and do not ask other people for help. If you leave the app, your code expires and the test ends and is recorded as abandoned.'],
+   ['Where it is stored','In a restricted-access cloud database, for as long as the law requires for hiring records. After that, it is deleted.'],
+   ['Voluntary','You do not have to agree. If you do not agree, tell HR so they can arrange another way to evaluate you.'],
+   ['Accommodations','If you need any accommodation to take the test (for example, because of a disability, reading, or language), talk to HR before you start.'],
+   ['Your rights','You can ask HR to see or correct your personal information.']],
+  decl:'I have read and understood this form, and I agree to the collection and use of my information for this hiring process.',
+  agree:'I have read and agree',sign:'Sign with your finger in the box below',clear:'Clear signature',ok:'Accept and continue',no:'I do not agree',
+  needAll:'Check “I have read and agree” and sign to continue.',refT:'That is okay',refS:'Without accepting the form, the test cannot start. Talk to HR to arrange another way to be evaluated.',
+  signedBy:'Signed by',on:'on'},
+ es:{title:'Formulario de Consentimiento',sub:'Bluewind Technology – Pensacola, FL · Bluewind Skill Station',
+  intro:'Lea con atención antes de comenzar. Al marcar “Leí y acepto” y firmar, usted autoriza a Bluewind Technology a recopilar y usar la información siguiente solo para este proceso de selección.',
+  items:[['Datos recopilados','Nombre, foto del rostro, dirección, teléfono, el puesto al que aplica, sus respuestas, el tiempo de cada respuesta, las calificaciones y el registro de salida de la aplicación durante la prueba.'],
+   ['Para qué se usan','Solo para evaluar su solicitud de empleo en Bluewind y comunicarnos con usted sobre este proceso.'],
+   ['Quién puede verlos','Solo Recursos Humanos y la dirección de Bluewind, con acceso protegido por contraseña. Sus datos no se venden ni se comparten con otras empresas.'],
+   ['Calificaciones','Las calificaciones son de uso interno de la empresa y no se le muestran en la aplicación.'],
+   ['Cómo funciona la prueba','La prueba tiene etapas, y continuar depende del resultado de cada etapa. Su código de acceso sirve una sola vez.'],
+   ['Regla contra trampas','Durante la prueba, no salga de la aplicación, no abra otras apps o sitios web y no pida ayuda a otras personas. Si sale de la aplicación, el código vence y la prueba termina y se registra como abandonada.'],
+   ['Dónde se guardan','En una base de datos en la nube con acceso restringido, por el tiempo que exige la ley para registros de contratación. Después, se eliminan.'],
+   ['Participación voluntaria','Usted no está obligado a aceptar. Si no acepta, avise a Recursos Humanos para acordar otra forma de evaluación.'],
+   ['Adaptaciones','Si necesita alguna adaptación para hacer la prueba (por ejemplo, por discapacidad, lectura o idioma), hable con Recursos Humanos antes de comenzar.'],
+   ['Sus derechos','Puede pedir a Recursos Humanos ver o corregir sus datos personales.']],
+  decl:'Leí y entendí este formulario y acepto la recopilación y el uso de mis datos para este proceso de selección.',
+  agree:'Leí y acepto',sign:'Firme con el dedo en el recuadro de abajo',clear:'Borrar firma',ok:'Aceptar y continuar',no:'No acepto',
+  needAll:'Marque “Leí y acepto” y firme para continuar.',refT:'Está bien',refS:'Sin aceptar el formulario, la prueba no puede comenzar. Hable con Recursos Humanos para acordar otra forma de evaluación.',
+  signedBy:'Firmado por',on:'el'}};
+
+/* contato (na página da foto) */
+const CONTACT={pt:{t:'Seus dados de contato',addr:'Endereço completo (rua, número, cidade, estado, ZIP)',phone:'Telefone',addrPh:'Ex.: 123 Main St, Pensacola, FL 32501',phonePh:'Ex.: (850) 555-0123',bad:'Preencha o endereço e um telefone válido.'},
+ en:{t:'Your contact information',addr:'Full address (street, number, city, state, ZIP)',phone:'Phone',addrPh:'E.g. 123 Main St, Pensacola, FL 32501',phonePh:'E.g. (850) 555-0123',bad:'Fill in the address and a valid phone number.'},
+ es:{t:'Sus datos de contacto',addr:'Dirección completa (calle, número, ciudad, estado, ZIP)',phone:'Teléfono',addrPh:'Ej.: 123 Main St, Pensacola, FL 32501',phonePh:'Ej.: (850) 555-0123',bad:'Complete la dirección y un teléfono válido.'}};
+
+/* ---------- PSICOTÉCNICO: 25 perguntas, 5 blocos ---------- */
+const PSY_MIN=50;
+const PSYL={pt:{log:'Raciocínio lógico',att:'Atenção e concentração',vis:'Percepção visual e mecânica',mem:'Memória',beh:'Comportamento no trabalho'},
+ en:{log:'Logical reasoning',att:'Attention and focus',vis:'Visual and mechanical perception',mem:'Memory',beh:'Work behavior'},
+ es:{log:'Razonamiento lógico',att:'Atención y concentración',vis:'Percepción visual y mecánica',mem:'Memoria',beh:'Comportamiento en el trabajo'}};
+const PSYPART={pt:['Parte 1','Parte 2'],en:['Part 1','Part 2'],es:['Parte 1','Parte 2']};
+const MEMO_T={pt:'Memorize as informações abaixo',en:'Memorize the information below',es:'Memorice la información de abajo'};
+const MEMO_S={pt:'Elas vão sumir em',en:'They will disappear in',es:'Desaparecerán en'};
+const P=(blk,ans,t,o,extra)=>Object.assign({psy:true,mod:'psy_'+blk,blk,type:'mc',ans,time:45,t,o},extra||{});
+const PSY_Q=[
+ /* raciocínio lógico */
+ P('log',2,{pt:'Qual número continua a sequência? 3 · 6 · 12 · 24 · ?',en:'Which number comes next? 3 · 6 · 12 · 24 · ?',es:'¿Qué número sigue? 3 · 6 · 12 · 24 · ?'},
+   {pt:['30','36','48','42'],en:['30','36','48','42'],es:['30','36','48','42']}),
+ P('log',1,{pt:'Qual número continua a sequência? 2 · 5 · 9 · 14 · ?',en:'Which number comes next? 2 · 5 · 9 · 14 · ?',es:'¿Qué número sigue? 2 · 5 · 9 · 14 · ?'},
+   {pt:['19','20','21','18'],en:['19','20','21','18'],es:['19','20','21','18']}),
+ P('log',2,{pt:'Uma máquina faz 40 peças em 2 horas. Quantas peças ela faz em 5 horas, no mesmo ritmo?',en:'A machine makes 40 parts in 2 hours. How many parts does it make in 5 hours at the same pace?',es:'Una máquina hace 40 piezas en 2 horas. ¿Cuántas piezas hace en 5 horas al mismo ritmo?'},
+   {pt:['80','90','100','120'],en:['80','90','100','120'],es:['80','90','100','120']}),
+ P('log',0,{pt:'Todos os moldes da Baia 1 são limpos na segunda-feira. O molde X está na Baia 1. O que é verdade?',en:'All molds in Bay 1 are cleaned on Monday. Mold X is in Bay 1. What is true?',es:'Todos los moldes de la Bahía 1 se limpian el lunes. El molde X está en la Bahía 1. ¿Qué es verdad?'},
+   {pt:['O molde X é limpo na segunda-feira','O molde X nunca é limpo','Só o molde X é limpo na segunda-feira','Não dá para saber nada sobre o molde X'],
+    en:['Mold X is cleaned on Monday','Mold X is never cleaned','Only mold X is cleaned on Monday','Nothing can be known about mold X'],
+    es:['El molde X se limpia el lunes','El molde X nunca se limpia','Solo el molde X se limpia el lunes','No se puede saber nada del molde X']}),
+ P('log',1,{pt:'Qual item continua a sequência? A1 · C3 · E5 · ?',en:'Which item comes next? A1 · C3 · E5 · ?',es:'¿Qué elemento sigue? A1 · C3 · E5 · ?'},
+   {pt:['F6','G7','H8','G6'],en:['F6','G7','H8','G6'],es:['F6','G7','H8','G6']}),
+ /* atenção e concentração */
+ P('att',1,{pt:'Quantas vezes o número 7 aparece?  7 1 7 4 7 9 2 7 1 7 3 7',en:'How many times does the number 7 appear?  7 1 7 4 7 9 2 7 1 7 3 7',es:'¿Cuántas veces aparece el número 7?  7 1 7 4 7 9 2 7 1 7 3 7'},
+   {pt:['5','6','7','4'],en:['5','6','7','4'],es:['5','6','7','4']}),
+ P('att',2,{pt:'A etiqueta da peça é BW-58A-3317. Qual opção é exatamente igual?',en:'The part label is BW-58A-3317. Which option is exactly the same?',es:'La etiqueta de la pieza es BW-58A-3317. ¿Qué opción es exactamente igual?'},
+   {pt:['BW-58A-3371','BW-85A-3317','BW-58A-3317','BW-58A-3177'],en:['BW-58A-3371','BW-85A-3317','BW-58A-3317','BW-58A-3177'],es:['BW-58A-3371','BW-85A-3317','BW-58A-3317','BW-58A-3177']}),
+ P('att',2,{pt:'Em qual linha existe uma letra diferente das outras?',en:'In which line is there a letter different from the others?',es:'¿En qué línea hay una letra diferente de las demás?'},
+   {pt:['OOOOOOOO','CCCCCCCC','OOOQOOOO','QQQQQQQQ'],en:['OOOOOOOO','CCCCCCCC','OOOQOOOO','QQQQQQQQ'],es:['OOOOOOOO','CCCCCCCC','OOOQOOOO','QQQQQQQQ']}),
+ P('att',1,{pt:'Quantos números pares existem?  13 8 21 6 15 4 9 10',en:'How many even numbers are there?  13 8 21 6 15 4 9 10',es:'¿Cuántos números pares hay?  13 8 21 6 15 4 9 10'},
+   {pt:['3','4','5','6'],en:['3','4','5','6'],es:['3','4','5','6']}),
+ P('att',2,{pt:'A ficha diz 24 peças. Você contou 6 caixas com 4 peças e 1 caixa com 3 peças. O lote está:',en:'The sheet says 24 parts. You counted 6 boxes with 4 parts and 1 box with 3 parts. The lot is:',es:'La hoja dice 24 piezas. Usted contó 6 cajas con 4 piezas y 1 caja con 3 piezas. El lote está:'},
+   {pt:['Completo','Faltando 3 peças','Com 3 peças a mais','Faltando 1 peça'],en:['Complete','Missing 3 parts','3 parts over','Missing 1 part'],es:['Completo','Faltan 3 piezas','Con 3 piezas de más','Falta 1 pieza']}),
+ /* percepção visual e mecânica */
+ P('vis',0,{pt:'Se girar a figura ◢ um quarto de volta no sentido horário, como ela fica?',en:'If you turn the shape ◢ a quarter turn clockwise, how does it look?',es:'Si gira la figura ◢ un cuarto de vuelta en sentido horario, ¿cómo queda?'},
+   {pt:['◣','◤','◥','◢'],en:['◣','◤','◥','◢'],es:['◣','◤','◥','◢']}),
+ P('vis',2,{pt:'Se girar a letra b meia volta (de cabeça para baixo), qual letra aparece?',en:'If you turn the letter b half a turn (upside down), which letter appears?',es:'Si gira la letra b media vuelta (de cabeza), ¿qué letra aparece?'},
+   {pt:['d','p','q','b'],en:['d','p','q','b'],es:['d','p','q','b']}),
+ P('vis',0,{pt:'Uma peça vista de cima é um círculo. Vista de lado, é um retângulo. Que peça é essa?',en:'A part seen from above is a circle. Seen from the side, it is a rectangle. What part is it?',es:'Una pieza vista desde arriba es un círculo. Vista de lado, es un rectángulo. ¿Qué pieza es?'},
+   {pt:['Um cilindro','Um cubo','Uma esfera','Um cone'],en:['A cylinder','A cube','A sphere','A cone'],es:['Un cilindro','Un cubo','Una esfera','Un cono']}),
+ P('vis',0,{pt:'Qual é o reflexo da seta ↗ em um espelho colocado ao lado dela?',en:'What is the reflection of the arrow ↗ in a mirror placed beside it?',es:'¿Cuál es el reflejo de la flecha ↗ en un espejo colocado a su lado?'},
+   {pt:['↖','↘','↙','↗'],en:['↖','↘','↙','↗'],es:['↖','↘','↙','↗']}),
+ P('vis',0,{pt:'Um parafuso comum (rosca direita) é girado no sentido horário. O que acontece?',en:'A standard screw (right-hand thread) is turned clockwise. What happens?',es:'Un tornillo común (rosca derecha) se gira en sentido horario. ¿Qué pasa?'},
+   {pt:['Ele aperta','Ele solta','Nada muda','Depende do tamanho'],en:['It tightens','It loosens','Nothing changes','It depends on the size'],es:['Se aprieta','Se afloja','Nada cambia','Depende del tamaño']}),
+ /* memória: a informação aparece por alguns segundos e some */
+ P('mem',1,{pt:'Qual era o turno?',en:'Which shift was it?',es:'¿Cuál era el turno?'},{pt:['A','B','C','D'],en:['A','B','C','D'],es:['A','B','C','D']},
+   {time:30,memo:{pt:'Molde: M-27 · Peça: Nacele · Turno: B',en:'Mold: M-27 · Part: Nacelle · Shift: B',es:'Molde: M-27 · Pieza: Góndola · Turno: B'}}),
+ P('mem',1,{pt:'Qual era o terceiro número?',en:'What was the third number?',es:'¿Cuál era el tercer número?'},{pt:['9','2','7','4'],en:['9','2','7','4'],es:['9','2','7','4']},
+   {time:30,memo:{pt:'Sequência: 4 – 9 – 2 – 7',en:'Sequence: 4 – 9 – 2 – 7',es:'Secuencia: 4 – 9 – 2 – 7'}}),
+ P('mem',2,{pt:'Qual cor vinha logo depois do verde?',en:'Which color came right after green?',es:'¿Qué color venía justo después del verde?'},{pt:['Azul','Amarelo','Vermelho','Branco'],en:['Blue','Yellow','Red','White'],es:['Azul','Amarillo','Rojo','Blanco']},
+   {time:30,memo:{pt:'Cores das etiquetas: azul, verde, vermelho, amarelo',en:'Label colors: blue, green, red, yellow',es:'Colores de las etiquetas: azul, verde, rojo, amarillo'}}),
+ P('mem',1,{pt:'Qual era o número do lote?',en:'What was the lot number?',es:'¿Cuál era el número de lote?'},{pt:['5823','5832','8532','5382'],en:['5823','5832','8532','5382'],es:['5823','5832','8532','5382']},
+   {time:30,memo:{pt:'Resina: lote 5832 · validade 12/2026',en:'Resin: lot 5832 · expires 12/2026',es:'Resina: lote 5832 · vence 12/2026'}}),
+ P('mem',0,{pt:'Qual item NÃO estava na lista?',en:'Which item was NOT on the list?',es:'¿Qué artículo NO estaba en la lista?'},{pt:['Protetor auricular','Óculos','Luvas nitrílicas','Avental'],en:['Ear protection','Safety glasses','Nitrile gloves','Apron'],es:['Protector auditivo','Lentes de seguridad','Guantes de nitrilo','Delantal']},
+   {time:30,memo:{pt:'EPI: luvas nitrílicas, óculos, respirador, avental',en:'PPE: nitrile gloves, safety glasses, respirator, apron',es:'EPP: guantes de nitrilo, lentes de seguridad, respirador, delantal'}}),
+ /* comportamento no trabalho */
+ P('beh',1,{pt:'Você vê um colega sem EPI perto do gel coat. O que você faz?',en:'You see a coworker without PPE near the gel coat. What do you do?',es:'Ve a un compañero sin EPP cerca del gel coat. ¿Qué hace?'},
+   {pt:['Não faz nada, não é problema seu','Fala com ele com respeito e, se continuar, avisa o líder','Tira uma foto e espalha no grupo','Espera ele se machucar para aprender'],
+    en:['Do nothing, it is not your problem','Talk to him respectfully and, if it continues, tell the lead','Take a photo and share it in the group chat','Wait for him to get hurt so he learns'],
+    es:['No hace nada, no es su problema','Habla con él con respeto y, si sigue, avisa al líder','Le toma una foto y la comparte en el grupo','Espera a que se lastime para que aprenda']}),
+ P('beh',2,{pt:'Você errou e uma peça saiu com defeito. Ninguém viu. O que você faz?',en:'You made a mistake and a part came out with a defect. Nobody saw it. What do you do?',es:'Usted se equivocó y una pieza salió con defecto. Nadie lo vio. ¿Qué hace?'},
+   {pt:['Esconde a peça no meio das outras','Culpa o turno anterior','Avisa o líder e registra o defeito','Conserta do seu jeito sem falar com ninguém'],
+    en:['Hide the part among the others','Blame the previous shift','Tell the lead and record the defect','Fix it your own way without telling anyone'],
+    es:['Esconde la pieza entre las demás','Culpa al turno anterior','Avisa al líder y registra el defecto','La arregla a su manera sin decir nada']}),
+ P('beh',0,{pt:'Você recebeu uma instrução que não entendeu bem. O que você faz?',en:'You received an instruction you did not fully understand. What do you do?',es:'Recibió una instrucción que no entendió bien. ¿Qué hace?'},
+   {pt:['Pergunta ao líder antes de começar','Faz do jeito que acha melhor','Espera alguém perceber','Pede para um colega fazer no seu lugar'],
+    en:['Ask the lead before starting','Do it the way you think is best','Wait for someone to notice','Ask a coworker to do it for you'],
+    es:['Pregunta al líder antes de empezar','Lo hace como cree mejor','Espera a que alguien se dé cuenta','Pide a un compañero que lo haga por usted']}),
+ P('beh',3,{pt:'Seu turno acabou, mas quem vai te render ainda não chegou e a máquina está ligada. O que você faz?',en:'Your shift is over, but your relief has not arrived and the machine is running. What do you do?',es:'Su turno terminó, pero su relevo no ha llegado y la máquina está encendida. ¿Qué hace?'},
+   {pt:['Vai embora, o horário acabou','Desliga tudo sem avisar ninguém','Deixa um bilhete na máquina','Avisa o líder e passa as informações antes de sair'],
+    en:['Leave, your shift is over','Shut everything down without telling anyone','Leave a note on the machine','Tell the lead and hand over the information before leaving'],
+    es:['Se va, el horario terminó','Apaga todo sin avisar a nadie','Deja una nota en la máquina','Avisa al líder y pasa la información antes de salir']}),
+ P('beh',1,{pt:'Caiu um pouco de resina no chão do seu posto. O que você faz?',en:'Some resin spilled on the floor at your station. What do you do?',es:'Se derramó un poco de resina en el piso de su puesto. ¿Qué hace?'},
+   {pt:['Deixa para a equipe de limpeza no fim do dia','Sinaliza a área e limpa seguindo o procedimento','Joga água por cima','Cobre com papelão e continua'],
+    en:['Leave it for the cleaning crew at the end of the day','Mark off the area and clean it following the procedure','Pour water on it','Cover it with cardboard and keep working'],
+    es:['La deja para el equipo de limpieza al final del día','Señaliza el área y limpia según el procedimiento','Le echa agua encima','La tapa con cartón y sigue trabajando']})
+];
+
+/* ---------- textos novos do painel ---------- */
+Object.assign(PLD.pt,{psy:'Psicotécnico',psyT:'Psicotécnico (etapa 1)',psyPass:'Passou',psyFail:'Reprovado',psyMin:'Nota mínima para seguir: '+PSY_MIN+'%. O candidato nunca vê esta nota.',
+ rkTec:'Teste técnico',rkPsy:'Psicotécnico',noPsy:'Ainda não há resultados do psicotécnico.',contactT:'Contato',addr:'Endereço',phone:'Telefone',
+ termT:'Termo de consentimento',termOk:'Aceito e assinado',termNo:'Sem termo assinado',termPrint:'🖨 Imprimir / salvar PDF',termVer:'versão',
+ qrT:'Peça para o candidato apontar a câmera do celular para o QR Code. O teste abre no celular dele com o código já preenchido.',
+ master:'Modo demonstração (senha master 0000): dados de exemplo, nada é salvo no banco de dados. Cadastre as senhas do RH e da Diretoria para ver os candidatos reais.'});
+Object.assign(PLD.en,{psy:'Aptitude',psyT:'Aptitude test (stage 1)',psyPass:'Passed',psyFail:'Failed',psyMin:'Minimum score to move on: '+PSY_MIN+'%. The candidate never sees this score.',
+ rkTec:'Technical test',rkPsy:'Aptitude',noPsy:'No aptitude results yet.',contactT:'Contact',addr:'Address',phone:'Phone',
+ termT:'Consent form',termOk:'Accepted and signed',termNo:'No signed form',termPrint:'🖨 Print / save PDF',termVer:'version',
+ qrT:'Ask the candidate to point the phone camera at the QR code. The test opens on their phone with the code already filled in.',
+ master:'Demo mode (master password 0000): sample data, nothing is saved to the database. Set up the HR and Management passwords to see real candidates.'});
+Object.assign(PLD.es,{psy:'Psicotécnico',psyT:'Psicotécnico (etapa 1)',psyPass:'Aprobó',psyFail:'Reprobado',psyMin:'Nota mínima para seguir: '+PSY_MIN+'%. El candidato nunca ve esta nota.',
+ rkTec:'Prueba técnica',rkPsy:'Psicotécnico',noPsy:'Todavía no hay resultados del psicotécnico.',contactT:'Contacto',addr:'Dirección',phone:'Teléfono',
+ termT:'Formulario de consentimiento',termOk:'Aceptado y firmado',termNo:'Sin formulario firmado',termPrint:'🖨 Imprimir / guardar PDF',termVer:'versión',
+ qrT:'Pida al candidato que apunte la cámara del celular al código QR. La prueba se abre en su celular con el código ya puesto.',
+ master:'Modo demostración (contraseña maestra 0000): datos de ejemplo, no se guarda nada en la base de datos. Configure las contraseñas de RR. HH. y Dirección para ver los candidatos reales.'});
+ST.psico_reprovado=['Reprovado no psicotécnico','b-bad'];ST.recusou=['Recusou o termo','b-bad'];
+STL.pt.psico_reprovado='Reprovado no psicotécnico';STL.en.psico_reprovado='Failed aptitude test';STL.es.psico_reprovado='Reprobado en el psicotécnico';
+STL.pt.recusou='Recusou o termo';STL.en.recusou='Declined the consent form';STL.es.recusou='Rechazó el formulario';
+CAND_SCREENS.push('terms');
+var MASTER=false,MASTER_PREV=null,pendingCode='',rkMode='tec',psyAnswers=[];
+const psyBlocks=a=>{const m={};['log','att','vis','mem','beh'].forEach(b=>{const x=a.filter(y=>y.blk===b);if(x.length)m[b]=Math.round(x.filter(y=>y.ok).length/x.length*100)});return m};
+const hasPsy=c=>typeof c.psyScore==='number';
+
+/* ---------- navegação ---------- */
+function render(){({home,code,demoProf,confirm:confirmS,notme,terms,refused,photo,how,test,done,abandoned,login,panel})[screen]()}
+function confirmS(){
+  const p=profBy(cand.role);
+  app.innerHTML=`<div class="center fade"><div class="glass" style="padding:28px">
+    <p class="muted">${t('hello')},</p><h2 style="font-size:32px;margin-top:2px">${escH(cand.name)}</h2>
+    <div class="profCard on" style="margin:18px auto 0;max-width:340px;cursor:default"><span class="pIco">${p.ico}</span><span><small>${t('prof')}</small><b>${p.n[lang]}</b></span></div>
+    <div style="display:grid;gap:10px;margin-top:24px"><button class="btn" onclick="go('terms')">${t('confirm')}</button><button class="btn ghost" onclick="notMe()">${t('notMe')}</button></div></div></div>`;
+}
+
+/* ---------- TERMO DE CONSENTIMENTO + ASSINATURA ---------- */
+let sigInk=0;
+function terms(){
+  const T=TERMS[lang];sigInk=0;
+  app.innerHTML=`<div class="center fade" style="max-width:680px"><div class="glass" style="padding:22px;text-align:left">
+   <h2 style="font-size:26px">📝 ${T.title}</h2><p class="muted" style="font-size:13px;margin-top:4px">${T.sub}</p>
+   <div style="max-height:42vh;overflow:auto;margin-top:12px;padding:14px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--gbrd);font-size:15px;line-height:1.5">
+    <p>${T.intro}</p><ol style="margin:10px 0 0 20px">${T.items.map(([h,x])=>`<li style="margin:8px 0"><b>${h}.</b> ${x}</li>`).join('')}</ol>
+    <p style="margin-top:10px"><b>${T.decl}</b></p></div>
+   <label class="consent"><input type="checkbox" id="tAg" onchange="termsUpd()" style="width:22px;height:22px;accent-color:#22d3ee;flex:none"> <b style="color:#fff">${T.agree}</b></label>
+   <p class="muted" style="margin-top:14px;font-size:14px">✍️ ${T.sign}</p>
+   <div style="position:relative;margin-top:6px"><canvas id="sig" style="width:100%;height:170px;border-radius:14px;background:#f8fafc;touch-action:none;display:block;cursor:crosshair"></canvas>
+    <button class="btn ghost small" style="position:absolute;right:8px;bottom:8px;color:#0f172a;background:rgba(15,23,42,.08)" onclick="sigClear()">${T.clear}</button></div>
+   <p class="muted" style="font-size:13px;margin-top:6px">${escH(cand.name)} · ${new Date().toLocaleDateString({pt:'pt-BR',en:'en-US',es:'es-US'}[lang])}</p>
+   <div class="err" id="tErr"></div>
+   <div style="display:grid;gap:10px;margin-top:6px"><button class="btn" id="tOk" onclick="termsAccept()">${T.ok} →</button><button class="btn ghost" onclick="termsRefuse()">${T.no}</button></div></div></div>`;
+  sigInit();
+}
+function sigInit(){
+  const c=document.getElementById('sig');if(!c)return;const r=c.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);const g=c.getContext('2d');g.scale(dpr,dpr);
+  g.strokeStyle='#0f172a';g.lineWidth=2.6;g.lineCap='round';g.lineJoin='round';
+  g.strokeStyle='rgba(15,23,42,.18)';g.beginPath();g.moveTo(16,r.height-36);g.lineTo(r.width-16,r.height-36);g.stroke();g.strokeStyle='#0f172a';
+  let last=null;
+  const pos=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  c.onpointerdown=e=>{e.preventDefault();try{c.setPointerCapture(e.pointerId)}catch(x){}last=pos(e);armIdle()};
+  c.onpointermove=e=>{if(!last)return;const p=pos(e);g.beginPath();g.moveTo(last[0],last[1]);g.lineTo(p[0],p[1]);g.stroke();sigInk+=Math.hypot(p[0]-last[0],p[1]-last[1]);last=p;termsUpd()};
+  c.onpointerup=c.onpointercancel=()=>{last=null};
+}
+function sigClear(){sigInk=0;sigInit();termsUpd()}
+function termsUpd(){const e=document.getElementById('tErr');if(e)e.textContent=''}
+function termsAccept(){
+  const T=TERMS[lang];const ag=document.getElementById('tAg');
+  if(!ag||!ag.checked||sigInk<40){document.getElementById('tErr').textContent=T.needAll;return}
+  const src=document.getElementById('sig');const o=document.createElement('canvas');const w=480,h=Math.round(480*src.height/src.width);
+  o.width=w;o.height=h;const g=o.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(src,0,0,w,h);
+  const consent={accepted:true,at:now(),lang,ver:TERMS_VER,sig:o.toDataURL('image/jpeg',.7)};
+  cand.consent=consent;saveCand(cand.id,{consent});go('photo');
+}
+function termsRefuse(){if(cand)saveCand(cand.id,{status:'recusou',refusedAt:now()});cand=null;go('refused')}
+function refused(){const T=TERMS[lang];app.innerHTML=`<div class="center fade"><div class="glass" style="padding:30px"><div style="font-size:54px">🤝</div><h2 style="font-size:28px;margin-top:8px">${T.refT}</h2><p class="muted" style="margin-top:10px;font-size:17px">${T.refS}</p><button class="btn" style="margin-top:22px" onclick="go('home')">OK</button></div></div>`;setTimeout(()=>{if(screen==='refused')go('home')},20000)}
+
+/* ---------- FOTO: primeiro o contato (endereço e telefone) ---------- */
+function phRender(){
+  let body='';
+  if(phStep==='consent'){
+    const C=CONTACT[lang];
+    body=`<div class="form" style="text-align:left"><h3 style="margin-bottom:4px">📇 ${C.t}</h3>
+      <label>${C.addr}</label><input id="cAddr" oninput="document.getElementById('cErr2').textContent=''" autocomplete="street-address" placeholder="${C.addrPh}" value="${escH(cand.address||'')}">
+      <label>${C.phone}</label><input id="cPhone" oninput="document.getElementById('cErr2').textContent=''" type="tel" inputmode="tel" autocomplete="tel" placeholder="${C.phonePh}" value="${escH(cand.phone||'')}"></div>
+      <div class="err" id="cErr2"></div>
+      <button class="btn" style="width:100%;margin-top:6px" onclick="contactNext()">${pt2('cont')} →</button>`;
+  }else if(phStep==='shoot'){
+    body=`<p class="muted" style="margin-bottom:10px">${pt2('live')}</p>
+      <div class="camBox"><video id="vid" playsinline autoplay muted></video><div class="faceGuide"></div>
+       <div id="camFallback" class="camFb"><div style="text-align:center;padding:16px"><p class="muted" style="margin-bottom:14px;font-size:15px">${pt2('tip')}</p>
+        <label class="btn"><input type="file" accept="image/*" capture="user" style="display:none" onchange="fileShot(this)">📷 ${t('open')}</label></div></div></div>
+      <div id="camBtns" style="display:grid;gap:10px;margin-top:14px"></div>`;
+  }else{
+    body=`<p class="muted" style="margin-bottom:10px">${pt2('adj')}</p>
+      <div class="camBox" id="adjBox"><canvas id="adjCv"></canvas><div class="faceGuide"></div></div>
+      <div class="zoomRow"><span>➖</span><input type="range" id="zr" min="1" max="3" step="0.01" value="${pz.z}" oninput="pz.z=+this.value;clampPan();drawAdj()"><span>➕</span></div>
+      <div style="display:grid;gap:10px;margin-top:12px"><button class="btn" onclick="useShot()">✓ ${t('use')}</button><button class="btn ghost" onclick="stopCam();phStep='shoot';phRender()">↺ ${t('retake')}</button></div>`;
+  }
+  const head=phStep==='consent'?'':`<h2 style="font-size:28px">📷 ${t('photoT')}</h2><p class="muted" style="margin:8px 0 14px">${t('photoS')}</p>`;
+  app.innerHTML=`<div class="center fade"><div class="glass" style="padding:24px">${head}${body}
+   ${phStep==='consent'?'':`<button class="btn ghost small" style="margin-top:12px" onclick="cand.photo=null;go('how')">${t('skip')}</button>`}</div></div>`;
+  if(phStep==='shoot')startCam();
+  if(phStep==='adjust')initAdj();
+}
+function contactNext(){
+  const a=(document.getElementById('cAddr').value||'').trim(),p=(document.getElementById('cPhone').value||'').trim();
+  if(a.length<8||p.replace(/\D/g,'').length<10){document.getElementById('cErr2').textContent=CONTACT[lang].bad;return}
+  cand.address=a;cand.phone=p;saveCand(cand.id,{address:a,phone:p});phStep='shoot';phRender();
+}
+
+/* ---------- TESTE: etapa 1 psicotécnico, etapa 2 técnico ---------- */
+function startTest(){
+  QS=[...PSY_Q.map(q=>({...q})),...buildTest(cand.role)];qi=0;answers=[];psyAnswers=[];exits=0;testActive=true;clearTimeout(idleT);
+  saveCand(cand.id,{status:'em_andamento',startedAt:now(),lang,photo:cand.photo||null,address:cand.address||null,phone:cand.phone||null,answers:[],psyAnswers:[],lastQ:0,total:QS.length});
+  screen='test';window.scrollTo(0,0);render();
+}
+function test(){
+  const q=QS[qi];sel=null;orderPick=[];
+  const nP=QS.filter(x=>x.psy).length,inPsy=!!q.psy,pos=inPsy?qi:qi-nP,tot=inPsy?nP:QS.length-nP;
+  const top=`<div class="topbar glass"><div class="miniLogo">${miniLogo()}<span class="hide-s">Skill Station</span></div>
+     <div class="prog"><i style="width:${pos/tot*100}%"></i></div><div class="timer" id="tm"></div></div>`;
+  if(q.memo&&!q._memoDone){
+    let n=8;clearInterval(timer);
+    app.innerHTML=`<div class="fade">${top}<div class="qcard glass" style="text-align:center">
+      <span class="muted">${PSYPART[lang][0]} · ${t('q')} ${pos+1} ${t('of')} ${tot}</span>
+      <h3 style="margin-top:14px">🧠 ${MEMO_T[lang]}</h3>
+      <div style="font-size:26px;font-weight:700;margin:22px 0;padding:22px;border-radius:16px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.35)">${q.memo[lang]}</div>
+      <p class="muted">${MEMO_S[lang]} <b id="mmN">${n}</b>s</p></div></div>`;
+    timer=setInterval(()=>{n--;const e=document.getElementById('mmN');if(e)e.textContent=n;if(n<=0){clearInterval(timer);q._memoDone=true;if(testActive&&screen==='test')test()}},1000);
+    return;
+  }
+  qStart=now();
+  let body='';
+  if(q.fig==='tape')body+=figTape();if(q.fig==='defect')body+=figDefect();
+  if(q.type==='mc'){const ord=shuffle([0,1,2,3]);q._ord=ord;const big=q.blk==='vis'&&q.o[lang][0].length<=2;body+=`<div class="opts">${ord.map((oi,k)=>`<button class="opt glass" data-i="${oi}" onclick="pick(${oi})"><span class="letter">${'ABCD'[k]}</span><span style="${big?'font-size:34px':''}">${q.o[lang][oi]}</span></button>`).join('')}</div>`}
+  if(q.type==='num')body+=`<div class="numIn"><input id="num" inputmode="decimal" placeholder="0" oninput="sel=this.value;upd()"><span>${q.unit}</span></div>`;
+  if(q.type==='order'){const sh=shuffle([0,1,2,3,4]);body+=`<p class="muted" style="margin-top:14px">${t('orderHint')}</p><div class="orderList">${sh.map(i=>`<button class="ord glass" id="o${i}" onclick="ordPick(${i})"><span class="n"></span><span>${q.steps[lang][i]}</span></button>`).join('')}</div><button class="btn ghost small" style="margin-top:10px" onclick="orderPick=[];document.querySelectorAll('.ord').forEach(e=>{e.classList.remove('picked');e.querySelector('.n').textContent=''});sel=null;upd()">↺ ${t('clear')}</button>`}
+  app.innerHTML=`<div class="fade">${top}
+   <div class="qcard glass">
+     <div class="qmeta"><span class="muted">${PSYPART[lang][inPsy?0:1]} · ${t('q')} ${pos+1} ${t('of')} ${tot}</span>
+       <span style="display:flex;gap:8px">${q.crit?`<span class="tag crit">⚠ ${t('crit')}</span>`:''}<button class="audio glass" onclick="speak()">🔊 ${t('listen')}</button></span></div>
+     <div class="qtext">${q.t[lang]}</div>${body}
+     <div class="qfoot"><span></span><button class="btn" id="nx" disabled onclick="answer()">${t('next')} →</button></div>
+   </div></div>`;
+  left=q.time;tick();clearInterval(timer);timer=setInterval(tick,1000);
+}
+function answer(timeout){
+  if(!testActive)return;
+  clearInterval(timer);try{speechSynthesis.cancel()}catch(e){}
+  const q=QS[qi];let ok=false,given=null;
+  if(!timeout&&sel!==null){
+    if(q.type==='mc'){ok=sel===q.ans;given=q.o.pt[sel]}
+    if(q.type==='num'){const v=parseFloat(String(sel).replace(',','.'));ok=Math.abs(v-q.ans)<=q.tol;given=String(sel)+(q.unit?' '+q.unit:'')}
+    if(q.type==='order'){ok=sel.every((v,i)=>v===i);given=sel.map(i=>i+1).join('-')}
+  }
+  const right=q.type==='mc'?q.o.pt[q.ans]:q.type==='num'?q.ans+(q.unit?' '+q.unit:''):'1-2-3-4-5';
+  const L3=f=>({pt:f('pt'),en:f('en'),es:f('es')});
+  const givenL=timeout?{pt:'(tempo esgotado)',en:'(time ran out)',es:'(tiempo agotado)'}:q.type==='mc'&&sel!==null?L3(l=>q.o[l][sel]):{pt:given,en:given,es:given};
+  const rightL=q.type==='mc'?L3(l=>q.o[l][q.ans]):{pt:right,en:right,es:right};
+  const rec={q:q.t.pt,qL:q.t,mod:q.mod,ok,crit:!!q.crit,given:timeout?'(tempo esgotado)':given,givenL,right,rightL,s:Math.round((now()-qStart)/1000)};
+  if(q.psy){rec.blk=q.blk;psyAnswers.push(rec)}else answers.push(rec);
+  qi++;
+  if(q.psy&&!(QS[qi]&&QS[qi].psy)){
+    const psyScore=Math.round(psyAnswers.filter(a=>a.ok).length/psyAnswers.length*100),psyPass=psyScore>=PSY_MIN;
+    const data={psyAnswers,psyScore,psyModules:psyBlocks(psyAnswers),psyPass,psyAt:now(),lastQ:qi,exits};
+    if(!psyPass){testActive=false;saveCand(cand.id,{...data,status:'psico_reprovado',finishedAt:now()});cand=null;return go('done')}
+    saveCand(cand.id,data);return test();
+  }
+  if(qi<QS.length){saveCand(cand.id,q.psy?{psyAnswers,lastQ:qi,exits}:{answers,lastQ:qi,exits});test()}else finish();
+}
+async function abandon(reason,silent){
+  if(!cand||!(testActive||CAND_SCREENS.includes(screen)))return;
+  testActive=false;clearInterval(timer);clearTimeout(idleT);
+  const id=cand.id;const data={status:'abandonado',abandonedAt:now(),abandonReason:reason,answers,psyAnswers,lastQ:qi,exits};
+  saveCand(id,data);cand=null;if(!silent)go('abandoned');
+}
+/* anti-cola: sair do app (trocar de app, abrir o Google, bloquear a tela) encerra o teste na hora */
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden||!cand)return;
+  if(!(testActive||CAND_SCREENS.includes(screen))||screen==='photo')return;
+  abandon('saiu do app');
+});
+
+/* ---------- QR CODE ---------- */
+function qrSVG(text,px){const g=QRGEN(text),n=g.length,q=4,s=n+q*2;let d='';g.forEach((row,r)=>row.forEach((v,c)=>{if(v)d+=`M${c+q} ${r+q}h1v1h-1z`}));
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${s} ${s}" width="${px}" height="${px}" shape-rendering="crispEdges" style="background:#fff;border-radius:12px"><path d="${d}" fill="#000"/></svg>`}
+const appURL=()=>location.origin+location.pathname;
+function genOut(){
+  return genOutBase()+`<div style="text-align:center;margin-top:6px">${qrSVG(appURL()+'?c='+newCode.code,220)}<p class="muted" style="font-size:13px;margin:10px auto 0;max-width:360px">${PL('qrT')}</p></div>`;
+}
+function code(err){
+  codeBase(err);
+  if(pendingCode&&/^\d{4}$/.test(pendingCode)){const c=pendingCode;pendingCode='';typed='';setTimeout(()=>{for(const d of c)kp(d)},250)}
+}
+(function(){try{const u=new URL(location.href),c=u.searchParams.get('c');if(c&&/^\d{4}$/.test(c)){pendingCode=c;u.searchParams.delete('c');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}}catch(e){}})();
+
+/* ---------- PAINEL: ranking do psicotécnico, ficha com contato/termo/psicotécnico ---------- */
+function pRank(){
+  const tg=`<div class="role" style="display:inline-flex;margin-bottom:12px"><button class="${rkMode==='tec'?'on':''}" onclick="rkMode='tec';render()" style="padding:8px 14px">${PL('rkTec')}</button><button class="${rkMode==='psy'?'on':''}" onclick="rkMode='psy';render()" style="padding:8px 14px">🧠 ${PL('rkPsy')}</button></div>`;
+  if(rkMode==='tec'){
+    const list=CANDS.filter(hasTest).filter(c=>rf==='todas'||profBy(c.role).id===rf).map(c=>({...c,f:finalScore(c)})).sort((a,b)=>b.f.v-a.f.v);
+    return tg+`<div class="card glass" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><h3 style="margin:0">${PL('rkTec')}</h3>
+     <select class="sel2" onchange="rf=this.value;render()"><option value="todas">${PL('allProf')}</option>${PROFS.map(p=>`<option value="${p.id}" ${rf===p.id?'selected':''}>${p.n[plang]}</option>`).join('')}</select></div>
+     ${list.length?`<table><tr><th>#</th><th>${PL('cand')}</th><th class="hide-s">${PL('prof')}</th><th>${PL('score')}</th><th class="hide-s">${PL('psy')}</th><th>${PL('sit')}</th></tr>
+     ${list.map((c,k)=>{const [l,b]=cls(c.f.v);return `<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${c.crit?'⚠️ ':''}${escH(c.name)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.f.v}</b>${c.f.partial?`<span class="muted" style="font-size:11px"> ${PL('partial')}</span>`:''}</td><td class="hide-s">${hasPsy(c)?c.psyScore:'—'}</td><td><span class="badge ${b}">${l}</span></td></tr>`}).join('')}</table>
+     <p class="muted" style="font-size:12px;margin-top:10px">${PL('rankNote')}</p>`:`<p class="muted">${PL('noRank')}</p>`}</div>`;
+  }
+  const list=CANDS.filter(hasPsy).filter(c=>rf==='todas'||profBy(c.role).id===rf).sort((a,b)=>b.psyScore-a.psyScore);
+  return tg+`<div class="card glass" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><h3 style="margin:0">🧠 ${PL('rkPsy')}</h3>
+   <select class="sel2" onchange="rf=this.value;render()"><option value="todas">${PL('allProf')}</option>${PROFS.map(p=>`<option value="${p.id}" ${rf===p.id?'selected':''}>${p.n[plang]}</option>`).join('')}</select></div>
+   ${list.length?`<table><tr><th>#</th><th>${PL('cand')}</th><th class="hide-s">${PL('prof')}</th><th>${PL('psy')}</th><th>${PL('sit')}</th></tr>
+   ${list.map((c,k)=>`<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${escH(c.name)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.psyScore}</b></td><td><span class="badge ${c.psyPass?'b-ok':'b-bad'}">${c.psyPass?PL('psyPass'):PL('psyFail')}</span></td></tr>`).join('')}</table>
+   <p class="muted" style="font-size:12px;margin-top:10px">${PL('psyMin')}</p>`:`<p class="muted">${PL('noPsy')}</p>`}</div>`;
+}
+function candDetail(){
+  candDetailBase();
+  const c=CANDS.find(x=>x.id===detail);if(!c)return;
+  const cards=document.querySelectorAll('#app .card');const head=cards[0];if(!head)return;
+  let h='';
+  if(hasPsy(c)){const m=c.psyModules||{};
+    h+=`<div class="card glass"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">🧠 ${PL('psyT')}</h3><div><b style="font-size:28px">${c.psyScore}</b> <span class="badge ${c.psyPass?'b-ok':'b-bad'}">${c.psyPass?PL('psyPass'):PL('psyFail')}</span></div></div>
+      <div style="margin-top:10px">${Object.entries(m).map(([k,v])=>`<div class="mod"><span>${PSYL[plang][k]}</span><div class="bar"><i style="width:${v}%;${v<PSY_MIN?'background:linear-gradient(90deg,#b45309,#f59e0b)':''}"></i></div><b>${v}</b></div>`).join('')}</div>
+      <p class="muted" style="font-size:12px;margin-top:8px">${PL('psyMin')}</p></div>`}
+  if(c.address||c.phone)h+=`<div class="card glass"><h3>📇 ${PL('contactT')}</h3><p style="margin-top:6px"><span class="muted">${PL('addr')}:</span> ${escH(c.address||'—')}</p><p style="margin-top:4px"><span class="muted">${PL('phone')}:</span> ${c.phone?`<a href="tel:${escH(c.phone.replace(/[^\d+]/g,''))}" style="color:var(--cyan)">${escH(c.phone)}</a>`:'—'}</p></div>`;
+  const cs=c.consent;
+  h+=`<div class="card glass"><h3>📝 ${PL('termT')}</h3>${cs&&cs.accepted?`<p style="margin-top:6px"><span class="badge b-ok">✓ ${PL('termOk')}</span> <span class="muted" style="font-size:13px">${fmtDTL(cs.at)} · ${(cs.lang||'pt').toUpperCase()} · ${PL('termVer')} ${escH(cs.ver||'')}</span></p>
+     ${cs.sig?`<img src="${cs.sig}" alt="" style="margin-top:10px;max-width:320px;width:100%;border-radius:10px;background:#fff">`:''}
+     <div><button class="btn small" style="margin-top:10px" onclick="printConsent('${c.id}')">${PL('termPrint')}</button></div>`:`<p class="muted" style="margin-top:6px">${PL('termNo')}</p>`}</div>`;
+  head.insertAdjacentHTML('afterend',h);
+}
+function printConsent(id){
+  const c=CANDS.find(x=>x.id===id);if(!c||!c.consent)return;const cs=c.consent,T=TERMS[cs.lang||'pt'];
+  const d=new Date(cs.at).toLocaleString({pt:'pt-BR',en:'en-US',es:'es-US'}[cs.lang||'pt']);
+  const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${T.title} – ${escH(c.name)}</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:30px auto;color:#111;line-height:1.45;font-size:14px}h1{font-size:22px;margin:0}li{margin:6px 0}.sig{border-top:1px solid #999;margin-top:24px;padding-top:10px}</style></head><body>
+   <h1>${T.title}</h1><p style="color:#555">${T.sub}</p><p>${T.intro}</p><ol>${T.items.map(([h,x])=>`<li><b>${h}.</b> ${x}</li>`).join('')}</ol><p><b>${T.decl}</b></p>
+   <div class="sig"><p>☑ ${T.agree}</p>${cs.sig?`<img src="${cs.sig}" style="width:300px;border:1px solid #ddd">`:''}<p>${T.signedBy}: <b>${escH(c.name)}</b> ${T.on} ${d}<br>${escH(profName(c.role))} · ${TERMS_VER}</p></div>
+   <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
+  const w=window.open('','_blank');if(!w){alertBox('Pop-up bloqueado.');return}w.document.write(html);w.document.close();
+}
+
+/* ---------- SENHA MASTER 0000 (demonstração, sem dados reais) ---------- */
+function sigDemo(){const c=document.createElement('canvas');c.width=480;c.height=150;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,480,150);g.strokeStyle='#0f172a';g.lineWidth=3;g.lineCap='round';g.beginPath();
+  for(let i=0;i<=60;i++){const x=40+i*6.5,y=80+Math.sin(i/3)*22*Math.cos(i/11)+(i%13===0?-25:0);i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();return c.toDataURL('image/jpeg',.7)}
+function demoCands(){
+  const people=[['Carlos Mendes','laminador',[1,1,1,1,0, 1,1,1,1,1, 1,1,1,0,1, 1,1,1,1,1, 1,1,1,1,1],.85],['Ana Rodríguez','gelcoat',[1,1,1,1,1, 1,1,1,1,0, 1,1,1,1,1, 1,0,1,1,1, 1,1,1,1,1],.7],
+   ['James Walker','montador',[1,0,1,1,1, 1,1,0,1,1, 0,1,1,1,1, 1,1,0,1,1, 1,1,1,1,1],.55],['Lucas Ferreira','laminador',[0,1,0,1,0, 1,0,0,1,0, 0,1,0,0,1, 0,1,0,0,1, 1,1,1,0,1],0],
+   ['María López','qualidade',[1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,0, 1,1,1,1,1],-1]];
+  const sig=sigDemo(),out={};
+  people.forEach(([name,role,okv,tq],i)=>{
+    const prof=PROFS.find(p=>p.id===role)?role:PROFS[i%PROFS.length].id;
+    const pa=PSY_Q.map((q,k)=>({q:q.t.pt,qL:q.t,mod:q.mod,blk:q.blk,ok:!!okv[k],given:q.o.pt[okv[k]?q.ans:(q.ans+1)%4],givenL:{pt:q.o.pt[okv[k]?q.ans:(q.ans+1)%4],en:q.o.en[okv[k]?q.ans:(q.ans+1)%4],es:q.o.es[okv[k]?q.ans:(q.ans+1)%4]},right:q.o.pt[q.ans],rightL:{pt:q.o.pt[q.ans],en:q.o.en[q.ans],es:q.o.es[q.ans]},s:8+((k*7)%20)}));
+    const ps=Math.round(pa.filter(a=>a.ok).length/pa.length*100),pass=ps>=PSY_MIN;
+    const base={name,role:prof,code:String(4100+i),createdAt:now()-(i+1)*3600000,attempts:[],address:['123 Main St, Pensacola, FL 32501','45 Palafox Pl, Pensacola, FL 32502','780 Gulf Breeze Pkwy, Gulf Breeze, FL 32561','12 Davis Hwy, Pensacola, FL 32503','300 Nine Mile Rd, Pensacola, FL 32514'][i],
+      phone:['(850) 555-0123','(850) 555-0188','(850) 555-0142','(850) 555-0199','(850) 555-0107'][i],consent:{accepted:true,at:now()-(i+1)*3500000,lang:['pt','es','en','pt','es'][i],ver:TERMS_VER,sig},
+      psyAnswers:pa,psyScore:ps,psyModules:psyBlocks(pa),psyPass:pass,psyAt:now()-(i+1)*3400000,startedAt:now()-(i+1)*3500000,exits:i%2};
+    if(tq<0){out['demo'+i]={...base,status:'em_andamento',answers:[],lastQ:25,total:45};return}
+    if(!pass){out['demo'+i]={...base,status:'psico_reprovado',finishedAt:base.psyAt,answers:[]};return}
+    const qs=buildTest(prof);const ans=qs.map((q,k)=>{const ok=((k*37+i*11)%100)/100<tq;const r=q.type==='mc'?q.o.pt[q.ans]:q.type==='num'?String(q.ans):'1-2-3-4-5';
+      return{q:q.t.pt,qL:q.t,mod:q.mod,ok,crit:!!q.crit,given:ok?r:'—',givenL:{pt:ok?r:'—',en:ok?r:'—',es:ok?r:'—'},right:r,rightL:{pt:r,en:r,es:r},s:10+((k*13)%40)}});
+    const m={};Object.keys(MOD).forEach(k=>{const a=ans.filter(x=>x.mod===k);if(a.length)m[k]=Math.round(a.filter(x=>x.ok).length/a.length*100)});
+    out['demo'+i]={...base,status:'concluido',finishedAt:now()-(i+1)*3000000,answers:ans,modules:m,score:Math.round(ans.filter(a=>a.ok).length/ans.length*100),crit:ans.some(a=>a.crit&&!a.ok),avg:18,lastQ:45,
+      interview:i===0?{r:[5,4,5,4,4]}:undefined,practical:i===0?{items:[true,true,true,true,false],done:true}:undefined};
+  });
+  return out;
+}
+function enterMaster(){
+  MASTER=true;MASTER_PREV=DBX;const mem=memDB();const seed=demoCands();Object.entries(seed).forEach(([id,d])=>mem.doc('candidates/'+id).set(d));
+  DBX=mem;mem.collection('candidates').onSnapshot(s=>{if(!MASTER)return;CANDS=s.docs.map(d=>({id:d.id,...d.data()}));if(screen==='panel'&&!document.activeElement?.matches?.('input,textarea,select'))render()});
+  viewRole='rh';panelTab='geral';detail=null;rkMode='tec';go('panel');
+}
+async function doLogin(){const p=document.getElementById('lgP').value;if(p==='0000')return enterMaster();return doLoginBase()}
+async function pinKey(k){if(k!=='del'&&pinTyped.length===3&&pinTyped+k==='0000'){pinTyped='';return enterMaster()}return pinKeyBase(k)}
+async function logoutPanel(){if(MASTER){MASTER=false;DBX=MASTER_PREV;CANDS=[];detail=null;newCode=null;return go('home')}return logoutPanelBase()}
+function panel(){
+  panelBase();
+  if(MASTER&&detail===null){const ph=document.querySelector('#app .ph');if(ph)ph.insertAdjacentHTML('afterend',`<div class="card glass" style="margin:0 0 12px;border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)"><b style="color:#fcd34d">🔑 ${PL('master')}</b></div>`)}
+}
 
 render();
 </script>
