@@ -1665,7 +1665,7 @@ function answer(timeout){
   qi++;
   if(qi<QS.length){saveCand(cand.id,{answers,lastQ:qi,exits});test()}else finish();
 }
-function finish(){
+function finishBase(){
   testActive=false;
   const m={};Object.keys(MOD).forEach(k=>{const a=answers.filter(x=>x.mod===k);if(a.length)m[k]=Math.round(a.filter(x=>x.ok).length/a.length*100)});
   const score=Math.round(answers.filter(a=>a.ok).length/answers.length*100);
@@ -3848,7 +3848,7 @@ const PSY_MIN=50;
 const PSYL={pt:{log:'Raciocínio lógico',att:'Atenção e concentração',vis:'Percepção visual e mecânica',mem:'Memória',beh:'Comportamento no trabalho'},
  en:{log:'Logical reasoning',att:'Attention and focus',vis:'Visual and mechanical perception',mem:'Memory',beh:'Work behavior'},
  es:{log:'Razonamiento lógico',att:'Atención y concentración',vis:'Percepción visual y mecánica',mem:'Memoria',beh:'Comportamiento en el trabajo'}};
-const PSYPART={pt:['Parte 1','Parte 2'],en:['Part 1','Part 2'],es:['Parte 1','Parte 2']};
+const PSYPART={pt:['Parte 1','Parte 2','Parte 3'],en:['Part 1','Part 2','Part 3'],es:['Parte 1','Parte 2','Parte 3']};
 const MEMO_T={pt:'Memorize as informações abaixo',en:'Memorize the information below',es:'Memorice la información de abajo'};
 const MEMO_S={pt:'Elas vão sumir em',en:'They will disappear in',es:'Desaparecerán en'};
 const P=(blk,ans,t,o,extra)=>Object.assign({psy:true,mod:'psy_'+blk,blk,type:'mc',ans,time:45,t,o},extra||{});
@@ -3922,32 +3922,125 @@ const PSY_Q=[
     es:['La deja para el equipo de limpieza al final del día','Señaliza el área y limpia según el procedimiento','Le echa agua encima','La tapa con cartón y sigue trabajando']})
 ];
 
+/* ---------- ETAPA 3: SEGURANÇA DO TRABALHO (20 perguntas, sem nota mínima, nota separada) ---------- */
+const SSTL={pt:{epi:'EPIs',quim:'Produtos químicos',maq:'Máquinas e equipamentos',ferr:'Ferramentas'},
+ en:{epi:'PPE',quim:'Chemicals',maq:'Machines and equipment',ferr:'Tools'},
+ es:{epi:'EPP',quim:'Productos químicos',maq:'Máquinas y equipos',ferr:'Herramientas'}};
+const S=(blk,ans,t,o)=>({sst:true,mod:'sst_'+blk,blk,type:'mc',ans,time:45,t,o});
+const SST_Q=[
+ S('epi',1,{pt:'Você vai lixar peças de fibra de vidro e tem muita poeira no ar. Qual proteção respiratória é a correta?',en:'You are going to sand fiberglass parts and there is a lot of dust in the air. Which respiratory protection is correct?',es:'Va a lijar piezas de fibra de vidrio y hay mucho polvo en el aire. ¿Qué protección respiratoria es la correcta?'},
+  {pt:['Máscara de pano','Respirador N95 (PFF2) ou superior','Nenhuma, se a área for ventilada','Só os óculos de segurança'],en:['A cloth mask','An N95 respirator or better','None, if the area is ventilated','Only safety glasses'],es:['Mascarilla de tela','Respirador N95 o superior','Ninguna, si el área está ventilada','Solo los lentes de seguridad']}),
+ S('epi',1,{pt:'Para aplicar gel coat ou tinta com pistola, qual proteção respiratória deve ser usada?',en:'To spray gel coat or paint with a gun, which respiratory protection should be used?',es:'Para aplicar gel coat o pintura con pistola, ¿qué protección respiratoria se debe usar?'},
+  {pt:['Máscara N95 simples','Respirador com cartucho para vapores orgânicos','Máscara cirúrgica','Nenhuma, o cheiro passa rápido'],en:['A plain N95 mask','A respirator with organic vapor cartridges','A surgical mask','None, the smell goes away quickly'],es:['Mascarilla N95 sencilla','Respirador con cartucho para vapores orgánicos','Mascarilla quirúrgica','Ninguna, el olor se va rápido']}),
+ S('epi',2,{pt:'Quando o protetor auricular deve ser usado?',en:'When should hearing protection be used?',es:'¿Cuándo se debe usar protector auditivo?'},
+  {pt:['Só quando o barulho incomodar','Só no fim do turno','Em áreas com ruído alto, como lixamento, corte e ar comprimido, e onde houver placa obrigando','Nunca, ele atrapalha ouvir os colegas'],
+   en:['Only when the noise bothers you','Only at the end of the shift','In loud areas, like sanding, cutting and compressed air, and wherever a sign requires it','Never, it makes it hard to hear coworkers'],
+   es:['Solo cuando el ruido moleste','Solo al final del turno','En áreas con ruido alto, como lijado, corte y aire comprimido, y donde haya un letrero que lo exija','Nunca, no deja oír a los compañeros']}),
+ S('epi',0,{pt:'Como se coloca corretamente o protetor auricular de espuma?',en:'How do you correctly put in foam earplugs?',es:'¿Cómo se coloca correctamente el protector auditivo de espuma?'},
+  {pt:['Enrolar bem fino, colocar no ouvido e segurar até a espuma expandir','Colocar só na entrada do ouvido, sem apertar','Cortar ao meio para ficar mais confortável','Usar o mesmo par por vários meses sem limpar'],
+   en:['Roll it thin, put it in the ear and hold it until the foam expands','Place it only at the entrance of the ear, without pressing','Cut it in half so it is more comfortable','Use the same pair for months without cleaning'],
+   es:['Enrollarlo bien delgado, ponerlo en el oído y sostenerlo hasta que la espuma se expanda','Ponerlo solo en la entrada del oído, sin apretar','Cortarlo a la mitad para que sea más cómodo','Usar el mismo par por meses sin limpiarlo']}),
+ S('epi',2,{pt:'Qual luva é a indicada para manusear resina e catalisador?',en:'Which glove is right for handling resin and catalyst?',es:'¿Qué guante es el indicado para manipular resina y catalizador?'},
+  {pt:['Luva de algodão','Luva de couro','Luva nitrílica','Não precisa de luva'],en:['Cotton glove','Leather glove','Nitrile glove','No glove is needed'],es:['Guante de algodón','Guante de cuero','Guante de nitrilo','No hace falta guante']}),
+ S('epi',3,{pt:'Seus óculos de segurança estão riscados e a luva está furada. O que você faz?',en:'Your safety glasses are scratched and your glove has a hole. What do you do?',es:'Sus lentes de seguridad están rayados y el guante tiene un agujero. ¿Qué hace?'},
+  {pt:['Continua até o fim do turno','Tira os óculos para enxergar melhor','Coloca fita no furo da luva','Para e troca o EPI antes de continuar'],en:['Keep going until the end of the shift','Take off the glasses to see better','Put tape over the hole in the glove','Stop and replace the PPE before continuing'],es:['Sigue hasta el final del turno','Se quita los lentes para ver mejor','Le pone cinta al agujero del guante','Para y cambia el EPP antes de continuar']}),
+ S('quim',0,{pt:'Onde você encontra os perigos e os cuidados de um produto químico?',en:'Where do you find the hazards and precautions for a chemical?',es:'¿Dónde encuentra los peligros y cuidados de un producto químico?'},
+  {pt:['Na ficha de segurança (SDS) e no rótulo','Perguntando para qualquer colega','Sentindo o cheiro do produto','Na nota fiscal da compra'],en:['In the safety data sheet (SDS) and on the label','By asking any coworker','By smelling the product','On the purchase invoice'],es:['En la hoja de seguridad (SDS) y en la etiqueta','Preguntándole a cualquier compañero','Oliendo el producto','En la factura de compra']}),
+ S('quim',1,{pt:'O que pode acontecer se o catalisador (MEKP) for misturado direto com o acelerador (cobalto)?',en:'What can happen if the catalyst (MEKP) is mixed directly with the accelerator (cobalt)?',es:'¿Qué puede pasar si el catalizador (MEKP) se mezcla directamente con el acelerador (cobalto)?'},
+  {pt:['Nada, é o jeito certo de preparar','Uma reação violenta, com fogo ou explosão','A resina fica mais bonita','Só muda a cor'],en:['Nothing, it is the right way to prepare it','A violent reaction, with fire or explosion','The resin looks better','Only the color changes'],es:['Nada, es la forma correcta de prepararlo','Una reacción violenta, con fuego o explosión','La resina queda más bonita','Solo cambia el color']}),
+ S('quim',2,{pt:'Você encontra um recipiente com líquido e sem rótulo. O que você faz?',en:'You find a container with liquid and no label. What do you do?',es:'Encuentra un recipiente con líquido y sin etiqueta. ¿Qué hace?'},
+  {pt:['Cheira para descobrir o que é','Usa, porque parece solvente','Não usa e avisa o líder','Joga na pia'],en:['Smell it to find out what it is','Use it, because it looks like solvent','Do not use it and tell the lead','Pour it down the sink'],es:['Lo huele para saber qué es','Lo usa, porque parece solvente','No lo usa y avisa al líder','Lo tira al lavabo']}),
+ S('quim',1,{pt:'Respingou resina no seu olho. O que fazer primeiro?',en:'Resin splashed into your eye. What do you do first?',es:'Le salpicó resina en el ojo. ¿Qué hace primero?'},
+  {pt:['Esfregar o olho com a mão','Lavar no lava-olhos por pelo menos 15 minutos e avisar o líder','Pingar colírio e voltar ao trabalho','Esperar passar sozinho'],en:['Rub your eye with your hand','Rinse at the eyewash for at least 15 minutes and tell the lead','Use eye drops and go back to work','Wait for it to go away'],es:['Frotarse el ojo con la mano','Lavarse en el lavaojos por al menos 15 minutos y avisar al líder','Echarse gotas y volver al trabajo','Esperar a que se pase solo']}),
+ S('quim',3,{pt:'Onde descartar panos sujos de solvente ou resina?',en:'Where do you throw away rags soaked with solvent or resin?',es:'¿Dónde se desechan los trapos sucios de solvente o resina?'},
+  {pt:['No lixo comum','Em cima da bancada para secar','No bolso, para jogar depois','Em lixeira de metal com tampa, porque podem pegar fogo sozinhos'],en:['In the regular trash','On the bench to dry','In your pocket, to throw away later','In a metal can with a lid, because they can catch fire on their own'],es:['En la basura común','Sobre la mesa para que se sequen','En el bolsillo, para tirarlos después','En un bote de metal con tapa, porque pueden prenderse solos']}),
+ S('maq',2,{pt:'Quem pode operar a empilhadeira (forklift)?',en:'Who can operate the forklift?',es:'¿Quién puede operar el montacargas (forklift)?'},
+  {pt:['Qualquer pessoa com carteira de motorista','Quem já viu alguém operando','Somente quem é treinado e autorizado','Qualquer um, se for rápido'],en:['Anyone with a driver license','Anyone who has watched someone operate it','Only people who are trained and authorized','Anyone, if it is quick'],es:['Cualquier persona con licencia de conducir','Quien ya vio a alguien operarlo','Solo quien está capacitado y autorizado','Cualquiera, si es rápido']}),
+ S('maq',0,{pt:'Você precisa passar perto de uma empilhadeira em movimento. O que fazer?',en:'You need to walk near a moving forklift. What do you do?',es:'Necesita pasar cerca de un montacargas en movimiento. ¿Qué hace?'},
+  {pt:['Manter distância, fazer contato visual com o operador e usar a faixa de pedestres','Passar correndo pela frente','Passar por trás, porque o operador não vê','Subir no garfo para atravessar'],en:['Keep your distance, make eye contact with the operator and use the walkway','Run in front of it','Walk behind it, since the operator cannot see','Ride on the forks to get across'],es:['Mantener distancia, hacer contacto visual con el operador y usar el paso peatonal','Pasar corriendo por delante','Pasar por detrás, porque el operador no ve','Subirse a las horquillas para cruzar']}),
+ S('maq',3,{pt:'A ponte rolante (crane) está levantando uma peça. O que é proibido?',en:'The overhead crane is lifting a part. What is forbidden?',es:'El puente grúa está levantando una pieza. ¿Qué está prohibido?'},
+  {pt:['Usar capacete','Isolar a área','Seguir os sinais do operador','Ficar ou passar embaixo da carga'],en:['Wearing a hard hat','Barricading the area','Following the operator signals','Standing or walking under the load'],es:['Usar casco','Aislar el área','Seguir las señales del operador','Pararse o pasar debajo de la carga']}),
+ S('maq',1,{pt:'Qual é o uso correto da plataforma tesoura (scissor lift)?',en:'What is the correct use of a scissor lift?',es:'¿Cuál es el uso correcto de la plataforma de tijera (scissor lift)?'},
+  {pt:['Subir no guarda-corpo para alcançar mais alto','Fechar o portão, ficar dentro do guarda-corpo e respeitar a carga máxima','Mover a plataforma com ela toda levantada em piso irregular','Levar o máximo de material de uma vez'],en:['Climb on the guardrail to reach higher','Close the gate, stay inside the guardrails and respect the load limit','Drive it fully raised on uneven floor','Carry as much material as possible at once'],es:['Subirse a la baranda para alcanzar más alto','Cerrar la puerta, quedarse dentro de la baranda y respetar la carga máxima','Moverla totalmente levantada en piso irregular','Llevar todo el material posible de una vez']}),
+ S('maq',2,{pt:'Antes de fazer manutenção ou limpeza dentro de uma máquina, o que é obrigatório?',en:'Before doing maintenance or cleaning inside a machine, what is required?',es:'Antes de dar mantenimiento o limpiar dentro de una máquina, ¿qué es obligatorio?'},
+  {pt:['Só apertar o botão de parada','Pedir para um colega vigiar o botão','Desligar e bloquear a energia com cadeado e etiqueta (lockout/tagout)','Trabalhar rápido para não demorar'],en:['Just press the stop button','Ask a coworker to watch the button','Turn off and lock the energy with a lock and tag (lockout/tagout)','Work fast so it does not take long'],es:['Solo apretar el botón de paro','Pedir a un compañero que vigile el botón','Apagar y bloquear la energía con candado y etiqueta (lockout/tagout)','Trabajar rápido para no tardar']}),
+ S('ferr',0,{pt:'Antes de usar uma lixadeira ou esmerilhadeira, o que você confere?',en:'Before using a sander or grinder, what do you check?',es:'Antes de usar una lijadora o esmeriladora, ¿qué revisa?'},
+  {pt:['Disco ou lixa, protetor e o cabo ou mangueira','Só se está carregada','A cor da ferramenta','Nada, se funcionou ontem'],en:['The disc or sandpaper, the guard, and the cord or hose','Only whether it is charged','The color of the tool','Nothing, if it worked yesterday'],es:['El disco o la lija, la guarda y el cable o la manguera','Solo si está cargada','El color de la herramienta','Nada, si funcionó ayer']}),
+ S('ferr',3,{pt:'O protetor do disco da esmerilhadeira atrapalha. O que fazer?',en:'The grinder disc guard is in the way. What do you do?',es:'La guarda del disco de la esmeriladora estorba. ¿Qué hace?'},
+  {pt:['Tirar o protetor','Usar um disco maior','Segurar com uma mão só','Nunca tirar o protetor; pedir a ferramenta certa ao líder'],en:['Remove the guard','Use a bigger disc','Hold it with one hand','Never remove the guard; ask the lead for the right tool'],es:['Quitar la guarda','Usar un disco más grande','Sostenerla con una sola mano','Nunca quitar la guarda; pedir la herramienta correcta al líder']}),
+ S('ferr',1,{pt:'Qual é o jeito seguro de usar o estilete?',en:'What is the safe way to use a utility knife?',es:'¿Cuál es la forma segura de usar el cúter?'},
+  {pt:['Cortar puxando na direção do corpo','Cortar para longe do corpo e recolher a lâmina ao terminar','Deixar a lâmina aberta no bolso','Usar a lâmina sem cabo'],en:['Cut by pulling toward your body','Cut away from your body and retract the blade when done','Keep the blade open in your pocket','Use the blade without a handle'],es:['Cortar jalando hacia el cuerpo','Cortar lejos del cuerpo y guardar la hoja al terminar','Dejar la hoja abierta en el bolsillo','Usar la hoja sin mango']}),
+ S('ferr',2,{pt:'Como usar o ar comprimido com segurança?',en:'How do you use compressed air safely?',es:'¿Cómo se usa el aire comprimido con seguridad?'},
+  {pt:['Para tirar a poeira da roupa e do corpo','Para brincar com os colegas','Nunca apontar para pessoas nem para o corpo; usar só com a pressão e o bico certos','Em qualquer pressão, quanto mais forte melhor'],en:['To blow dust off your clothes and body','To play around with coworkers','Never point it at people or your body; use only the right pressure and nozzle','At any pressure, the stronger the better'],es:['Para quitar el polvo de la ropa y del cuerpo','Para jugar con los compañeros','Nunca apuntarlo a personas ni al cuerpo; usar solo la presión y la boquilla correctas','A cualquier presión, mientras más fuerte mejor']})
+];
+const sstBlocks=a=>{const m={};['epi','quim','maq','ferr'].forEach(b=>{const x=a.filter(y=>y.blk===b);if(x.length)m[b]=Math.round(x.filter(y=>y.ok).length/x.length*100)});return m};
+const hasSst=c=>typeof c.sstScore==='number';
+
+/* ---------- SETORES (para o candidato escolher setor e função) ---------- */
+const SECTORS=[
+ {id:'prod',ico:'🏭',n:{pt:'Produção',en:'Production',es:'Producción'},p:['laminador','leader_lam','gel_tech','comp_tech','moldcare','assembler','leader_asm','acabamento','cnc','supervisor']},
+ {id:'qual',ico:'🔬',n:{pt:'Qualidade e Engenharia',en:'Quality and Engineering',es:'Calidad e Ingeniería'},p:['qualidade','processista','engenheiro','especialista']},
+ {id:'mant',ico:'🔧',n:{pt:'Manutenção e Segurança',en:'Maintenance and Safety',es:'Mantenimiento y Seguridad'},p:['manutencao','seguranca']},
+ {id:'log',ico:'📦',n:{pt:'Logística e Almoxarifado',en:'Logistics and Warehouse',es:'Logística y Almacén'},p:['almox','logistica']},
+ {id:'serv',ico:'🧹',n:{pt:'Limpeza e Serviços',en:'Cleaning and Services',es:'Limpieza y Servicios'},p:['limpeza']},
+ {id:'adm',ico:'👥',n:{pt:'Administrativo (RH)',en:'Administrative (HR)',es:'Administrativo (RR. HH.)'},p:['rh']}];
+(function(){const all=SECTORS.flatMap(s=>s.p);const extra=PROFS.map(p=>p.id).filter(id=>!all.includes(id));
+  SECTORS.forEach(s=>s.p=s.p.filter(id=>PROFS.some(p=>p.id===id)));if(extra.length)SECTORS.push({id:'out',ico:'➕',n:{pt:'Outros',en:'Other',es:'Otros'},p:extra})})();
+const secOf=role=>(SECTORS.find(s=>s.p.includes(role))||SECTORS[0]).id;
+const PICK={pt:{t:'Escolha o seu setor e a sua função',sec:'Setor',fn:'Função',go:'Começar a Parte 2',need:'Escolha o setor e a função.'},
+ en:{t:'Choose your department and your job',sec:'Department',fn:'Job',go:'Start Part 2',need:'Choose the department and the job.'},
+ es:{t:'Elija su sector y su puesto',sec:'Sector',fn:'Puesto',go:'Comenzar la Parte 2',need:'Elija el sector y el puesto.'}};
+let pkSec=null,pkRole=null;
+function pickRole(){
+  if(!pkSec){pkRole=cand.role;pkSec=secOf(cand.role)}
+  const P=PICK[lang],sec=SECTORS.find(s=>s.id===pkSec);
+  app.innerHTML=`<div class="center fade" style="max-width:720px"><div class="glass" style="padding:22px">
+   <h2 style="font-size:26px">🧭 ${P.t}</h2>
+   <p class="muted" style="margin:14px 0 8px;text-align:left">${P.sec}</p>
+   <div class="profGrid">${SECTORS.map(s=>`<button class="profCard ${pkSec===s.id?'on':''}" onclick="pkSec='${s.id}';pkRole=null;render()"><span class="pIco">${s.ico}</span><span><b>${s.n[lang]}</b></span></button>`).join('')}</div>
+   <p class="muted" style="margin:16px 0 8px;text-align:left">${P.fn}</p>
+   <div class="profGrid">${sec.p.map(id=>{const p=profBy(id);return `<button class="profCard ${pkRole===id?'on':''}" onclick="pkRole='${id}';render()"><span class="pIco">${p.ico}</span><span><b>${p.n[lang]}</b></span></button>`}).join('')}</div>
+   <div class="err" id="pkErr"></div>
+   <button class="btn" style="width:100%;margin-top:8px" onclick="pickGo()">${P.go} →</button></div></div>`;
+}
+function pickGo(){
+  if(!pkRole){document.getElementById('pkErr').textContent=PICK[lang].need;return}
+  const roleRH=cand.roleRH||cand.role,role=pkRole;pkSec=null;pkRole=null;
+  cand.roleRH=roleRH;cand.role=role;
+  QS=QS.slice(0,qi).concat(buildTest(role),SST_Q.map(q=>({...q})));
+  saveCand(cand.id,{role,roleRH,roleChanged:role!==roleRH,total:QS.length});
+  screen='test';window.scrollTo(0,0);render();
+}
+
 /* ---------- textos novos do painel ---------- */
 Object.assign(PLD.pt,{psy:'Psicotécnico',psyT:'Psicotécnico (etapa 1)',psyPass:'Passou',psyFail:'Reprovado',psyMin:'Nota mínima para seguir: '+PSY_MIN+'%. O candidato nunca vê esta nota.',
  rkTec:'Teste técnico',rkPsy:'Psicotécnico',noPsy:'Ainda não há resultados do psicotécnico.',contactT:'Contato',addr:'Endereço',phone:'Telefone',
  termT:'Termo de consentimento',termOk:'Aceito e assinado',termNo:'Sem termo assinado',termPrint:'🖨 Imprimir / salvar PDF',termVer:'versão',
  qrT:'Peça para o candidato apontar a câmera do celular para o QR Code. O teste abre no celular dele com o código já preenchido.',
+ rkSst:'Segurança',sstT:'Segurança do trabalho (etapa 3)',sstNote:'Sem nota mínima: serve para o RH saber o que o candidato conhece.',noSst:'Ainda não há resultados de segurança.',roleAlert:(a,b)=>`Função escolhida pelo candidato (${a}) é diferente da cadastrada pelo RH (${b}).`,roleDiff:'Função diferente da cadastrada',
  master:'Modo demonstração (senha master 0000): dados de exemplo, nada é salvo no banco de dados. Cadastre as senhas do RH e da Diretoria para ver os candidatos reais.'});
 Object.assign(PLD.en,{psy:'Aptitude',psyT:'Aptitude test (stage 1)',psyPass:'Passed',psyFail:'Failed',psyMin:'Minimum score to move on: '+PSY_MIN+'%. The candidate never sees this score.',
  rkTec:'Technical test',rkPsy:'Aptitude',noPsy:'No aptitude results yet.',contactT:'Contact',addr:'Address',phone:'Phone',
  termT:'Consent form',termOk:'Accepted and signed',termNo:'No signed form',termPrint:'🖨 Print / save PDF',termVer:'version',
  qrT:'Ask the candidate to point the phone camera at the QR code. The test opens on their phone with the code already filled in.',
+ rkSst:'Safety',sstT:'Workplace safety (stage 3)',sstNote:'No minimum score: it shows HR what the candidate knows.',noSst:'No safety results yet.',roleAlert:(a,b)=>`The job chosen by the candidate (${a}) is different from the one HR registered (${b}).`,roleDiff:'Job different from the registered one',
  master:'Demo mode (master password 0000): sample data, nothing is saved to the database. Set up the HR and Management passwords to see real candidates.'});
 Object.assign(PLD.es,{psy:'Psicotécnico',psyT:'Psicotécnico (etapa 1)',psyPass:'Aprobó',psyFail:'Reprobado',psyMin:'Nota mínima para seguir: '+PSY_MIN+'%. El candidato nunca ve esta nota.',
  rkTec:'Prueba técnica',rkPsy:'Psicotécnico',noPsy:'Todavía no hay resultados del psicotécnico.',contactT:'Contacto',addr:'Dirección',phone:'Teléfono',
  termT:'Formulario de consentimiento',termOk:'Aceptado y firmado',termNo:'Sin formulario firmado',termPrint:'🖨 Imprimir / guardar PDF',termVer:'versión',
  qrT:'Pida al candidato que apunte la cámara del celular al código QR. La prueba se abre en su celular con el código ya puesto.',
+ rkSst:'Seguridad',sstT:'Seguridad laboral (etapa 3)',sstNote:'Sin nota mínima: sirve para que RR. HH. sepa lo que el candidato conoce.',noSst:'Todavía no hay resultados de seguridad.',roleAlert:(a,b)=>`El puesto elegido por el candidato (${a}) es diferente del registrado por RR. HH. (${b}).`,roleDiff:'Puesto diferente del registrado',
  master:'Modo demostración (contraseña maestra 0000): datos de ejemplo, no se guarda nada en la base de datos. Configure las contraseñas de RR. HH. y Dirección para ver los candidatos reales.'});
 ST.psico_reprovado=['Reprovado no psicotécnico','b-bad'];ST.recusou=['Recusou o termo','b-bad'];
 STL.pt.psico_reprovado='Reprovado no psicotécnico';STL.en.psico_reprovado='Failed aptitude test';STL.es.psico_reprovado='Reprobado en el psicotécnico';
 STL.pt.recusou='Recusou o termo';STL.en.recusou='Declined the consent form';STL.es.recusou='Rechazó el formulario';
-CAND_SCREENS.push('terms');
-var MASTER=false,MASTER_PREV=null,pendingCode='',rkMode='tec',psyAnswers=[];
+CAND_SCREENS.push('terms','pickRole');
+var MASTER=false,MASTER_PREV=null,pendingCode='',rkMode='tec',psyAnswers=[],sstAnswers=[];
 const psyBlocks=a=>{const m={};['log','att','vis','mem','beh'].forEach(b=>{const x=a.filter(y=>y.blk===b);if(x.length)m[b]=Math.round(x.filter(y=>y.ok).length/x.length*100)});return m};
 const hasPsy=c=>typeof c.psyScore==='number';
 
 /* ---------- navegação ---------- */
-function render(){({home,code,demoProf,confirm:confirmS,notme,terms,refused,photo,how,test,done,abandoned,login,panel})[screen]()}
+function render(){({home,code,demoProf,confirm:confirmS,notme,terms,refused,photo,how,pickRole,test,done,abandoned,login,panel})[screen]()}
 function confirmS(){
   const p=profBy(cand.role);
   app.innerHTML=`<div class="center fade"><div class="glass" style="padding:28px">
@@ -4004,8 +4097,8 @@ function phRender(){
   if(phStep==='consent'){
     const C=CONTACT[lang];
     body=`<div class="form" style="text-align:left"><h3 style="margin-bottom:4px">📇 ${C.t}</h3>
-      <label>${C.addr}</label><input id="cAddr" oninput="document.getElementById('cErr2').textContent=''" autocomplete="street-address" placeholder="${C.addrPh}" value="${escH(cand.address||'')}">
-      <label>${C.phone}</label><input id="cPhone" oninput="document.getElementById('cErr2').textContent=''" type="tel" inputmode="tel" autocomplete="tel" placeholder="${C.phonePh}" value="${escH(cand.phone||'')}"></div>
+      <label>${C.addr}</label><input id="cAddr" autocomplete="street-address" placeholder="${C.addrPh}" value="${escH(cand.address||'')}">
+      <label>${C.phone}</label><input id="cPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="${C.phonePh}" value="${escH(cand.phone||'')}"></div>
       <div class="err" id="cErr2"></div>
       <button class="btn" style="width:100%;margin-top:6px" onclick="contactNext()">${pt2('cont')} →</button>`;
   }else if(phStep==='shoot'){
@@ -4034,13 +4127,13 @@ function contactNext(){
 
 /* ---------- TESTE: etapa 1 psicotécnico, etapa 2 técnico ---------- */
 function startTest(){
-  QS=[...PSY_Q.map(q=>({...q})),...buildTest(cand.role)];qi=0;answers=[];psyAnswers=[];exits=0;testActive=true;clearTimeout(idleT);
-  saveCand(cand.id,{status:'em_andamento',startedAt:now(),lang,photo:cand.photo||null,address:cand.address||null,phone:cand.phone||null,answers:[],psyAnswers:[],lastQ:0,total:QS.length});
+  QS=PSY_Q.map(q=>({...q}));qi=0;answers=[];psyAnswers=[];sstAnswers=[];pkSec=null;pkRole=null;exits=0;testActive=true;clearTimeout(idleT);
+  saveCand(cand.id,{status:'em_andamento',startedAt:now(),lang,photo:cand.photo||null,address:cand.address||null,phone:cand.phone||null,answers:[],psyAnswers:[],sstAnswers:[],lastQ:0,total:QS.length});
   screen='test';window.scrollTo(0,0);render();
 }
 function test(){
   const q=QS[qi];sel=null;orderPick=[];
-  const nP=QS.filter(x=>x.psy).length,inPsy=!!q.psy,pos=inPsy?qi:qi-nP,tot=inPsy?nP:QS.length-nP;
+  const stg=x=>x.psy?0:x.sst?2:1,st=stg(q),first=QS.findIndex(x=>stg(x)===st),tot=QS.filter(x=>stg(x)===st).length,pos=qi-first,inPsy=st===0;
   const top=`<div class="topbar glass"><div class="miniLogo">${miniLogo()}<span class="hide-s">Skill Station</span></div>
      <div class="prog"><i style="width:${pos/tot*100}%"></i></div><div class="timer" id="tm"></div></div>`;
   if(q.memo&&!q._memoDone){
@@ -4061,7 +4154,7 @@ function test(){
   if(q.type==='order'){const sh=shuffle([0,1,2,3,4]);body+=`<p class="muted" style="margin-top:14px">${t('orderHint')}</p><div class="orderList">${sh.map(i=>`<button class="ord glass" id="o${i}" onclick="ordPick(${i})"><span class="n"></span><span>${q.steps[lang][i]}</span></button>`).join('')}</div><button class="btn ghost small" style="margin-top:10px" onclick="orderPick=[];document.querySelectorAll('.ord').forEach(e=>{e.classList.remove('picked');e.querySelector('.n').textContent=''});sel=null;upd()">↺ ${t('clear')}</button>`}
   app.innerHTML=`<div class="fade">${top}
    <div class="qcard glass">
-     <div class="qmeta"><span class="muted">${PSYPART[lang][inPsy?0:1]} · ${t('q')} ${pos+1} ${t('of')} ${tot}</span>
+     <div class="qmeta"><span class="muted">${PSYPART[lang][st]} · ${t('q')} ${pos+1} ${t('of')} ${tot}</span>
        <span style="display:flex;gap:8px">${q.crit?`<span class="tag crit">⚠ ${t('crit')}</span>`:''}<button class="audio glass" onclick="speak()">🔊 ${t('listen')}</button></span></div>
      <div class="qtext">${q.t[lang]}</div>${body}
      <div class="qfoot"><span></span><button class="btn" id="nx" disabled onclick="answer()">${t('next')} →</button></div>
@@ -4082,21 +4175,25 @@ function answer(timeout){
   const givenL=timeout?{pt:'(tempo esgotado)',en:'(time ran out)',es:'(tiempo agotado)'}:q.type==='mc'&&sel!==null?L3(l=>q.o[l][sel]):{pt:given,en:given,es:given};
   const rightL=q.type==='mc'?L3(l=>q.o[l][q.ans]):{pt:right,en:right,es:right};
   const rec={q:q.t.pt,qL:q.t,mod:q.mod,ok,crit:!!q.crit,given:timeout?'(tempo esgotado)':given,givenL,right,rightL,s:Math.round((now()-qStart)/1000)};
-  if(q.psy){rec.blk=q.blk;psyAnswers.push(rec)}else answers.push(rec);
+  if(q.psy){rec.blk=q.blk;psyAnswers.push(rec)}else if(q.sst){rec.blk=q.blk;sstAnswers.push(rec)}else answers.push(rec);
   qi++;
   if(q.psy&&!(QS[qi]&&QS[qi].psy)){
     const psyScore=Math.round(psyAnswers.filter(a=>a.ok).length/psyAnswers.length*100),psyPass=psyScore>=PSY_MIN;
     const data={psyAnswers,psyScore,psyModules:psyBlocks(psyAnswers),psyPass,psyAt:now(),lastQ:qi,exits};
     if(!psyPass){testActive=false;saveCand(cand.id,{...data,status:'psico_reprovado',finishedAt:now()});cand=null;return go('done')}
-    saveCand(cand.id,data);return test();
+    saveCand(cand.id,data);clearTimeout(idleT);return go('pickRole');
   }
-  if(qi<QS.length){saveCand(cand.id,q.psy?{psyAnswers,lastQ:qi,exits}:{answers,lastQ:qi,exits});test()}else finish();
+  if(qi<QS.length){saveCand(cand.id,q.psy?{psyAnswers,lastQ:qi,exits}:q.sst?{sstAnswers,lastQ:qi,exits}:{answers,lastQ:qi,exits});test()}else finish();
 }
 async function abandon(reason,silent){
   if(!cand||!(testActive||CAND_SCREENS.includes(screen)))return;
   testActive=false;clearInterval(timer);clearTimeout(idleT);
-  const id=cand.id;const data={status:'abandonado',abandonedAt:now(),abandonReason:reason,answers,psyAnswers,lastQ:qi,exits};
+  const id=cand.id;const data={status:'abandonado',abandonedAt:now(),abandonReason:reason,answers,psyAnswers,sstAnswers,lastQ:qi,exits};
   saveCand(id,data);cand=null;if(!silent)go('abandoned');
+}
+function finish(){
+  if(sstAnswers.length&&cand){const sstScore=Math.round(sstAnswers.filter(a=>a.ok).length/sstAnswers.length*100);saveCand(cand.id,{sstAnswers,sstScore,sstModules:sstBlocks(sstAnswers),sstAt:now()})}
+  finishBase();
 }
 /* anti-cola: sair do app (trocar de app, abrir o Google, bloquear a tela) encerra o teste na hora */
 document.addEventListener('visibilitychange',()=>{
@@ -4120,20 +4217,29 @@ function code(err){
 
 /* ---------- PAINEL: ranking do psicotécnico, ficha com contato/termo/psicotécnico ---------- */
 function pRank(){
-  const tg=`<div class="role" style="display:inline-flex;margin-bottom:12px"><button class="${rkMode==='tec'?'on':''}" onclick="rkMode='tec';render()" style="padding:8px 14px">${PL('rkTec')}</button><button class="${rkMode==='psy'?'on':''}" onclick="rkMode='psy';render()" style="padding:8px 14px">🧠 ${PL('rkPsy')}</button></div>`;
+  const tg=`<div class="role" style="display:inline-flex;margin-bottom:12px"><button class="${rkMode==='tec'?'on':''}" onclick="rkMode='tec';render()" style="padding:8px 14px">${PL('rkTec')}</button><button class="${rkMode==='psy'?'on':''}" onclick="rkMode='psy';render()" style="padding:8px 14px">🧠 ${PL('rkPsy')}</button><button class="${rkMode==='sst'?'on':''}" onclick="rkMode='sst';render()" style="padding:8px 14px">🦺 ${PL('rkSst')}</button></div>`;
+  const diff=c=>c.roleRH&&c.roleRH!==c.role?` <span title="${PL('roleDiff')}">🔀</span>`:'';
   if(rkMode==='tec'){
     const list=CANDS.filter(hasTest).filter(c=>rf==='todas'||profBy(c.role).id===rf).map(c=>({...c,f:finalScore(c)})).sort((a,b)=>b.f.v-a.f.v);
     return tg+`<div class="card glass" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><h3 style="margin:0">${PL('rkTec')}</h3>
      <select class="sel2" onchange="rf=this.value;render()"><option value="todas">${PL('allProf')}</option>${PROFS.map(p=>`<option value="${p.id}" ${rf===p.id?'selected':''}>${p.n[plang]}</option>`).join('')}</select></div>
      ${list.length?`<table><tr><th>#</th><th>${PL('cand')}</th><th class="hide-s">${PL('prof')}</th><th>${PL('score')}</th><th class="hide-s">${PL('psy')}</th><th>${PL('sit')}</th></tr>
-     ${list.map((c,k)=>{const [l,b]=cls(c.f.v);return `<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${c.crit?'⚠️ ':''}${escH(c.name)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.f.v}</b>${c.f.partial?`<span class="muted" style="font-size:11px"> ${PL('partial')}</span>`:''}</td><td class="hide-s">${hasPsy(c)?c.psyScore:'—'}</td><td><span class="badge ${b}">${l}</span></td></tr>`}).join('')}</table>
+     ${list.map((c,k)=>{const [l,b]=cls(c.f.v);return `<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${c.crit?'⚠️ ':''}${escH(c.name)}${diff(c)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.f.v}</b>${c.f.partial?`<span class="muted" style="font-size:11px"> ${PL('partial')}</span>`:''}</td><td class="hide-s">${hasPsy(c)?c.psyScore:'—'}</td><td><span class="badge ${b}">${l}</span></td></tr>`}).join('')}</table>
      <p class="muted" style="font-size:12px;margin-top:10px">${PL('rankNote')}</p>`:`<p class="muted">${PL('noRank')}</p>`}</div>`;
+  }
+  if(rkMode==='sst'){
+    const list=CANDS.filter(hasSst).filter(c=>rf==='todas'||profBy(c.role).id===rf).sort((a,b)=>b.sstScore-a.sstScore);
+    return tg+`<div class="card glass" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><h3 style="margin:0">🦺 ${PL('rkSst')}</h3>
+     <select class="sel2" onchange="rf=this.value;render()"><option value="todas">${PL('allProf')}</option>${PROFS.map(p=>`<option value="${p.id}" ${rf===p.id?'selected':''}>${p.n[plang]}</option>`).join('')}</select></div>
+     ${list.length?`<table><tr><th>#</th><th>${PL('cand')}</th><th class="hide-s">${PL('prof')}</th><th>${PL('rkSst')}</th>${Object.keys(SSTL.pt).map(k=>`<th class="hide-s">${SSTL[plang][k]}</th>`).join('')}</tr>
+     ${list.map((c,k)=>`<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${escH(c.name)}${diff(c)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.sstScore}</b></td>${Object.keys(SSTL.pt).map(b=>`<td class="hide-s">${(c.sstModules||{})[b]??'—'}</td>`).join('')}</tr>`).join('')}</table>
+     <p class="muted" style="font-size:12px;margin-top:10px">${PL('sstNote')}</p>`:`<p class="muted">${PL('noSst')}</p>`}</div>`;
   }
   const list=CANDS.filter(hasPsy).filter(c=>rf==='todas'||profBy(c.role).id===rf).sort((a,b)=>b.psyScore-a.psyScore);
   return tg+`<div class="card glass" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap"><h3 style="margin:0">🧠 ${PL('rkPsy')}</h3>
    <select class="sel2" onchange="rf=this.value;render()"><option value="todas">${PL('allProf')}</option>${PROFS.map(p=>`<option value="${p.id}" ${rf===p.id?'selected':''}>${p.n[plang]}</option>`).join('')}</select></div>
    ${list.length?`<table><tr><th>#</th><th>${PL('cand')}</th><th class="hide-s">${PL('prof')}</th><th>${PL('psy')}</th><th>${PL('sit')}</th></tr>
-   ${list.map((c,k)=>`<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${escH(c.name)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.psyScore}</b></td><td><span class="badge ${c.psyPass?'b-ok':'b-bad'}">${c.psyPass?PL('psyPass'):PL('psyFail')}</span></td></tr>`).join('')}</table>
+   ${list.map((c,k)=>`<tr class="click" onclick="detail='${c.id}';render()"><td>${k+1}</td><td>${escH(c.name)}${diff(c)}</td><td class="hide-s muted">${profName(c.role)}</td><td><b>${c.psyScore}</b></td><td><span class="badge ${c.psyPass?'b-ok':'b-bad'}">${c.psyPass?PL('psyPass'):PL('psyFail')}</span></td></tr>`).join('')}</table>
    <p class="muted" style="font-size:12px;margin-top:10px">${PL('psyMin')}</p>`:`<p class="muted">${PL('noPsy')}</p>`}</div>`;
 }
 function candDetail(){
@@ -4141,10 +4247,17 @@ function candDetail(){
   const c=CANDS.find(x=>x.id===detail);if(!c)return;
   const cards=document.querySelectorAll('#app .card');const head=cards[0];if(!head)return;
   let h='';
+  if(c.roleRH&&c.roleRH!==c.role)h+=`<div class="card glass" style="border-color:rgba(245,158,11,.6);background:rgba(245,158,11,.1)"><b style="color:#fcd34d">🔀 ${PL('roleAlert')(profName(c.role),profName(c.roleRH))}</b></div>`;
   if(hasPsy(c)){const m=c.psyModules||{};
     h+=`<div class="card glass"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">🧠 ${PL('psyT')}</h3><div><b style="font-size:28px">${c.psyScore}</b> <span class="badge ${c.psyPass?'b-ok':'b-bad'}">${c.psyPass?PL('psyPass'):PL('psyFail')}</span></div></div>
       <div style="margin-top:10px">${Object.entries(m).map(([k,v])=>`<div class="mod"><span>${PSYL[plang][k]}</span><div class="bar"><i style="width:${v}%;${v<PSY_MIN?'background:linear-gradient(90deg,#b45309,#f59e0b)':''}"></i></div><b>${v}</b></div>`).join('')}</div>
       <p class="muted" style="font-size:12px;margin-top:8px">${PL('psyMin')}</p></div>`}
+  if(hasSst(c)){const m=c.sstModules||{};
+    h+=`<div class="card glass"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><h3 style="margin:0">🦺 ${PL('sstT')}</h3><b style="font-size:28px">${c.sstScore}</b></div>
+      <div style="margin-top:10px">${Object.entries(m).map(([k,v])=>`<div class="mod"><span>${SSTL[plang][k]}</span><div class="bar"><i style="width:${v}%"></i></div><b>${v}</b></div>`).join('')}</div>
+      <details style="margin-top:8px"><summary class="muted" style="cursor:pointer">${PL('answers')((c.sstAnswers||[]).filter(a=>a.ok).length,(c.sstAnswers||[]).length)}</summary>
+      ${(c.sstAnswers||[]).map((a,i)=>`<div style="font-size:13px;margin-top:6px">${a.ok?'✅':'❌'} ${i+1}. ${escH((a.qL&&a.qL[plang])||a.q)}${a.ok?'':`<br><span class="muted">→ ${escH((a.rightL&&a.rightL[plang])||a.right)}</span>`}</div>`).join('')}</details>
+      <p class="muted" style="font-size:12px;margin-top:8px">${PL('sstNote')}</p></div>`}
   if(c.address||c.phone)h+=`<div class="card glass"><h3>📇 ${PL('contactT')}</h3><p style="margin-top:6px"><span class="muted">${PL('addr')}:</span> ${escH(c.address||'—')}</p><p style="margin-top:4px"><span class="muted">${PL('phone')}:</span> ${c.phone?`<a href="tel:${escH(c.phone.replace(/[^\d+]/g,''))}" style="color:var(--cyan)">${escH(c.phone)}</a>`:'—'}</p></div>`;
   const cs=c.consent;
   h+=`<div class="card glass"><h3>📝 ${PL('termT')}</h3>${cs&&cs.accepted?`<p style="margin-top:6px"><span class="badge b-ok">✓ ${PL('termOk')}</span> <span class="muted" style="font-size:13px">${fmtDTL(cs.at)} · ${(cs.lang||'pt').toUpperCase()} · ${PL('termVer')} ${escH(cs.ver||'')}</span></p>
@@ -4182,7 +4295,9 @@ function demoCands(){
     const qs=buildTest(prof);const ans=qs.map((q,k)=>{const ok=((k*37+i*11)%100)/100<tq;const r=q.type==='mc'?q.o.pt[q.ans]:q.type==='num'?String(q.ans):'1-2-3-4-5';
       return{q:q.t.pt,qL:q.t,mod:q.mod,ok,crit:!!q.crit,given:ok?r:'—',givenL:{pt:ok?r:'—',en:ok?r:'—',es:ok?r:'—'},right:r,rightL:{pt:r,en:r,es:r},s:10+((k*13)%40)}});
     const m={};Object.keys(MOD).forEach(k=>{const a=ans.filter(x=>x.mod===k);if(a.length)m[k]=Math.round(a.filter(x=>x.ok).length/a.length*100)});
-    out['demo'+i]={...base,status:'concluido',finishedAt:now()-(i+1)*3000000,answers:ans,modules:m,score:Math.round(ans.filter(a=>a.ok).length/ans.length*100),crit:ans.some(a=>a.crit&&!a.ok),avg:18,lastQ:45,
+    const sa=SST_Q.map((q,k)=>{const ok=((k*29+i*7)%100)/100<(tq+.1);return{q:q.t.pt,qL:q.t,mod:q.mod,blk:q.blk,ok,given:'',givenL:{},right:q.o.pt[q.ans],rightL:{pt:q.o.pt[q.ans],en:q.o.en[q.ans],es:q.o.es[q.ans]},s:12}});
+    if(i===2)base.roleRH='laminador';
+    out['demo'+i]={...base,sstAnswers:sa,sstScore:Math.round(sa.filter(a=>a.ok).length/sa.length*100),sstModules:sstBlocks(sa),status:'concluido',finishedAt:now()-(i+1)*3000000,answers:ans,modules:m,score:Math.round(ans.filter(a=>a.ok).length/ans.length*100),crit:ans.some(a=>a.crit&&!a.ok),avg:18,lastQ:45,
       interview:i===0?{r:[5,4,5,4,4]}:undefined,practical:i===0?{items:[true,true,true,true,false],done:true}:undefined};
   });
   return out;
