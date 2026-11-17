@@ -1,0 +1,155 @@
+<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Psicotécnico – BlueWind Skill Station (demonstração)</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}html{-webkit-text-size-adjust:100%;touch-action:manipulation}
+body{font-family:Outfit,system-ui,sans-serif;background:radial-gradient(1200px 700px at 50% -10%,#123a63,#06142a 60%,#030b18);color:#e6f6ff;min-height:100vh;padding:14px 14px 40px;-webkit-user-select:none;user-select:none}
+.wrap{max-width:600px;margin:0 auto}.glass{background:rgba(255,255,255,.06);border:1px solid rgba(148,197,255,.22);border-radius:20px}
+.top{display:flex;align-items:center;gap:10px;padding:10px 14px;margin-bottom:12px}.prog{flex:1;height:8px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden}.prog i{display:block;height:100%;background:linear-gradient(90deg,#2f86e0,#22d3ee)}
+.card{padding:20px}.muted{color:#9fb6d0}.btn{display:inline-block;border:0;border-radius:999px;padding:14px 22px;font:600 17px Outfit,sans-serif;color:#fff;background:linear-gradient(90deg,#2563eb,#0ea5e9);cursor:pointer}
+.opt{display:flex;gap:12px;align-items:center;width:100%;text-align:left;padding:14px;margin-top:10px;color:#e6f6ff;font:500 17px Outfit,sans-serif;cursor:pointer}.opt.on{border-color:#22d3ee;background:rgba(34,211,238,.15)}
+.letter{width:32px;height:32px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(47,134,224,.3);font-weight:700}
+.flags{display:flex;gap:6px;justify-content:center;margin-bottom:10px}.flags button{border:1px solid rgba(148,197,255,.3);background:rgba(255,255,255,.06);color:#e6f6ff;border-radius:999px;padding:6px 12px;font:600 14px Outfit;cursor:pointer}.flags .on{background:#0ea5e9}
+.cell{height:52px;border-radius:12px;font-size:26px;font-weight:700;color:#e6f6ff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+.tm{font-weight:700;min-width:54px;text-align:right}.bar{height:10px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden;flex:1}.bar i{display:block;height:100%;background:linear-gradient(90deg,#2f86e0,#22d3ee)}
+.row{display:flex;align-items:center;gap:10px;margin:8px 0;font-size:15px}.row span{width:46%}
+</style></head><body><div class="wrap" id="app"></div>
+<script>
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const PSY_MIN=50;
+const PSYL={pt:{log:'Raciocínio lógico',att:'Atenção e concentração',vis:'Percepção visual e mecânica',mem:'Memória',beh:'Comportamento no trabalho',tap:'Atenção concentrada (toque)'},
+ en:{log:'Logical reasoning',att:'Attention and focus',vis:'Visual and mechanical perception',mem:'Memory',beh:'Work behavior',tap:'Focused attention (tap)'},
+ es:{log:'Razonamiento lógico',att:'Atención y concentración',vis:'Percepción visual y mecánica',mem:'Memoria',beh:'Comportamiento en el trabajo',tap:'Atención concentrada (toque)'}};
+const PSYPART={pt:['Parte 1','Parte 2'],en:['Part 1','Part 2'],es:['Parte 1','Parte 2']};
+const MEMO_T={pt:'Memorize as informações abaixo',en:'Memorize the information below',es:'Memorice la información de abajo'};
+const MEMO_S={pt:'Elas vão sumir em',en:'They will disappear in',es:'Desaparecerán en'};
+const P=(blk,ans,t,o,extra)=>Object.assign({psy:true,mod:'psy_'+blk,blk,type:'mc',ans,time:45,t,o},extra||{});
+const PSY_ALL=[
+ /* raciocínio lógico */
+ P('log',2,{pt:'Qual número continua a sequência? 3 · 6 · 12 · 24 · ?',en:'Which number comes next? 3 · 6 · 12 · 24 · ?',es:'¿Qué número sigue? 3 · 6 · 12 · 24 · ?'},
+   {pt:['30','36','48','42'],en:['30','36','48','42'],es:['30','36','48','42']}),
+ P('log',1,{pt:'Qual número continua a sequência? 2 · 5 · 9 · 14 · ?',en:'Which number comes next? 2 · 5 · 9 · 14 · ?',es:'¿Qué número sigue? 2 · 5 · 9 · 14 · ?'},
+   {pt:['19','20','21','18'],en:['19','20','21','18'],es:['19','20','21','18']}),
+ P('log',2,{pt:'Uma máquina faz 40 peças em 2 horas. Quantas peças ela faz em 5 horas, no mesmo ritmo?',en:'A machine makes 40 parts in 2 hours. How many parts does it make in 5 hours at the same pace?',es:'Una máquina hace 40 piezas en 2 horas. ¿Cuántas piezas hace en 5 horas al mismo ritmo?'},
+   {pt:['80','90','100','120'],en:['80','90','100','120'],es:['80','90','100','120']}),
+ P('log',0,{pt:'Todos os moldes da Baia 1 são limpos na segunda-feira. O molde X está na Baia 1. O que é verdade?',en:'All molds in Bay 1 are cleaned on Monday. Mold X is in Bay 1. What is true?',es:'Todos los moldes de la Bahía 1 se limpian el lunes. El molde X está en la Bahía 1. ¿Qué es verdad?'},
+   {pt:['O molde X é limpo na segunda-feira','O molde X nunca é limpo','Só o molde X é limpo na segunda-feira','Não dá para saber nada sobre o molde X'],
+    en:['Mold X is cleaned on Monday','Mold X is never cleaned','Only mold X is cleaned on Monday','Nothing can be known about mold X'],
+    es:['El molde X se limpia el lunes','El molde X nunca se limpia','Solo el molde X se limpia el lunes','No se puede saber nada del molde X']}),
+ P('log',1,{pt:'Qual item continua a sequência? A1 · C3 · E5 · ?',en:'Which item comes next? A1 · C3 · E5 · ?',es:'¿Qué elemento sigue? A1 · C3 · E5 · ?'},
+   {pt:['F6','G7','H8','G6'],en:['F6','G7','H8','G6'],es:['F6','G7','H8','G6']}),
+ /* atenção e concentração */
+ P('att',1,{pt:'Quantas vezes o número 7 aparece?  7 1 7 4 7 9 2 7 1 7 3 7',en:'How many times does the number 7 appear?  7 1 7 4 7 9 2 7 1 7 3 7',es:'¿Cuántas veces aparece el número 7?  7 1 7 4 7 9 2 7 1 7 3 7'},
+   {pt:['5','6','7','4'],en:['5','6','7','4'],es:['5','6','7','4']}),
+ P('att',2,{pt:'A etiqueta da peça é BW-58A-3317. Qual opção é exatamente igual?',en:'The part label is BW-58A-3317. Which option is exactly the same?',es:'La etiqueta de la pieza es BW-58A-3317. ¿Qué opción es exactamente igual?'},
+   {pt:['BW-58A-3371','BW-85A-3317','BW-58A-3317','BW-58A-3177'],en:['BW-58A-3371','BW-85A-3317','BW-58A-3317','BW-58A-3177'],es:['BW-58A-3371','BW-85A-3317','BW-58A-3317','BW-58A-3177']}),
+ P('att',2,{pt:'Em qual linha existe uma letra diferente das outras?',en:'In which line is there a letter different from the others?',es:'¿En qué línea hay una letra diferente de las demás?'},
+   {pt:['OOOOOOOO','CCCCCCCC','OOOQOOOO','QQQQQQQQ'],en:['OOOOOOOO','CCCCCCCC','OOOQOOOO','QQQQQQQQ'],es:['OOOOOOOO','CCCCCCCC','OOOQOOOO','QQQQQQQQ']}),
+ P('att',1,{pt:'Quantos números pares existem?  13 8 21 6 15 4 9 10',en:'How many even numbers are there?  13 8 21 6 15 4 9 10',es:'¿Cuántos números pares hay?  13 8 21 6 15 4 9 10'},
+   {pt:['3','4','5','6'],en:['3','4','5','6'],es:['3','4','5','6']}),
+ P('att',2,{pt:'A ficha diz 24 peças. Você contou 6 caixas com 4 peças e 1 caixa com 3 peças. O lote está:',en:'The sheet says 24 parts. You counted 6 boxes with 4 parts and 1 box with 3 parts. The lot is:',es:'La hoja dice 24 piezas. Usted contó 6 cajas con 4 piezas y 1 caja con 3 piezas. El lote está:'},
+   {pt:['Completo','Faltando 3 peças','Com 3 peças a mais','Faltando 1 peça'],en:['Complete','Missing 3 parts','3 parts over','Missing 1 part'],es:['Completo','Faltan 3 piezas','Con 3 piezas de más','Falta 1 pieza']}),
+ /* percepção visual e mecânica */
+ P('vis',0,{pt:'Se girar a figura ◢ um quarto de volta no sentido horário, como ela fica?',en:'If you turn the shape ◢ a quarter turn clockwise, how does it look?',es:'Si gira la figura ◢ un cuarto de vuelta en sentido horario, ¿cómo queda?'},
+   {pt:['◣','◤','◥','◢'],en:['◣','◤','◥','◢'],es:['◣','◤','◥','◢']}),
+ P('vis',2,{pt:'Se girar a letra b meia volta (de cabeça para baixo), qual letra aparece?',en:'If you turn the letter b half a turn (upside down), which letter appears?',es:'Si gira la letra b media vuelta (de cabeza), ¿qué letra aparece?'},
+   {pt:['d','p','q','b'],en:['d','p','q','b'],es:['d','p','q','b']}),
+ P('vis',0,{pt:'Uma peça vista de cima é um círculo. Vista de lado, é um retângulo. Que peça é essa?',en:'A part seen from above is a circle. Seen from the side, it is a rectangle. What part is it?',es:'Una pieza vista desde arriba es un círculo. Vista de lado, es un rectángulo. ¿Qué pieza es?'},
+   {pt:['Um cilindro','Um cubo','Uma esfera','Um cone'],en:['A cylinder','A cube','A sphere','A cone'],es:['Un cilindro','Un cubo','Una esfera','Un cono']}),
+ P('vis',0,{pt:'Qual é o reflexo da seta ↗ em um espelho colocado ao lado dela?',en:'What is the reflection of the arrow ↗ in a mirror placed beside it?',es:'¿Cuál es el reflejo de la flecha ↗ en un espejo colocado a su lado?'},
+   {pt:['↖','↘','↙','↗'],en:['↖','↘','↙','↗'],es:['↖','↘','↙','↗']}),
+ P('vis',0,{pt:'Um parafuso comum (rosca direita) é girado no sentido horário. O que acontece?',en:'A standard screw (right-hand thread) is turned clockwise. What happens?',es:'Un tornillo común (rosca derecha) se gira en sentido horario. ¿Qué pasa?'},
+   {pt:['Ele aperta','Ele solta','Nada muda','Depende do tamanho'],en:['It tightens','It loosens','Nothing changes','It depends on the size'],es:['Se aprieta','Se afloja','Nada cambia','Depende del tamaño']}),
+ /* memória: a informação aparece por alguns segundos e some */
+ P('mem',1,{pt:'Qual era o turno?',en:'Which shift was it?',es:'¿Cuál era el turno?'},{pt:['A','B','C','D'],en:['A','B','C','D'],es:['A','B','C','D']},
+   {time:30,memo:{pt:'Molde: M-27 · Peça: Nacele · Turno: B',en:'Mold: M-27 · Part: Nacelle · Shift: B',es:'Molde: M-27 · Pieza: Góndola · Turno: B'}}),
+ P('mem',1,{pt:'Qual era o terceiro número?',en:'What was the third number?',es:'¿Cuál era el tercer número?'},{pt:['9','2','7','4'],en:['9','2','7','4'],es:['9','2','7','4']},
+   {time:30,memo:{pt:'Sequência: 4 – 9 – 2 – 7',en:'Sequence: 4 – 9 – 2 – 7',es:'Secuencia: 4 – 9 – 2 – 7'}}),
+ P('mem',2,{pt:'Qual cor vinha logo depois do verde?',en:'Which color came right after green?',es:'¿Qué color venía justo después del verde?'},{pt:['Azul','Amarelo','Vermelho','Branco'],en:['Blue','Yellow','Red','White'],es:['Azul','Amarillo','Rojo','Blanco']},
+   {time:30,memo:{pt:'Cores das etiquetas: azul, verde, vermelho, amarelo',en:'Label colors: blue, green, red, yellow',es:'Colores de las etiquetas: azul, verde, rojo, amarillo'}}),
+ P('mem',1,{pt:'Qual era o número do lote?',en:'What was the lot number?',es:'¿Cuál era el número de lote?'},{pt:['5823','5832','8532','5382'],en:['5823','5832','8532','5382'],es:['5823','5832','8532','5382']},
+   {time:30,memo:{pt:'Resina: lote 5832 · validade 12/2026',en:'Resin: lot 5832 · expires 12/2026',es:'Resina: lote 5832 · vence 12/2026'}}),
+ P('mem',0,{pt:'Qual item NÃO estava na lista?',en:'Which item was NOT on the list?',es:'¿Qué artículo NO estaba en la lista?'},{pt:['Protetor auricular','Óculos','Luvas nitrílicas','Avental'],en:['Ear protection','Safety glasses','Nitrile gloves','Apron'],es:['Protector auditivo','Lentes de seguridad','Guantes de nitrilo','Delantal']},
+   {time:30,memo:{pt:'EPI: luvas nitrílicas, óculos, respirador, avental',en:'PPE: nitrile gloves, safety glasses, respirator, apron',es:'EPP: guantes de nitrilo, lentes de seguridad, respirador, delantal'}}),
+ /* comportamento no trabalho */
+ P('beh',1,{pt:'Você vê um colega sem EPI perto do gel coat. O que você faz?',en:'You see a coworker without PPE near the gel coat. What do you do?',es:'Ve a un compañero sin EPP cerca del gel coat. ¿Qué hace?'},
+   {pt:['Não faz nada, não é problema seu','Fala com ele com respeito e, se continuar, avisa o líder','Tira uma foto e espalha no grupo','Espera ele se machucar para aprender'],
+    en:['Do nothing, it is not your problem','Talk to him respectfully and, if it continues, tell the lead','Take a photo and share it in the group chat','Wait for him to get hurt so he learns'],
+    es:['No hace nada, no es su problema','Habla con él con respeto y, si sigue, avisa al líder','Le toma una foto y la comparte en el grupo','Espera a que se lastime para que aprenda']}),
+ P('beh',2,{pt:'Você errou e uma peça saiu com defeito. Ninguém viu. O que você faz?',en:'You made a mistake and a part came out with a defect. Nobody saw it. What do you do?',es:'Usted se equivocó y una pieza salió con defecto. Nadie lo vio. ¿Qué hace?'},
+   {pt:['Esconde a peça no meio das outras','Culpa o turno anterior','Avisa o líder e registra o defeito','Conserta do seu jeito sem falar com ninguém'],
+    en:['Hide the part among the others','Blame the previous shift','Tell the lead and record the defect','Fix it your own way without telling anyone'],
+    es:['Esconde la pieza entre las demás','Culpa al turno anterior','Avisa al líder y registra el defecto','La arregla a su manera sin decir nada']}),
+ P('beh',0,{pt:'Você recebeu uma instrução que não entendeu bem. O que você faz?',en:'You received an instruction you did not fully understand. What do you do?',es:'Recibió una instrucción que no entendió bien. ¿Qué hace?'},
+   {pt:['Pergunta ao líder antes de começar','Faz do jeito que acha melhor','Espera alguém perceber','Pede para um colega fazer no seu lugar'],
+    en:['Ask the lead before starting','Do it the way you think is best','Wait for someone to notice','Ask a coworker to do it for you'],
+    es:['Pregunta al líder antes de empezar','Lo hace como cree mejor','Espera a que alguien se dé cuenta','Pide a un compañero que lo haga por usted']}),
+ P('beh',3,{pt:'Seu turno acabou, mas quem vai te render ainda não chegou e a máquina está ligada. O que você faz?',en:'Your shift is over, but your relief has not arrived and the machine is running. What do you do?',es:'Su turno terminó, pero su relevo no ha llegado y la máquina está encendida. ¿Qué hace?'},
+   {pt:['Vai embora, o horário acabou','Desliga tudo sem avisar ninguém','Deixa um bilhete na máquina','Avisa o líder e passa as informações antes de sair'],
+    en:['Leave, your shift is over','Shut everything down without telling anyone','Leave a note on the machine','Tell the lead and hand over the information before leaving'],
+    es:['Se va, el horario terminó','Apaga todo sin avisar a nadie','Deja una nota en la máquina','Avisa al líder y pasa la información antes de salir']}),
+ P('beh',1,{pt:'Caiu um pouco de resina no chão do seu posto. O que você faz?',en:'Some resin spilled on the floor at your station. What do you do?',es:'Se derramó un poco de resina en el piso de su puesto. ¿Qué hace?'},
+   {pt:['Deixa para a equipe de limpeza no fim do dia','Sinaliza a área e limpa seguindo o procedimento','Joga água por cima','Cobre com papelão e continua'],
+    en:['Leave it for the cleaning crew at the end of the day','Mark off the area and clean it following the procedure','Pour water on it','Cover it with cardboard and keep working'],
+    es:['La deja para el equipo de limpieza al final del día','Señaliza el área y limpia según el procedimiento','Le echa agua encima','La tapa con cartón y sigue trabajando']})
+];const TAPL={pt:{done:'Pronto',hint:'Toque no maior número possível antes do tempo acabar. Toque errado conta como erro.',res:(h,T,w)=>`${h}/${T} acertos, ${w} toque(s) errado(s)`},
+ en:{done:'Done',hint:'Tap as many as you can before time runs out. Wrong taps count as errors.',res:(h,T,w)=>`${h}/${T} correct, ${w} wrong tap(s)`},
+ es:{done:'Listo',hint:'Toque la mayor cantidad posible antes de que se acabe el tiempo. Un toque equivocado cuenta como error.',res:(h,T,w)=>`${h}/${T} aciertos, ${w} toque(s) equivocado(s)`}};
+const rnd=n=>Math.floor(Math.random()*n);
+const TP=(t,gen,extra)=>Object.assign({psy:true,mod:'psy_tap',blk:'tap',type:'tap',time:30,t,gen},extra||{});
+function mkGrid(n,targets,targetHtml,others){const cells=[];for(let i=0;i<targets;i++)cells.push({h:targetHtml(),tg:true});while(cells.length<n){cells.push({h:others[rnd(others.length)](),tg:false})}return shuffle(cells)}
+const DOT=s=>`<span style="position:relative;display:inline-block">${s}<i style="position:absolute;left:50%;top:-6px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:currentColor"></i></span>`;
+const PSY_TAP=[
+ TP({pt:'Toque em todos os ▲ (triângulos cheios).',en:'Tap every ▲ (solid triangle).',es:'Toque todos los ▲ (triángulos llenos).'},
+   ()=>({cells:mkGrid(30,8,()=>'▲',[()=>'△',()=>'◆',()=>'●',()=>'■'])})),
+ TP({pt:'Toque em todos os números 7.',en:'Tap every number 7.',es:'Toque todos los números 7.'},
+   ()=>({cells:mkGrid(30,8,()=>'7',[1,2,3,4,5,6,8,9].map(d=>()=>String(d)))})),
+ TP({pt:'Toque somente nos ▲ que têm um ponto em cima.',en:'Tap only the ▲ that have a dot on top.',es:'Toque solo los ▲ que tienen un punto arriba.'},
+   ()=>({cells:mkGrid(30,7,()=>DOT('▲'),[()=>'▲',()=>DOT('△'),()=>'△'])})),
+ TP({pt:'Toque em todas as letras b (cuidado com d, p e q).',en:'Tap every letter b (watch out for d, p and q).',es:'Toque todas las letras b (cuidado con d, p y q).'},
+   ()=>({cells:mkGrid(30,8,()=>'b',[()=>'d',()=>'p',()=>'q'])})),
+ TP({pt:'Toque nos números em ordem: 1, 2, 3… até 10.',en:'Tap the numbers in order: 1, 2, 3… up to 10.',es:'Toque los números en orden: 1, 2, 3… hasta 10.'},
+   ()=>{const pos=shuffle([...Array(20).keys()]).slice(0,10);const cells=Array(20).fill(null).map(()=>({h:'',tg:false,empty:true}));pos.forEach((p,i)=>cells[p]={h:String(i+1),tg:true,n:i+1});return{cells,order:true}},{time:40})
+];
+const PSY_Q=[...PSY_TAP,PSY_ALL[0],PSY_ALL[2],PSY_ALL[6],PSY_ALL[9],PSY_ALL[10],PSY_ALL[14],PSY_ALL[15],PSY_ALL[18],PSY_ALL[20],PSY_ALL[21]];
+
+const QS0=[...PSY_TAP,PSY_ALL[0],PSY_ALL[2],PSY_ALL[6],PSY_ALL[9],PSY_ALL[10],PSY_ALL[14],PSY_ALL[15],PSY_ALL[18],PSY_ALL[20],PSY_ALL[21]];
+const TX={pt:{title:'Psicotécnico',sub:'Demonstração · BlueWind Skill Station',intro:'15 itens: primeiro 5 testes de tocar na tela, depois 10 perguntas de múltipla escolha (A, B, C ou D). Cada item tem tempo limite.',start:'Começar',q:'Item',of:'de',next:'Confirmar',endT:'Fim da demonstração',endS:'No app real, o candidato não vê a nota. Ela aparece só para o RH e a diretoria.',score:'Nota (só nesta demonstração)',again:'Fazer de novo',min:'Nota mínima para seguir: 50%',pass:'Passou',fail:'Não passou'},
+ en:{title:'Aptitude test',sub:'Demo · BlueWind Skill Station',intro:'15 items: first 5 tap-on-screen tests, then 10 multiple-choice questions (A, B, C or D). Each item has a time limit.',start:'Start',q:'Item',of:'of',next:'Confirm',endT:'End of demo',endS:'In the real app, the candidate never sees the score. Only HR and management see it.',score:'Score (this demo only)',again:'Try again',min:'Minimum score to move on: 50%',pass:'Passed',fail:'Did not pass'},
+ es:{title:'Psicotécnico',sub:'Demostración · BlueWind Skill Station',intro:'15 ítems: primero 5 pruebas de tocar la pantalla, luego 10 preguntas de opción múltiple (A, B, C o D). Cada ítem tiene tiempo límite.',start:'Comenzar',q:'Ítem',of:'de',next:'Confirmar',endT:'Fin de la demostración',endS:'En la app real, el candidato nunca ve la nota. Solo la ven RR. HH. y la dirección.',score:'Nota (solo en esta demostración)',again:'Hacer de nuevo',min:'Nota mínima para seguir: 50%',pass:'Aprobó',fail:'No aprobó'}};
+let lang='pt',QS=[],qi=-1,sel=null,timer=null,left=0,res=[];
+const app=document.getElementById('app');
+const flags=()=>`<div class="flags">${[['pt','🇧🇷 PT'],['en','🇺🇸 EN'],['es','🇪🇸 ES']].map(([k,l])=>`<button class="${lang===k?'on':''}" onclick="lang='${k}';R()">${l}</button>`).join('')}</div>`;
+function startT(){QS=QS0.map(q=>({...q,_st:null,_memoDone:false}));qi=0;res=[];R()}
+function R(){
+ const X=TX[lang];clearInterval(timer);window.scrollTo(0,0);
+ if(qi<0){app.innerHTML=flags()+`<div class="glass card" style="text-align:center"><div style="font-size:50px">🧠</div><h1 style="font-size:30px;margin-top:6px">${X.title}</h1><p class="muted">${X.sub}</p><p style="margin-top:14px;font-size:17px">${X.intro}</p><button class="btn" style="margin-top:20px;width:100%" onclick="startT()">${X.start} →</button></div>`;return}
+ if(qi>=QS.length){const val=r=>typeof r.frac==='number'?r.frac:(r.ok?1:0);const sc=Math.round(res.reduce((s,r)=>s+val(r),0)/res.length*100);
+   const blk={};res.forEach(r=>{(blk[r.blk]=blk[r.blk]||[]).push(val(r))});
+   app.innerHTML=flags()+`<div class="glass card"><h2 style="font-size:26px">✅ ${X.endT}</h2><p class="muted" style="margin-top:6px">${X.endS}</p>
+   <p style="margin-top:16px">${X.score}: <b style="font-size:30px">${sc}</b> <span style="color:${sc>=50?'#86efac':'#fca5a5'}">${sc>=50?X.pass:X.fail}</span></p><p class="muted" style="font-size:13px">${X.min}</p>
+   <div style="margin-top:12px">${Object.entries(blk).map(([k,v])=>{const p=Math.round(v.reduce((a,b)=>a+b,0)/v.length*100);return `<div class="row"><span>${PSYL[lang][k]}</span><div class="bar"><i style="width:${p}%"></i></div><b>${p}</b></div>`}).join('')}</div>
+   <button class="btn" style="margin-top:18px;width:100%" onclick="qi=-1;R()">↺ ${X.again}</button></div>`;return}
+ const q=QS[qi];sel=null;
+ const top=`<div class="glass top"><b>🧠</b><div class="prog"><i style="width:${qi/QS.length*100}%"></i></div><span class="tm" id="tm"></span></div>`;
+ if(q.memo&&!q._memoDone){let n=8;app.innerHTML=flags()+top+`<div class="glass card" style="text-align:center"><span class="muted">${X.q} ${qi+1} ${X.of} ${QS.length}</span><h3 style="margin-top:12px">🧠 ${MEMO_T[lang]}</h3><div style="font-size:24px;font-weight:700;margin:20px 0;padding:20px;border-radius:16px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.35)">${q.memo[lang]}</div><p class="muted">${MEMO_S[lang]} <b id="mm">${n}</b>s</p></div>`;
+   timer=setInterval(()=>{n--;const e=document.getElementById('mm');if(e)e.textContent=n;if(n<=0){clearInterval(timer);q._memoDone=true;R()}},1000);return}
+ let body='';
+ if(q.type==='tap'){if(!q._st){const g=q.gen();q._st={cells:g.cells,order:!!g.order,done:new Set(),wrong:0,next:1}}const st=q._st;
+   body=`<p class="muted" style="margin:10px 0 12px;font-size:14px">${TAPL[lang].hint}</p><div style="display:grid;grid-template-columns:repeat(${st.order?5:6},1fr);gap:8px">${st.cells.map((c,i)=>c.empty?'<span></span>':`<button class="glass cell" id="tp${i}" onclick="hit(${i})">${c.h}</button>`).join('')}</div>`}
+ else{const ord=shuffle([0,1,2,3]);const big=q.blk==='vis'&&q.o[lang][0].length<=2;body=ord.map((oi,k)=>`<button class="glass opt" data-i="${oi}" onclick="pick(${oi})"><span class="letter">${'ABCD'[k]}</span><span style="${big?'font-size:32px':''}">${q.o[lang][oi]}</span></button>`).join('')}
+ app.innerHTML=flags()+top+`<div class="glass card"><span class="muted">${X.q} ${qi+1} ${X.of} ${QS.length}</span><h3 style="font-size:21px;margin:10px 0 6px">${q.t[lang]}</h3>${body}
+  <div style="text-align:right;margin-top:16px"><button class="btn" id="nx" ${q.type==='tap'?'':'disabled style="opacity:.5"'} onclick="ans()">${q.type==='tap'?TAPL[lang].done:X.next} →</button></div></div>`;
+ left=q.time;tick();timer=setInterval(tick,1000);
+}
+function tick(){const e=document.getElementById('tm');if(e)e.textContent='⏱ '+left+'s';if(left--<=0){clearInterval(timer);ans(true)}}
+function pick(i){sel=i;document.querySelectorAll('.opt').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));const n=document.getElementById('nx');n.disabled=false;n.style.opacity=1}
+function hit(i){const q=QS[qi],st=q._st,c=st.cells[i],el=document.getElementById('tp'+i);if(!c||st.done.has(i))return;const ok=st.order?c.n===st.next:c.tg;
+ if(ok){st.done.add(i);if(st.order)st.next++;el.style.background='rgba(34,197,94,.35)';el.style.borderColor='#22c55e'}else{st.wrong++;el.style.background='rgba(239,68,68,.45)';setTimeout(()=>{if(!st.done.has(i))el.style.background=''},350)}
+ if(st.done.size>=st.cells.filter(x=>x.tg).length)setTimeout(()=>{if(QS[qi]===q)ans()},350)}
+function ans(timeout){const q=QS[qi];if(!q)return;clearInterval(timer);
+ if(q.type==='tap'){const st=q._st,T=st.cells.filter(x=>x.tg).length,h=st.done.size;res.push({blk:'tap',frac:Math.max(0,Math.min(1,(h-st.wrong*.5)/T))})}
+ else res.push({blk:q.blk,ok:!timeout&&sel===q.ans});
+ qi++;R()}
+R();
+</script></body></html>
