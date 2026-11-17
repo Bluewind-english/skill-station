@@ -1422,13 +1422,13 @@ function pTurbine(){
   const sugg=['Quem são os 3 melhores candidatos?','Tem algum alerta de segurança?','Faça um resumo das contratações','Qual vaga tem mais candidatos fracos?'];
   return `<div class="card glass tbWrap" style="margin-top:0">
    <div class="tbHead"><div id="orb" class="orb ${tbState}"><i></i><i></i><i></i><b></b></div>
-     <div><h2 style="font-size:28px;letter-spacing:.04em">TURBINE</h2><p class="muted" id="orbLbl">Pronto para ajudar</p>
+     <div><h2 style="font-size:28px;letter-spacing:.04em">AEOLUS</h2><p class="muted" id="orbLbl">Pronto para ajudar</p>
      <p class="demo" style="margin-top:4px">Acesso exclusivo: RH e diretoria${SAMPLE?'':' · modo demonstração'}</p></div></div>
-   <div id="tbLog" class="tbLog">${tbHist.length?tbHist.map(tbBubble).join(''):`<div class="tbMsg ai">Olá! Eu sou a Turbine. Pergunte sobre candidatos, notas, vagas ou alertas.</div>`}</div>
+   <div id="tbLog" class="tbLog">${tbHist.length?tbHist.map(tbBubble).join(''):`<div class="tbMsg ai">Olá! Eu sou o Aeolus. Pergunte sobre candidatos, notas, vagas ou alertas.</div>`}</div>
    <div class="tbSugg">${sugg.map(q=>`<button class="tab" onclick="tbAsk('${q}')">${q}</button>`).join('')}</div>
    <div class="tbBar">
      ${DICT?`<button class="tbMic" onclick="tbMic()" title="Falar">🎙️</button>`:''}
-     <input id="tbIn" placeholder="Pergunte para a Turbine..." onkeydown="if(event.key==='Enter'&&this.value.trim())tbAsk(this.value.trim())">
+     <input id="tbIn" placeholder="Pergunte para o Aeolus..." onkeydown="if(event.key==='Enter'&&this.value.trim())tbAsk(this.value.trim())">
      <button class="btn small" onclick="const i=document.getElementById('tbIn');if(i.value.trim())tbAsk(i.value.trim())">Enviar</button>
      <button class="tbMic" onclick="tbSpeak=!tbSpeak;this.textContent=tbSpeak?'🔊':'🔇';if(!tbSpeak){try{TTS&&TTS.stop()}catch(e){}try{speechSynthesis.cancel()}catch(e){}}" title="Voz">${tbSpeak?'🔊':'🔇'}</button>
    </div></div>`;
@@ -1448,13 +1448,13 @@ async function tbAsk(q){
   setOrb('thinking');let ans='';
   try{
     if(!SAMPLE)throw {code:'offline'};
-    const sys=`Você é TURBINE, a assistente de inteligência artificial de recrutamento da Bluewind Technology (fábrica de naceles eólicas em compósitos, Pensacola, FL). Fala com o RH e a diretoria.
+    const sys=`Você é AEOLUS, o assistente de inteligência artificial de recrutamento da Bluewind Technology (fábrica de naceles eólicas em compósitos, Pensacola, FL). Fala com o RH e a diretoria.
 Regras: responda no idioma da pergunta (padrão português do Brasil), de forma curta e direta (no máximo 5 frases ou uma lista curta), com tom profissional e um leve toque futurista. Use SOMENTE os dados abaixo; se não souber, diga que não há dados. Cite os candidatos pelo nome completo exatamente como nos dados. Avalie apenas por notas, módulos, status e alertas ligados ao trabalho; nunca por idade, origem, gênero ou outra característica pessoal. Notas: 75+ Apto, 55-74 Apto com treinamento, abaixo de 55 Não apto. "alerta_seguranca" true = errou pergunta eliminatória de segurança. Muitas saídas de tela com tempo médio baixo pode indicar chute ou consulta.
 Régua da casa (média dos bons funcionários atuais) por módulo: ${JSON.stringify(Object.fromEntries(Object.entries(REF).map(([k,v])=>[MOD[k],v])))}
 DADOS DOS CANDIDATOS (JSON): ${JSON.stringify(tbData())}`;
     const msgs=[];const hist=tbHist.slice(0,-1).slice(-9);
     hist.forEach((m,i)=>{const role=m.who==='user'?'user':'assistant';msgs.push({role,content:(i===0&&role==='user'?sys+'\n\nPergunta: ':'')+m.text})});
-    if(msgs[0].role!=='user')msgs.shift();if(msgs[0]&&!msgs[0].content.startsWith('Você é TURBINE'))msgs[0].content=sys+'\n\nPergunta: '+msgs[0].content;
+    if(msgs[0].role!=='user')msgs.shift();if(msgs[0]&&!msgs[0].content.startsWith('Você é AEOLUS'))msgs[0].content=sys+'\n\nPergunta: '+msgs[0].content;
     tbAbort=new AbortController();
     const r=await SAMPLE(msgs,{cache:false,signal:tbAbort.signal,onText:({text})=>{ans=text;const e=document.getElementById('tbm'+idx);if(e&&text&&text!=='Thinking...')e.innerHTML=esc(text);const l=tbLogEl();if(l)l.scrollTop=l.scrollHeight}});
     ans=r.text||ans;
@@ -1706,7 +1706,7 @@ async function pinKey(k){
 /* ---------- PAINEL ---------- */
 function panel(){
   if(detail!==null)return candDetail();
-  const tabs=[['geral','Visão geral'],['ranking','Ranking'],['lista','Candidatos'],['turbine','🌀 Turbine'],...(viewRole==='rh'?[['novo','+ Novo candidato'],['config','⚙️']]:[])];
+  const tabs=[['geral','Visão geral'],['ranking','Ranking'],['lista','Candidatos'],['turbine','🌀 Aeolus'],...(viewRole==='rh'?[['novo','+ Novo candidato'],['config','⚙️']]:[])];
   let body='';
   if(panelTab==='geral')body=pGeral();if(panelTab==='ranking')body=pRank();if(panelTab==='lista')body=pLista();
   if(panelTab==='novo')body=pNovo();if(panelTab==='turbine')body=pTurbine();if(panelTab==='config')body=pConfig();
@@ -1718,7 +1718,7 @@ function panel(){
        <button class="btn ghost small" onclick="detail=null;go('home')">Sair</button></div></div>
    <p class="muted" style="font-size:12px;margin:-6px 0 10px 4px">${dbTag}</p>
    <div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${panelTab===k?'on':''}" onclick="panelTab='${k}';render()">${n}</button>`).join('')}</div>
-   ${body}</div>${panelTab!=='turbine'?`<button class="tbFab" onclick="detail=null;panelTab='turbine';render()"><span class="orb"><i></i><i></i><i></i><b></b></span>TURBINE</button>`:''}`;
+   ${body}</div>${panelTab!=='turbine'?`<button class="tbFab" onclick="detail=null;panelTab='turbine';render()"><span class="orb"><i></i><i></i><i></i><b></b></span>AEOLUS</button>`:''}`;
 }
 function pGeral(){
   const T=CANDS.filter(hasTest),apt=T.filter(c=>c.score>=75).length,alerts=T.filter(c=>c.crit).length,ab=CANDS.filter(c=>effStatus(c)==='abandonado').length;
@@ -1797,8 +1797,8 @@ function candDetail(){
     testBlock=`<div class="card glass"><h3>Notas por módulo</h3>
       ${Object.entries(m).map(([k,v])=>`<div class="mod"><span>${MOD[k]||k}</span><div class="bar"><i style="width:${v}%;${v<(REF[k]||80)?'background:linear-gradient(90deg,#b45309,#f59e0b)':''}"></i><span class="ref" style="left:${REF[k]||80}%"></span></div><b>${v}</b></div>`).join('')}
       <p class="muted" style="font-size:13px;margin-top:8px">▍ Linha branca = régua da casa. ${weak.length?'Lacunas para treinamento: <b>'+weak.join(', ')+'</b>.':''}</p></div>
-     <div class="card glass"><h3>🤖 Análise da Turbine</h3><div class="ai" id="aiBox">${c.aiNote?esc(c.aiNote):'Toque no botão para a Turbine analisar este candidato.'}</div>
-      <button class="btn small" style="margin-top:10px" onclick="aiAnalyze('${c.id}')">🌀 Analisar com a Turbine</button></div>
+     <div class="card glass"><h3>🤖 Análise do Aeolus</h3><div class="ai" id="aiBox">${c.aiNote?esc(c.aiNote):'Toque no botão para o Aeolus analisar este candidato.'}</div>
+      <button class="btn small" style="margin-top:10px" onclick="aiAnalyze('${c.id}')">🌀 Analisar com o Aeolus</button></div>
      <div class="card glass"><h3>Respostas (${c.answers.filter(a=>a.ok).length} de ${c.answers.length})</h3>
       ${c.answers.map((a,i)=>`<div class="ansRow"><span class="${a.ok?'okC':'noC'}">${a.ok?'✓':'✗'}</span><div><div>${i+1}. ${escH(a.q)} ${a.crit?'<span class="tag crit" style="font-size:11px;padding:2px 8px">eliminatória</span>':''}</div>${a.ok?'':`<div class="muted" style="font-size:13px">Respondeu: ${escH(a.given??'—')} · Certo: ${escH(a.right)}</div>`}<div class="muted" style="font-size:12px">${MOD[a.mod]||a.mod} · ${a.s}s</div></div></div>`).join('')}</div>`;
   }else if(s==='abandonado'||s==='em_andamento'){
@@ -1849,7 +1849,7 @@ async function aiAnalyze(id){
   let txt='';
   try{
     if(!SAMPLE)throw{code:'offline'};
-    const r=await SAMPLE(`Você é TURBINE, assistente de recrutamento da Bluewind Technology (fábrica de naceles eólicas em compósitos). Analise o candidato abaixo para o RH em português do Brasil, em no máximo 5 frases: pontos fortes, lacunas (o que treinar) e uma recomendação objetiva. Avalie só desempenho ligado ao trabalho; nunca características pessoais. Se errou pergunta eliminatória de segurança, destaque. Muitas saídas de tela com tempo médio baixo pode indicar chute ou consulta.\nDADOS: ${JSON.stringify(data)}`,{cache:false,onText:({text})=>{if(text&&text!=='Thinking...')box.innerHTML=esc(text)}});
+    const r=await SAMPLE(`Você é AEOLUS, assistente de recrutamento da Bluewind Technology (fábrica de naceles eólicas em compósitos). Analise o candidato abaixo para o RH em português do Brasil, em no máximo 5 frases: pontos fortes, lacunas (o que treinar) e uma recomendação objetiva. Avalie só desempenho ligado ao trabalho; nunca características pessoais. Se errou pergunta eliminatória de segurança, destaque. Muitas saídas de tela com tempo médio baixo pode indicar chute ou consulta.\nDADOS: ${JSON.stringify(data)}`,{cache:false,onText:({text})=>{if(text&&text!=='Thinking...')box.innerHTML=esc(text)}});
     txt=r.text;
   }catch(e){
     const weak=Object.entries(c.modules||{}).filter(([k,v])=>v<(REF[k]||80)).map(([k])=>MOD[k]);const strong=Object.entries(c.modules||{}).filter(([k,v])=>v>=(REF[k]||80)).map(([k])=>MOD[k]);
@@ -1875,7 +1875,7 @@ let plang='pt';
 const PLD={
  pt:{panel:'Painel de Recrutamento',pinSub:'Digite o seu PIN de acesso (RH ou Diretoria)',pinBad:'PIN incorreto.',rh:'RH',dir:'Diretoria (leitura)',exit:'Sair',
   db:{nuvem:'🟢 Banco de dados conectado',local:'🟡 Modo local (os dados não são salvos na nuvem)',lento:'🟡 Banco de dados lento, tentando...',erro:'🔴 Erro no banco de dados',conectando:'… Conectando'},
-  tabs:{geral:'Visão geral',ranking:'Ranking',lista:'Candidatos',turbine:'🌀 Turbine',novo:'+ Novo candidato',config:'⚙️'},
+  tabs:{geral:'Visão geral',ranking:'Ranking',lista:'Candidatos',turbine:'🌀 Aeolus',novo:'+ Novo candidato',config:'⚙️'},
   none:'Nenhum candidato ainda',noneRH:'Toque em <b>+ Novo candidato</b> para cadastrar alguém e gerar o código de acesso.',noneDir:'Assim que o RH cadastrar candidatos, eles aparecem aqui.',
   kC:'Candidatos',kA:'Aptos no teste',kAb:'Abandonados',kAl:'Alertas de segurança',funnel:'Funil da seleção',
   f:['Cadastrados','Teste concluído','Entrevista feita','Prova prática feita','Aprovados'],byProf:'Por profissão',prof:'Profissão',cands:'Cand.',avg:'Média',best:'Melhor',
@@ -1884,7 +1884,7 @@ const PLD={
   newT:'Cadastrar candidato e gerar código',name:'Nome completo',namePh:'Ex.: Maria Souza',gen:'Gerar código de acesso',codeFor:'Código para',
   once:(d)=>`Vale <b>uma única vez</b>, até ${d}. Entregue ao candidato para digitar no terminal.`,needName:'Digite o nome do candidato.',needProf:'Escolha a profissão.',saveErr:'Não foi possível salvar. Verifique a conexão.',
   cfgT:'Configurações',pin1:'Novo PIN do RH (4 números)',pin2:'Novo PIN da Diretoria (4 números)',savePins:'Salvar PINs',pinNote:'PINs de fábrica: RH 1234 · Diretoria 4321. Troque antes de usar com candidatos.',pin4:'O PIN precisa ter 4 números.',pinDiff:'Os dois PINs precisam ser diferentes.',pinOk:'PINs salvos.',
-  back:'← Voltar',modT:'Notas por módulo',refNote:'▍ Linha branca = régua da casa.',gaps:'Lacunas para treinamento:',aiT:'🤖 Análise da Turbine',aiHint:'Toque no botão para a Turbine analisar este candidato.',aiBtn:'🌀 Analisar com a Turbine',analyzing:'Analisando...',
+  back:'← Voltar',modT:'Notas por módulo',refNote:'▍ Linha branca = régua da casa.',gaps:'Lacunas para treinamento:',aiT:'🤖 Análise do Aeolus',aiHint:'Toque no botão para o Aeolus analisar este candidato.',aiBtn:'🌀 Analisar com o Aeolus',analyzing:'Analisando...',
   answers:(a,b)=>`Respostas (${a} de ${b})`,elim:'eliminatória',gave:'Respondeu',right:'Certo',
   abT:'Teste abandonado',runT:'Teste em andamento',abTxt:(d,r,q,t)=>`Saiu em ${d} (${r}), na pergunta ${q} de ${t}.`,runTxt:d=>`Começou em ${d}.`,ansTxt:(a,b)=>` Respondeu ${a}, acertou ${b}.`,
   reissue:'🔑 Liberar novo código',reissueNote:'Use só se o problema foi da empresa (queda de energia, tablet travou...). Fica registrado.',newCodeMsg:'Novo código: ',
@@ -1894,11 +1894,11 @@ const PLD={
   decT:'Decisão',approve:'Aprovar',hold:'Em espera',reject:'Reprovar',del:'🗑 Excluir candidato',delQ:n=>`Excluir ${n} para sempre?`,delYes:'Sim, excluir',cancel:'Cancelar',curSit:'Situação atual:',decBy:'A decisão é registrada pelo RH.',
   prev:'Tentativas anteriores:',prevItem:(d,q)=>`abandonou em ${d} na pergunta ${q}`,
   apt:'Apto',aptT:'Apto c/ treinamento',notApt:'Não apto',
-  tb:{idle:'Pronto para ajudar',listening:'Ouvindo...',thinking:'Analisando os dados...',speaking:'Falando...',excl:'Acesso exclusivo: RH e diretoria',demo:' · modo demonstração',hello:'Olá! Eu sou a Turbine. Pergunte sobre candidatos, notas, vagas ou alertas.',ph:'Pergunte para a Turbine...',send:'Enviar',
+  tb:{idle:'Pronto para ajudar',listening:'Ouvindo...',thinking:'Analisando os dados...',speaking:'Falando...',excl:'Acesso exclusivo: RH e diretoria',demo:' · modo demonstração',hello:'Olá! Eu sou o Aeolus. Pergunte sobre candidatos, notas, vagas ou alertas.',ph:'Pergunte para o Aeolus...',send:'Enviar',
    sugg:['Quem são os 3 melhores candidatos?','Tem algum alerta de segurança?','Faça um resumo das contratações','Qual profissão tem mais candidatos fracos?'],lang:'português do Brasil'}},
  en:{panel:'Recruiting Dashboard',pinSub:'Enter your access PIN (HR or Management)',pinBad:'Wrong PIN.',rh:'HR',dir:'Management (read-only)',exit:'Exit',
   db:{nuvem:'🟢 Database connected',local:'🟡 Local mode (data is not saved to the cloud)',lento:'🟡 Database is slow, retrying...',erro:'🔴 Database error',conectando:'… Connecting'},
-  tabs:{geral:'Overview',ranking:'Ranking',lista:'Candidates',turbine:'🌀 Turbine',novo:'+ New candidate',config:'⚙️'},
+  tabs:{geral:'Overview',ranking:'Ranking',lista:'Candidates',turbine:'🌀 Aeolus',novo:'+ New candidate',config:'⚙️'},
   none:'No candidates yet',noneRH:'Tap <b>+ New candidate</b> to register someone and generate an access code.',noneDir:'Candidates will show up here once HR registers them.',
   kC:'Candidates',kA:'Passed the test',kAb:'Abandoned',kAl:'Safety alerts',funnel:'Hiring funnel',
   f:['Registered','Test completed','Interview done','Practical test done','Approved'],byProf:'By position',prof:'Position',cands:'Cand.',avg:'Average',best:'Best',
@@ -1907,7 +1907,7 @@ const PLD={
   newT:'Register a candidate and generate a code',name:'Full name',namePh:'e.g. Maria Souza',gen:'Generate access code',codeFor:'Code for',
   once:(d)=>`Valid <b>one time only</b>, until ${d}. Give it to the candidate to enter at the terminal.`,needName:"Enter the candidate's name.",needProf:'Choose the position.',saveErr:'Could not save. Check the connection.',
   cfgT:'Settings',pin1:'New HR PIN (4 digits)',pin2:'New Management PIN (4 digits)',savePins:'Save PINs',pinNote:'Default PINs: HR 1234 · Management 4321. Change them before using with candidates.',pin4:'The PIN must have 4 digits.',pinDiff:'The two PINs must be different.',pinOk:'PINs saved.',
-  back:'← Back',modT:'Scores by module',refNote:'▍ White line = in-house benchmark.',gaps:'Training gaps:',aiT:'🤖 Turbine analysis',aiHint:'Tap the button for Turbine to analyze this candidate.',aiBtn:'🌀 Analyze with Turbine',analyzing:'Analyzing...',
+  back:'← Back',modT:'Scores by module',refNote:'▍ White line = in-house benchmark.',gaps:'Training gaps:',aiT:'🤖 Aeolus analysis',aiHint:'Tap the button for Aeolus to analyze this candidate.',aiBtn:'🌀 Analyze with Aeolus',analyzing:'Analyzing...',
   answers:(a,b)=>`Answers (${a} of ${b})`,elim:'knock-out',gave:'Answered',right:'Correct',
   abT:'Test abandoned',runT:'Test in progress',abTxt:(d,r,q,t)=>`Left at ${d} (${r}), on question ${q} of ${t}.`,runTxt:d=>`Started at ${d}.`,ansTxt:(a,b)=>` Answered ${a}, got ${b} right.`,
   reissue:'🔑 Issue a new code',reissueNote:'Only if the problem was on our side (power outage, frozen tablet...). It is logged.',newCodeMsg:'New code: ',
@@ -1917,11 +1917,11 @@ const PLD={
   decT:'Decision',approve:'Approve',hold:'On hold',reject:'Reject',del:'🗑 Delete candidate',delQ:n=>`Delete ${n} permanently?`,delYes:'Yes, delete',cancel:'Cancel',curSit:'Current status:',decBy:'HR records the decision.',
   prev:'Previous attempts:',prevItem:(d,q)=>`abandoned at ${d} on question ${q}`,
   apt:'Qualified',aptT:'Qualified w/ training',notApt:'Not qualified',
-  tb:{idle:'Ready to help',listening:'Listening...',thinking:'Analyzing the data...',speaking:'Speaking...',excl:'Exclusive access: HR and management',demo:' · demo mode',hello:"Hi! I'm Turbine. Ask me about candidates, scores, positions or alerts.",ph:'Ask Turbine...',send:'Send',
+  tb:{idle:'Ready to help',listening:'Listening...',thinking:'Analyzing the data...',speaking:'Speaking...',excl:'Exclusive access: HR and management',demo:' · demo mode',hello:"Hi! I'm Aeolus. Ask me about candidates, scores, positions or alerts.",ph:'Ask Aeolus...',send:'Send',
    sugg:['Who are the top 3 candidates?','Are there any safety alerts?','Summarize the hiring status','Which position has the most weak candidates?'],lang:'English'}},
  es:{panel:'Panel de Reclutamiento',pinSub:'Ingrese su PIN de acceso (RR. HH. o Dirección)',pinBad:'PIN incorrecto.',rh:'RR. HH.',dir:'Dirección (solo lectura)',exit:'Salir',
   db:{nuvem:'🟢 Base de datos conectada',local:'🟡 Modo local (los datos no se guardan en la nube)',lento:'🟡 Base de datos lenta, reintentando...',erro:'🔴 Error en la base de datos',conectando:'… Conectando'},
-  tabs:{geral:'Resumen',ranking:'Ranking',lista:'Candidatos',turbine:'🌀 Turbine',novo:'+ Nuevo candidato',config:'⚙️'},
+  tabs:{geral:'Resumen',ranking:'Ranking',lista:'Candidatos',turbine:'🌀 Aeolus',novo:'+ Nuevo candidato',config:'⚙️'},
   none:'Aún no hay candidatos',noneRH:'Toque <b>+ Nuevo candidato</b> para registrar a alguien y generar el código de acceso.',noneDir:'Cuando RR. HH. registre candidatos, aparecerán aquí.',
   kC:'Candidatos',kA:'Aptos en la prueba',kAb:'Abandonados',kAl:'Alertas de seguridad',funnel:'Embudo de selección',
   f:['Registrados','Prueba terminada','Entrevista hecha','Prueba práctica hecha','Aprobados'],byProf:'Por puesto',prof:'Puesto',cands:'Cand.',avg:'Promedio',best:'Mejor',
@@ -1930,7 +1930,7 @@ const PLD={
   newT:'Registrar candidato y generar código',name:'Nombre completo',namePh:'Ej.: María Souza',gen:'Generar código de acceso',codeFor:'Código para',
   once:(d)=>`Vale <b>una sola vez</b>, hasta ${d}. Entréguelo al candidato para ingresarlo en la terminal.`,needName:'Escriba el nombre del candidato.',needProf:'Elija el puesto.',saveErr:'No se pudo guardar. Revise la conexión.',
   cfgT:'Configuración',pin1:'Nuevo PIN de RR. HH. (4 números)',pin2:'Nuevo PIN de Dirección (4 números)',savePins:'Guardar PINs',pinNote:'PINs de fábrica: RR. HH. 1234 · Dirección 4321. Cámbielos antes de usar con candidatos.',pin4:'El PIN debe tener 4 números.',pinDiff:'Los dos PINs deben ser diferentes.',pinOk:'PINs guardados.',
-  back:'← Volver',modT:'Notas por módulo',refNote:'▍ Línea blanca = referencia de la casa.',gaps:'Brechas para capacitación:',aiT:'🤖 Análisis de Turbine',aiHint:'Toque el botón para que Turbine analice a este candidato.',aiBtn:'🌀 Analizar con Turbine',analyzing:'Analizando...',
+  back:'← Volver',modT:'Notas por módulo',refNote:'▍ Línea blanca = referencia de la casa.',gaps:'Brechas para capacitación:',aiT:'🤖 Análisis de Aeolus',aiHint:'Toque el botón para que Aeolus analice a este candidato.',aiBtn:'🌀 Analizar con Aeolus',analyzing:'Analizando...',
   answers:(a,b)=>`Respuestas (${a} de ${b})`,elim:'eliminatoria',gave:'Respondió',right:'Correcto',
   abT:'Prueba abandonada',runT:'Prueba en curso',abTxt:(d,r,q,t)=>`Salió el ${d} (${r}), en la pregunta ${q} de ${t}.`,runTxt:d=>`Empezó el ${d}.`,ansTxt:(a,b)=>` Respondió ${a}, acertó ${b}.`,
   reissue:'🔑 Emitir nuevo código',reissueNote:'Úselo solo si el problema fue de la empresa (corte de luz, tableta trabada...). Queda registrado.',newCodeMsg:'Nuevo código: ',
@@ -1940,7 +1940,7 @@ const PLD={
   decT:'Decisión',approve:'Aprobar',hold:'En espera',reject:'Rechazar',del:'🗑 Eliminar candidato',delQ:n=>`¿Eliminar a ${n} para siempre?`,delYes:'Sí, eliminar',cancel:'Cancelar',curSit:'Situación actual:',decBy:'RR. HH. registra la decisión.',
   prev:'Intentos anteriores:',prevItem:(d,q)=>`abandonó el ${d} en la pregunta ${q}`,
   apt:'Apto',aptT:'Apto c/ capacitación',notApt:'No apto',
-  tb:{idle:'Listo para ayudar',listening:'Escuchando...',thinking:'Analizando los datos...',speaking:'Hablando...',excl:'Acceso exclusivo: RR. HH. y dirección',demo:' · modo demostración',hello:'¡Hola! Soy Turbine. Pregúnteme sobre candidatos, notas, puestos o alertas.',ph:'Pregunte a Turbine...',send:'Enviar',
+  tb:{idle:'Listo para ayudar',listening:'Escuchando...',thinking:'Analizando los datos...',speaking:'Hablando...',excl:'Acceso exclusivo: RR. HH. y dirección',demo:' · modo demostración',hello:'¡Hola! Soy Aeolus. Pregúnteme sobre candidatos, notas, puestos o alertas.',ph:'Pregunte a Aeolus...',send:'Enviar',
    sugg:['¿Quiénes son los 3 mejores candidatos?','¿Hay alertas de seguridad?','Haga un resumen de las contrataciones','¿Qué puesto tiene más candidatos débiles?'],lang:'español'}}
 };
 const PL=k=>PLD[plang][k];
@@ -2013,7 +2013,7 @@ function panelBase(){
        <button class="btn ghost small" onclick="logoutPanel()">${PL('exit')}</button></div></div>
    <p class="muted" style="font-size:12px;margin:-6px 0 10px 4px">${PL('db')[dbMode]}</p>
    <div class="tabs">${tabs.map(k=>`<button class="tab ${panelTab===k?'on':''}" onclick="panelTab='${k}';render()">${PL('tabs')[k]}</button>`).join('')}</div>
-   ${body}</div>${panelTab!=='turbine'?`<button class="tbFab" onclick="detail=null;panelTab='turbine';render()"><span class="orb"><i></i><i></i><i></i><b></b></span>TURBINE</button>`:''}`;
+   ${body}</div>${panelTab!=='turbine'?`<button class="tbFab" onclick="detail=null;panelTab='turbine';render()"><span class="orb"><i></i><i></i><i></i><b></b></span>AEOLUS</button>`:''}`;
 }
 function pGeral(){
   if(!CANDS.length)return `<div class="card glass" style="margin-top:0;text-align:center;padding:30px"><div style="font-size:46px">📋</div><h3 style="margin-top:8px">${PL('none')}</h3><p class="muted" style="margin-top:6px">${viewRole==='rh'?PL('noneRH'):PL('noneDir')}</p>${viewRole==='rh'?`<button class="btn" style="margin-top:16px" onclick="panelTab='novo';render()">${PL('tabs').novo}</button>`:''}</div>`;
@@ -2137,7 +2137,7 @@ async function aiAnalyze(id){
   let txt='';
   try{
     if(!SAMPLE)throw{code:'offline'};
-    const r=await SAMPLE(`You are TURBINE, the recruiting assistant of Bluewind Technology (composite wind-turbine nacelle plant). Analyze the candidate below for HR. Answer ONLY in ${PL('tb').lang}, in at most 5 sentences: strengths, gaps (what to train) and one objective recommendation. Judge only job-related performance, never personal characteristics. If a knock-out safety question was missed, highlight it. Many screen exits with a low average time may indicate guessing or outside help.\nDATA (field names in Portuguese): ${JSON.stringify(data)}`,{cache:false,onText:({text})=>{if(text&&text!=='Thinking...')box.innerHTML=esc(text)}});
+    const r=await SAMPLE(`You are AEOLUS, the recruiting assistant of Bluewind Technology (composite wind-turbine nacelle plant). Analyze the candidate below for HR. Answer ONLY in ${PL('tb').lang}, in at most 5 sentences: strengths, gaps (what to train) and one objective recommendation. Judge only job-related performance, never personal characteristics. If a knock-out safety question was missed, highlight it. Many screen exits with a low average time may indicate guessing or outside help.\nDATA (field names in Portuguese): ${JSON.stringify(data)}`,{cache:false,onText:({text})=>{if(text&&text!=='Thinking...')box.innerHTML=esc(text)}});
     txt=r.text;
   }catch(e){
     const weak=Object.entries(c.modules||{}).filter(([k,v])=>v<(REF[k]||80)).map(([k])=>modL(k));const strong=Object.entries(c.modules||{}).filter(([k,v])=>v>=(REF[k]||80)).map(([k])=>modL(k));
@@ -2155,7 +2155,7 @@ function pTurbine(){
   const T=PL('tb');
   return `<div class="card glass tbWrap" style="margin-top:0">
    <div class="tbHead"><div id="orb" class="orb ${tbState}"><i></i><i></i><i></i><b></b></div>
-     <div><h2 style="font-size:28px;letter-spacing:.04em">TURBINE</h2><p class="muted" id="orbLbl">${T[tbState]||T.idle}</p>
+     <div><h2 style="font-size:28px;letter-spacing:.04em">AEOLUS</h2><p class="muted" id="orbLbl">${T[tbState]||T.idle}</p>
      <p class="demo" style="margin-top:4px">${T.excl}${SAMPLE?'':T.demo}</p></div></div>
    <div id="tbLog" class="tbLog">${tbHist.length?tbHist.map(tbBubble).join(''):`<div class="tbMsg ai">${T.hello}</div>`}</div>
    <div class="tbSugg">${T.sugg.map(q=>`<button class="tab" onclick="tbAsk('${q.replace(/'/g,"\\'")}')">${q}</button>`).join('')}</div>
@@ -4388,13 +4388,13 @@ window.addEventListener('popstate',()=>{try{history.pushState({sk:1},'')}catch(e
 
 /* ---------- TURBINE POR VOZ ---------- */
 const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
-const VOZ={pt:{mic:'Falar com a Turbine',wake:'Ativar por voz',wakeOff:'Desativar voz',hint:'Diga “Turbine” e a pergunta. Ex.: “Turbine, quem são os melhores laminadores?”',on:'🎙️ Ouvindo “Turbine”',noSR:'Este navegador não tem reconhecimento de voz. Use o Chrome ou o Safari atualizado.',deny:'O microfone foi bloqueado. Libere o microfone para este site nas configurações do navegador.'},
- en:{mic:'Talk to Turbine',wake:'Voice activation',wakeOff:'Turn off voice',hint:'Say “Turbine” and your question. E.g. “Turbine, who are the best laminators?”',on:'🎙️ Listening for “Turbine”',noSR:'This browser has no speech recognition. Use an updated Chrome or Safari.',deny:'The microphone is blocked. Allow the microphone for this site in the browser settings.'},
- es:{mic:'Hablar con Turbine',wake:'Activar por voz',wakeOff:'Desactivar voz',hint:'Diga “Turbine” y la pregunta. Ej.: “Turbine, ¿quiénes son los mejores laminadores?”',on:'🎙️ Escuchando “Turbine”',noSR:'Este navegador no tiene reconocimiento de voz. Use Chrome o Safari actualizado.',deny:'El micrófono está bloqueado. Permita el micrófono para este sitio en la configuración del navegador.'}};
+const VOZ={pt:{mic:'Falar com o Aeolus',wake:'Ativar por voz',wakeOff:'Desativar voz',hint:'Diga “Aeolus” e a pergunta. Ex.: “Aeolus, quem são os melhores laminadores?”',on:'🎙️ Ouvindo “Aeolus”',noSR:'Este navegador não tem reconhecimento de voz. Use o Chrome ou o Safari atualizado.',deny:'O microfone foi bloqueado. Libere o microfone para este site nas configurações do navegador.'},
+ en:{mic:'Talk to Aeolus',wake:'Voice activation',wakeOff:'Turn off voice',hint:'Say “Aeolus” and your question. E.g. “Aeolus, who are the best laminators?”',on:'🎙️ Listening for “Aeolus”',noSR:'This browser has no speech recognition. Use an updated Chrome or Safari.',deny:'The microphone is blocked. Allow the microphone for this site in the browser settings.'},
+ es:{mic:'Hablar con Aeolus',wake:'Activar por voz',wakeOff:'Desactivar voz',hint:'Diga “Aeolus” y la pregunta. Ej.: “Aeolus, ¿quiénes son los mejores laminadores?”',on:'🎙️ Escuchando “Aeolus”',noSR:'Este navegador no tiene reconocimiento de voz. Use Chrome o Safari actualizado.',deny:'El micrófono está bloqueado. Permita el micrófono para este sitio en la configuración del navegador.'}};
 const srLang=()=>(SPK[plang]);
 let wakeOn=false,wakeRec=null,oneRec=null,tbBusyVoice=false;
 try{wakeOn=localStorage.getItem('sk_wake')==='1'}catch(e){}
-const WAKE_RE=/\b(turbine|turbina|turbi|turbinho|turbin|terbine|turban)\b[\s,.:!?-]*/i;
+const WAKE_RE=/(?:^|[\s,.])(a[eé]olus|[eé]olus|[eé]olo|a[eé]olo|aiolos|aiolus|iolus|íolo|eólus|aeolos|ayolus|eulos|turbine|turbina)(?=$|[\s,.:!?-])[\s,.:!?-]*/i;
 function wakeAllowed(){return wakeOn&&SRC&&screen==='panel'&&!tbBusyVoice&&tbState!=='speaking'&&tbState!=='thinking'}
 function wakeStart(){
   if(!wakeAllowed()||wakeRec)return;
@@ -4441,7 +4441,7 @@ function pTurbine(){
   const T=PL('tb'),V=VOZ[plang],canVoice=!!(DICT||SRC);
   return `<div class="card glass tbWrap" style="margin-top:0">
    <div class="tbHead"><div id="orb" class="orb ${tbState}"><i></i><i></i><i></i><b></b></div>
-     <div><h2 style="font-size:28px;letter-spacing:.04em">TURBINE</h2><p class="muted" id="orbLbl">${T[tbState]||T.idle}</p>
+     <div><h2 style="font-size:28px;letter-spacing:.04em">AEOLUS</h2><p class="muted" id="orbLbl">${T[tbState]||T.idle}</p>
      <p class="demo" style="margin-top:4px">${T.excl}${SAMPLE?'':T.demo}</p></div></div>
    ${SRC?`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0 10px"><button class="btn ghost small ${wakeOn?'wakeOn':''}" onclick="wakeToggle()">${wakeOn?'🔕 '+V.wakeOff:'👂 '+V.wake}</button><span class="muted" style="font-size:13px;flex:1;min-width:200px">${V.hint}</span></div>`:''}
    <div id="tbLog" class="tbLog">${tbHist.length?tbHist.map(tbBubble).join(''):`<div class="tbMsg ai">${T.hello}</div>`}</div>
