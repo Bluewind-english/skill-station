@@ -5396,6 +5396,12 @@ function psicoLink(){
 }
 (function(){try{const u=new URL(location.href);if(u.searchParams.has('psico')){u.searchParams.delete('psico');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(psicoLink,300)}}catch(e){}})();
 if(plang==='es')plang='pt';
+/* ao tocar na bandeira, fala o nome do país no próprio idioma */
+const FLAG_SAY={pt:['Brasil','pt-BR'],en:['United States','en-US'],es:['España','es-ES'],de:['Deutschland','de-DE'],tr:['Türkiye','tr-TR'],zh:['中国','zh-CN']};
+function sayFlag(k){try{const x=FLAG_SAY[k];if(!x||!window.speechSynthesis)return;const u=new SpeechSynthesisUtterance(x[0]);u.lang=x[1];const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.replace('_','-').toLowerCase().startsWith(x[1].slice(0,2).toLowerCase()));if(v)u.voice=v;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+try{speechSynthesis.getVoices()}catch(e){}
+const setLangBase6=setLang;setLang=function(k){sayFlag(k);setLangBase6(k)};
+const pickLang6Base=pickLang6;pickLang6=function(k,f){sayFlag(k);pickLang6Base(k,f)};
 
 
 render();
