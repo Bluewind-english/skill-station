@@ -5410,6 +5410,114 @@ const setLangBase6=setLang;setLang=function(k){sayFlag(k);setLangBase6(k)};
 const pickLang6Base=pickLang6;pickLang6=function(k,f){sayFlag(k);pickLang6Base(k,f)};
 
 
+/* =====================================================================
+   ACESSO SAFETY (segurança do trabalho) — 17/11/2026
+   Três acessos: RH (tudo), Diretoria (só leitura), Safety (Onboard + alertas de segurança).
+   O Safety não vê notas da seleção nem psicotécnico: no banco de dados ele só recebe
+   nome, função, situação, alertas de segurança e dados do Onboard (função safety_list).
+   ===================================================================== */
+LOGIN_EMAIL.seg='seguranca@skillstation.app';
+Object.assign(PLD.pt,{seg:'Safety',segT:'Painel de Segurança (Safety)',segOnb:'Onboard dos contratados',segAl:'Alertas de segurança',
+  segNone:'Nenhum contratado ainda. Quando o RH aprovar alguém, ele aparece aqui.',segNoAl:'Nenhum alerta de segurança.',
+  segNoCode:'Sem código',segSent:'Código enviado',segDone:'Concluído',segExp:'vence',segExpired:'Código vencido',
+  segErr:'Erros por módulo',segCrit:'Errou pergunta(s) crítica(s) de segurança no teste da profissão',segPos:'Função',
+  segAlNote:'Candidatos que erraram perguntas críticas de segurança no teste da profissão. Vale reforçar esses pontos no treinamento.',
+  segK1:'Contratados',segK2:'Onboard concluído',segK3:'Aguardando',segWho:'Quem vai entrar?',
+  segNew:'🔄 Gerar novo código',segMaster:'Modo de demonstração: dados de exemplo, nada é salvo.',segCodeHint:'Entregue o código ao funcionário. Ele digita na tela inicial (Toque para começar) ou lê o QR Code.'});
+Object.assign(PLD.en,{seg:'Safety',segT:'Safety Dashboard',segOnb:'New hire Onboard',segAl:'Safety alerts',
+  segNone:'No new hires yet. When HR approves someone, they show up here.',segNoAl:'No safety alerts.',
+  segNoCode:'No code',segSent:'Code sent',segDone:'Completed',segExp:'expires',segExpired:'Code expired',
+  segErr:'Errors per module',segCrit:'Missed critical safety question(s) on the position test',segPos:'Position',
+  segAlNote:'Candidates who missed critical safety questions on the position test. Worth reinforcing these points in training.',
+  segK1:'New hires',segK2:'Onboard completed',segK3:'Pending',segWho:'Who is signing in?',
+  segNew:'🔄 New code',segMaster:'Demo mode: sample data, nothing is saved.',segCodeHint:'Give the code to the employee. They type it on the start screen (Tap to start) or scan the QR code.'});
+
+/* login: 3 botões (RH, Diretoria, Safety) */
+function setWho(k){loginWho=k;['rh','dir','seg'].forEach(x=>{const b=document.getElementById('lgW_'+x);if(b)b.classList.toggle('on',x===k)})}
+const loginBaseSeg=login;
+login=function(){
+  if(SB_ON&&STAFF){viewRole=STAFF.role==='rh'?'rh':STAFF.role==='seg'?'seg':'dir';panelTab='geral';detail=null;screen='panel';return render()}
+  loginBaseSeg();
+  const r=SB_ON?document.querySelector('#app form .role'):null;
+  if(r){const names={rh:PL('rh'),dir:{pt:'Diretoria',en:'Management'}[plang]||'Diretoria',seg:'🦺 Safety'};
+    r.innerHTML=['rh','dir','seg'].map(k=>`<button type="button" id="lgW_${k}" class="${loginWho===k?'on':''}" onclick="setWho('${k}')" style="flex:1;font-size:15px;padding:10px 6px">${names[k]}</button>`).join('')}
+};
+const doLoginBaseSeg=doLoginBase;
+doLoginBase=async function(){await doLoginBaseSeg();if(STAFF&&STAFF.role==='seg'&&screen==='panel'){viewRole='seg';panelTab='geral';render()}};
+
+/* dados: o Safety lê pela função safety_list (só campos permitidos) */
+let SEGD=null,SEGT=0;
+const segLive=()=>SB_ON&&!MASTER&&STAFF&&STAFF.role==='seg';
+const segData=()=>segLive()?(SEGD||[]):CANDS;
+async function segLoad(){if(!segLive())return;SEGT=now();const r=await SB.rpc('safety_list');if(r.error)return;
+  SEGD=(r.data||[]).map(x=>({id:x.id,...x.doc}));if(screen==='panel'&&viewRole==='seg')render()}
+const loadStaffBaseSeg=loadStaff;
+loadStaff=async function(){await loadStaffBaseSeg();SEGD=null;if(segLive())segLoad()};
+const logoutBaseSeg=logoutPanel;logoutPanel=async function(){SEGD=null;return logoutBaseSeg()};
+/* modo demonstração: senha 000/0000 com "Safety" escolhido abre o painel do Safety */
+const enterMasterBaseSeg=enterMaster;
+enterMaster=function(){const who=loginWho;enterMasterBaseSeg();
+  if(who==='seg'){const d=now()-86400000;
+    const extra={
+      seg1:{name:'Paulo Lima',role:'laminador',status:'aprovado',createdAt:d-5*86400000,onboardCode:'9417',onboardCodeAt:d,onboardDone:true,onboardAt:d+3600000,onboardLang:'pt',onboardErr:{m1:1,m2:0,m3:2,m4:0,m5:1,m6:0,m7:0}},
+      seg2:{name:'Kevin Brooks',role:'montador',status:'aprovado',createdAt:d-3*86400000,onboardCode:'9582',onboardCodeAt:now()-7200000},
+      seg3:{name:'Rafael Costa',role:'laminador',status:'aprovado',createdAt:d-86400000,crit:true}};
+    Object.entries(extra).forEach(([id,x])=>DBX.doc('candidates/'+id).set(x));
+    viewRole='seg';panelTab='geral';detail=null;render()}};
+
+/* painel */
+const panelBaseSeg=panel;
+panel=function(){if(viewRole==='seg')return segPanel();return panelBaseSeg()};
+function segHires(){return segData().filter(c=>c.status==='aprovado'||c.onboardCode||c.onboardDone).sort((a,b)=>(a.onboardDone?1:0)-(b.onboardDone?1:0)||(b.createdAt||0)-(a.createdAt||0))}
+function segRow(c){
+  const p=profBy(c.role);let st,badge;
+  if(c.onboardDone){st=`${PL('segDone')} · ${fmtDTL(c.onboardAt)} · ${(c.onboardLang||'').toUpperCase()}`;badge='b-ok'}
+  else if(c.onboardCode){const exp=(c.onboardCodeAt||0)+7*24*3600000;st=exp<now()?PL('segExpired'):`${PL('segSent')}: <b>${c.onboardCode}</b> · ${PL('segExp')} ${fmtDTL(exp)}`;badge=exp<now()?'b-bad':'b-mid'}
+  else{st=PL('segNoCode');badge='b-mid'}
+  let h=`<div class="card glass" style="margin:0 0 10px;padding:14px">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+      <div><b style="font-size:17px">${esc(c.name||'—')}</b><div class="muted" style="font-size:13px">${p?p.ico+' '+profName(c.role):esc(c.role||'')}</div></div>
+      <span class="badge ${badge}" style="white-space:normal">${st}</span></div>`;
+  if(c.onboardDone)h+=`<p class="muted" style="font-size:13px;margin-top:8px">${PL('segErr')}: ${ONB.map((m,i)=>`${m.ico} ${(c.onboardErr||{})['m'+(i+1)]||0}`).join(' · ')}</p>`;
+  if(c.crit)h+=`<p style="font-size:13px;margin-top:6px;color:#fca5a5">⚠️ ${PL('segCrit')}</p>`;
+  if(!c.onboardDone){
+    if(c.onboardCode&&(c.onboardCodeAt||0)+7*24*3600000>now()&&segOpen===c.id)h+=`<div style="text-align:center;margin-top:10px"><div class="bigcode">${c.onboardCode}</div>${qrSVG(appURL()+'?c='+c.onboardCode,170)}<p class="muted" style="font-size:13px;margin-top:6px">${PL('segCodeHint')}</p></div>`;
+    h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+      ${c.onboardCode&&(c.onboardCodeAt||0)+7*24*3600000>now()?`<button class="btn ghost small" onclick="segOpen=segOpen==='${c.id}'?null:'${c.id}';render()">📱 QR Code</button>`:''}
+      <button class="btn ${c.onboardCode?'ghost ':''}small" onclick="segGen('${c.id}')">${c.onboardCode?PL('segNew'):PL('onbGen')}</button></div>`}
+  return h+`</div>`;
+}
+let segOpen=null;
+function segPanel(){
+  if(segLive()&&now()-SEGT>30000)segLoad();
+  const H=segHires(),done=H.filter(c=>c.onboardDone).length,AL=segData().filter(c=>c.crit);
+  const tabs=[['geral','✈️ '+PL('segOnb')],['alertas','⚠️ '+PL('segAl')]];
+  let body='';
+  if(panelTab!=='alertas'){
+    body=`<div class="kpis"><div class="kpi glass"><span>${PL('segK1')}</span><b>${H.length}</b></div><div class="kpi glass"><span>${PL('segK2')}</span><b style="color:#86efac">${done}</b></div><div class="kpi glass"><span>${PL('segK3')}</span><b style="color:#fcd34d">${H.length-done}</b></div></div>
+      ${H.length?H.map(segRow).join(''):`<div class="card glass" style="text-align:center;padding:26px"><div style="font-size:40px">🦺</div><p class="muted" style="margin-top:8px">${PL('segNone')}</p></div>`}
+      <div style="text-align:center;margin:6px 0 20px"><button class="btn ghost small" onclick="onbStart({preview:true})">${PL('onbPrev')}</button></div>`;
+  }else{
+    body=`<p class="muted" style="margin:0 0 10px 4px;font-size:14px">${PL('segAlNote')}</p>`+(AL.length?AL.map(c=>{const p=profBy(c.role);return`<div class="card glass" style="margin:0 0 10px;padding:14px"><b>${esc(c.name||'—')}</b><div class="muted" style="font-size:13px">${p?p.ico+' '+profName(c.role):''} · ${stL(effStatus(c))[0]}</div><p style="font-size:13px;margin-top:6px;color:#fca5a5">⚠️ ${PL('segCrit')}</p></div>`}).join(''):`<div class="card glass" style="text-align:center;padding:26px"><p class="muted">${PL('segNoAl')}</p></div>`);
+  }
+  app.innerHTML=`<div class="fade">
+   <div class="ph glass"><div class="miniLogo">${miniLogo()}<span>${PL('segT')}</span></div>
+     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${plFlags()}
+       <span class="badge b-mid">🦺 ${PL('seg')}</span>
+       <button class="btn ghost small" onclick="logoutPanel()">${PL('exit')}</button></div></div>
+   ${MASTER?`<div class="card glass" style="margin:0 0 12px;border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)"><b style="color:#fcd34d">🔑 ${PL('segMaster')}</b></div>`:''}
+   <div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${(panelTab===k||(k==='geral'&&panelTab!=='alertas'))?'on':''}" onclick="panelTab='${k}';render()">${n}</button>`).join('')}</div>
+   ${body}</div>`;
+}
+async function segGen(id){
+  if(SB_ON&&!MASTER&&STAFF&&STAFF.role==='seg'){
+    const r=await SB.rpc('safety_onb_code',{p_id:id});
+    if(r.error){alertBox(PL('saveErr'));return}
+    const x=segData().find(k=>k.id===id);if(x){x.onboardCode=r.data;x.onboardCodeAt=now()}segOpen=id;render();return}
+  await genOnb(id);segOpen=id;render();
+}
+
+
 render();
 </script>
 </body>
