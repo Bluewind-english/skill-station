@@ -78,6 +78,8 @@ language plpgsql security definer set search_path = public as $$
 declare nid text := 'd' || replace(gen_random_uuid()::text, '-', '');
         tok text := replace(gen_random_uuid()::text, '-', '');
 begin
+  -- limpeza automática: apaga testes do código 0000 com mais de 1 dia (até criar as senhas do RH/Diretoria)
+  delete from candidates where doc->>'demo' = 'true' and coalesce((doc->>'createdAt')::bigint, 0) < (extract(epoch from now() - interval '1 day') * 1000)::bigint;
   if (select count(*) from candidates where doc->>'demo' = 'true' and updated_at > now() - interval '1 hour') > 50 then
     raise exception 'limite de testes atingido';
   end if;

@@ -1312,8 +1312,8 @@ function home(){
    <div class="coverHud">
      <div class="hudCard">
               <div class="title"><div class="l2">Skill Station</div><div class="slogan">Show what you know</div></div>
-       <div class="langs">
-         ${[['en','us','English'],['pt','br','Português'],['es','es','Español']].map(([k,f,n])=>`<button class="lang glass ${lang===k?'on':''}" data-lg="${k}" onclick="setLang('${k}')"><span class="flag">${FLAG[f]}</span>${n}</button>`).join('')}
+       <div class="langs flagsOnly">
+         ${LANG_FLAGS.map(([k,f])=>`<button class="lang glass ${lang===k?'on':''}" data-lg="${k}" aria-label="${k}" onclick="setLang('${k}')"><span class="flag">${FLAG[f]}</span></button>`).join('')}
        </div>
        <button class="btn start" onclick="typed='';go('code')"><span class="play"><svg width="20" height="20" viewBox="0 0 20 20"><path d="M5 3l12 7-12 7z" fill="#fff"/></svg></span><span id="startTxt">${t('start')}<small>${t('startSub')}</small></span></button>
      </div></div>
@@ -1588,8 +1588,8 @@ async function kp(k){
 /* ---------- CÓDIGO DE TESTE 0000: escolher profissão ---------- */
 function demoProfBase(){
   app.innerHTML=`<div class="center fade" style="max-width:640px"><div class="glass" style="padding:24px">
-   <span class="badge b-mid">${{pt:'Modo de teste',en:'Test mode',es:'Modo de prueba'}[lang]}</span>
-   <h2 style="font-size:26px;margin-top:10px">${{pt:'Escolha a profissão',en:'Choose the position',es:'Elija el puesto'}[lang]}</h2>
+   <span class="badge b-mid">${t('testMode')}</span>
+   <h2 style="font-size:26px;margin-top:10px">${t('chooseProf')}</h2>
    <div class="profGrid" style="margin-top:16px">${PROFS.map(p=>`<button class="profCard" onclick="startDemo('${p.id}')"><span class="pIco">${p.ico}</span><span><b>${p.n[lang]}</b></span></button>`).join('')}</div>
    <button class="btn ghost small" style="margin-top:16px" onclick="go('home')">✕</button></div></div>`;
 }
@@ -1647,7 +1647,7 @@ function tick(){const e=document.getElementById('tm');if(!e)return;e.textContent
 function upd(){const b=document.getElementById('nx');if(b)b.disabled=(sel===null||sel==='')}
 function pick(i){sel=i;document.querySelectorAll('.opt').forEach(e=>e.classList.toggle('sel',+e.dataset.i===i));upd()}
 function ordPick(i){if(orderPick.includes(i))return;orderPick.push(i);const e=document.getElementById('o'+i);e.classList.add('picked');e.querySelector('.n').textContent=orderPick.length;sel=orderPick.length===5?orderPick.slice():null;upd()}
-function speak(){try{const q=QS[qi];let s=q.t[lang];if(q.o)s+='. '+q._ord.map((oi,k)=>'ABCD'[k]+': '+q.o[lang][oi]).join('. ');const u=new SpeechSynthesisUtterance(s);u.lang={pt:'pt-BR',en:'en-US',es:'es-US'}[lang];speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function speak(){try{const q=QS[qi];let s=q.t[lang];if(q.o)s+='. '+q._ord.map((oi,k)=>'ABCD'[k]+': '+q.o[lang][oi]).join('. ');const u=new SpeechSynthesisUtterance(s);u.lang=SPK[lang];speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function answer(timeout){
   if(!testActive)return;
   clearInterval(timer);try{speechSynthesis.cancel()}catch(e){}
@@ -1974,10 +1974,10 @@ const PRACL={pt:PRACTICAL,
   qc:['Midió correctamente con calibrador','Identificó los defectos de la pieza','Llenó el registro de inspección','Aplicó el criterio de aceptación','Comunicó el resultado con claridad'],
   tech:['Analizó el defecto con método (causa raíz)','Calculó la formulación correctamente','Leyó el procedimiento y la ficha técnica','Propuso una acción correctiva viable','Comunicó el resultado con claridad'],
   hr:['Hizo preguntas estructuradas','Evitó preguntas prohibidas','Registró las notas de la entrevista','Se comunicó con claridad','Mantuvo la confidencialidad']}};
-const fmtDTL=ms=>ms?new Date(ms).toLocaleString({pt:'pt-BR',en:'en-US',es:'es-US'}[plang],{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+const fmtDTL=ms=>ms?new Date(ms).toLocaleString(SPK[plang],{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
 function cls(s){return s>=75?[PL('apt'),'b-ok']:s>=55?[PL('aptT'),'b-mid']:[PL('notApt'),'b-bad']}
 function setPLang(k){plang=k;render()}
-const plFlags=()=>`<div class="role">${[['pt','br'],['en','us'],['es','es']].map(([k,f])=>`<button class="${plang===k?'on':''}" onclick="setPLang('${k}')" style="padding:6px 10px;display:flex">${FLAG[f]}</button>`).join('')}</div>`;
+const plFlags=()=>`<div class="role">${[['pt','br'],['en','us']].map(([k,f])=>`<button class="${plang===k?'on':''}" onclick="setPLang('${k}')" style="padding:6px 10px;display:flex">${FLAG[f]}</button>`).join('')}</div>`;
 
 /* ---- login ---- */
 function login(){
@@ -2168,7 +2168,7 @@ function pTurbine(){
 }
 function tbSay(text){const plain=text.replace(/\*\*/g,'').slice(0,1900);const lg={pt:'pt-BR',en:'en',es:'es'}[plang];
   if(TTS){setOrb('speaking');TTS.speak(plain,{language:lg,voice:'glassy'}).catch(()=>{}).finally(()=>{if(tbState==='speaking')setOrb('idle')});return}
-  try{const u=new SpeechSynthesisUtterance(plain);u.lang={pt:'pt-BR',en:'en-US',es:'es-US'}[plang];u.onstart=()=>setOrb('speaking');u.onend=()=>setOrb('idle');speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+  try{const u=new SpeechSynthesisUtterance(plain);u.lang=SPK[plang];u.onstart=()=>setOrb('speaking');u.onend=()=>setOrb('idle');speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function tbData(){return CANDS.map(c=>{const fs=finalScore(c);return{nome:c.name,profissao:profName(c.role,plang),situacao:STL[plang][effStatus(c)],nota_teste:hasTest(c)?c.score:null,nota_final:fs?fs.v:null,nota_parcial:fs?fs.partial:null,
   entrevista:intPct(c),pratica:pracPct(c),modulos:c.modules?Object.fromEntries(Object.entries(c.modules).map(([k,v])=>[modL(k),v])):null,alerta_seguranca:!!c.crit,saidas_de_tela:c.exits||0,tempo_medio_s:c.avg||null,cadastro:fmtDTL(c.createdAt)}})}
 
@@ -3924,6 +3924,7 @@ const PSY_ALL=[
     es:['La deja para el equipo de limpieza al final del día','Señaliza el área y limpia según el procedimiento','Le echa agua encima','La tapa con cartón y sigue trabajando']})
 ];
 
+
 /* ---------- ETAPA 3: SEGURANÇA DO TRABALHO (20 perguntas, sem nota mínima, nota separada) ---------- */
 const SSTL={pt:{epi:'EPIs',quim:'Produtos químicos',maq:'Máquinas e equipamentos',ferr:'Ferramentas'},
  en:{epi:'PPE',quim:'Chemicals',maq:'Machines and equipment',ferr:'Tools'},
@@ -4014,6 +4015,7 @@ function pickGo(){
   screen='test';window.scrollTo(0,0);render();
 }
 
+
 /* ---------- textos novos do painel ---------- */
 Object.assign(PLD.pt,{psy:'Psicotécnico',psyT:'Psicotécnico (etapa 1)',psyPass:'Passou',psyFail:'Reprovado',psyMin:'Nota mínima para seguir: '+PSY_MIN+'%. O candidato nunca vê esta nota.',
  rkTec:'Teste técnico',rkPsy:'Psicotécnico',noPsy:'Ainda não há resultados do psicotécnico.',contactT:'Contato',addr:'Endereço',phone:'Telefone',
@@ -4065,7 +4067,7 @@ function terms(){
    <p class="muted" style="margin-top:14px;font-size:14px">✍️ ${T.sign}</p>
    <div style="position:relative;margin-top:6px"><canvas id="sig" style="width:100%;height:170px;border-radius:14px;background:#f8fafc;touch-action:none;display:block;cursor:crosshair"></canvas>
     <button class="btn ghost small" style="position:absolute;right:8px;bottom:8px;color:#0f172a;background:rgba(15,23,42,.08)" onclick="sigClear()">${T.clear}</button></div>
-   <p class="muted" style="font-size:13px;margin-top:6px">${escH(cand.name)} · ${new Date().toLocaleDateString({pt:'pt-BR',en:'en-US',es:'es-US'}[lang])}</p>
+   <p class="muted" style="font-size:13px;margin-top:6px">${escH(cand.name)} · ${new Date().toLocaleDateString(SPK[lang])}</p>
    <div class="err" id="tErr"></div>
    <div style="display:grid;gap:10px;margin-top:6px"><button class="btn" id="tOk" onclick="termsAccept()">${T.ok} →</button><button class="btn ghost" onclick="termsRefuse()">${T.no}</button></div></div></div>`;
   sigInit();
@@ -4277,7 +4279,7 @@ function candDetail(){
 }
 function printConsent(id){
   const c=CANDS.find(x=>x.id===id);if(!c||!c.consent)return;const cs=c.consent,T=TERMS[cs.lang||'pt'];
-  const d=new Date(cs.at).toLocaleString({pt:'pt-BR',en:'en-US',es:'es-US'}[cs.lang||'pt']);
+  const d=new Date(cs.at).toLocaleString(SPK[cs.lang||'pt']);
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${T.title} – ${escH(c.name)}</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:30px auto;color:#111;line-height:1.45;font-size:14px}h1{font-size:22px;margin:0}li{margin:6px 0}.sig{border-top:1px solid #999;margin-top:24px;padding-top:10px}</style></head><body>
    <h1>${T.title}</h1><p style="color:#555">${T.sub}</p><p>${T.intro}</p><ol>${T.items.map(([h,x])=>`<li><b>${h}.</b> ${x}</li>`).join('')}</ol><p><b>${T.decl}</b></p>
    <div class="sig"><p>☑ ${T.agree}</p>${cs.sig?`<img src="${cs.sig}" style="width:300px;border:1px solid #ddd">`:''}<p>${T.signedBy}: <b>${escH(c.name)}</b> ${T.on} ${d}<br>${escH(profName(c.role))} · ${TERMS_VER}</p></div>
@@ -4324,6 +4326,7 @@ function panel(){
   panelBase();
   if(MASTER&&detail===null){const ph=document.querySelector('#app .ph');if(ph)ph.insertAdjacentHTML('afterend',`<div class="card glass" style="margin:0 0 12px;border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)"><b style="color:#fcd34d">🔑 ${PL('master')}</b></div>`)}
 }
+
 
 /* =====================================================================
    16/11/2026 (2): sem zoom e sem seleção de texto no celular; botão Voltar em todas as telas
@@ -4382,7 +4385,7 @@ const SRC=window.SpeechRecognition||window.webkitSpeechRecognition;
 const VOZ={pt:{mic:'Falar com a Turbine',wake:'Ativar por voz',wakeOff:'Desativar voz',hint:'Diga “Turbine” e a pergunta. Ex.: “Turbine, quem são os melhores laminadores?”',on:'🎙️ Ouvindo “Turbine”',noSR:'Este navegador não tem reconhecimento de voz. Use o Chrome ou o Safari atualizado.',deny:'O microfone foi bloqueado. Libere o microfone para este site nas configurações do navegador.'},
  en:{mic:'Talk to Turbine',wake:'Voice activation',wakeOff:'Turn off voice',hint:'Say “Turbine” and your question. E.g. “Turbine, who are the best laminators?”',on:'🎙️ Listening for “Turbine”',noSR:'This browser has no speech recognition. Use an updated Chrome or Safari.',deny:'The microphone is blocked. Allow the microphone for this site in the browser settings.'},
  es:{mic:'Hablar con Turbine',wake:'Activar por voz',wakeOff:'Desactivar voz',hint:'Diga “Turbine” y la pregunta. Ej.: “Turbine, ¿quiénes son los mejores laminadores?”',on:'🎙️ Escuchando “Turbine”',noSR:'Este navegador no tiene reconocimiento de voz. Use Chrome o Safari actualizado.',deny:'El micrófono está bloqueado. Permita el micrófono para este sitio en la configuración del navegador.'}};
-const srLang=()=>({pt:'pt-BR',en:'en-US',es:'es-US'}[plang]);
+const srLang=()=>(SPK[plang]);
 let wakeOn=false,wakeRec=null,oneRec=null,tbBusyVoice=false;
 try{wakeOn=localStorage.getItem('sk_wake')==='1'}catch(e){}
 const WAKE_RE=/\b(turbine|turbina|turbi|turbinho|turbin|terbine|turban)\b[\s,.:!?-]*/i;
@@ -4473,6 +4476,7 @@ function tbLocal(q){
   return `Os melhores${prof?' em '+prof.n.pt:''} agora: ${L2.slice(0,3).map((c,i)=>(i+1)+'. '+c.name+' ('+profName(c.role)+') com '+c.s).join('; ')}.`}
 /* ligar/desligar a escuta ao entrar e sair do painel */
 setInterval(()=>{if(screen!=='panel'&&wakeRec)wakeStop();else if(screen==='panel'&&wakeOn&&!wakeRec)wakeStart();wakeBadge()},1500);
+
 
 /* =====================================================================
    16/11/2026 (3): psicotécnico com 15 itens (10 múltipla escolha + 5 de tocar na tela),
@@ -4684,10 +4688,10 @@ function onboard(){
    <button class="btn" style="width:100%;margin-top:12px" onclick="onbGo()">✈️ ${L.start} →</button></div>`;
 }
 function onbGo(){onbI=0;onbStage='learn';onbQ=0;go('onbMod')}
-function onbSpeak(){try{const m=ONB[onbI];const u=new SpeechSynthesisUtterance(m.t[lang]+'. '+m.pts[lang].join(' '));u.lang={pt:'pt-BR',en:'en-US',es:'es-US'}[lang];speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
+function onbSpeak(){try{const m=ONB[onbI];const u=new SpeechSynthesisUtterance(m.t[lang]+'. '+m.pts[lang].join(' '));u.lang=SPK[lang];speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
 function onbMod(){
-  const L=ONBL[lang],m=ONB[onbI],n=ONB.length;
-  const top=`<div class="topbar glass"><div class="miniLogo">${miniLogo()}<span class="hide-s">Onboard</span></div><div class="prog"><i style="width:${(onbI+(onbStage==='q'?.5+onbQ*.25:0))/n*100}%"></i></div><span class="muted" style="font-size:13px">${onbI+1}/${n}</span></div>`;
+  const L=ONBL[lang],m=ONB[onbI],n=ONB.length,tot=ONB.reduce((s,x)=>s+x.q.length,0),gq=ONB.slice(0,onbI).reduce((s,x)=>s+x.q.length,0)+(onbStage==='q'?onbQ+1:0);
+  const top=`<div class="topbar glass"><div class="miniLogo">${miniLogo()}<span class="hide-s">Onboard</span></div><div class="prog"><i style="width:${gq/tot*100}%"></i></div><span class="muted" style="font-size:13px">${onbStage==='q'?gq+'/'+tot:L.mod+' '+(onbI+1)+'/'+n}</span></div>`;
   if(onbStage==='learn'){
     app.innerHTML=`<div class="fade">${top}<div class="qcard glass">
      <div class="qmeta"><span class="muted">${L.mod} ${onbI+1} ${L.of} ${n}</span><button class="audio glass" onclick="onbSpeak()">🔊 ${L.listen}</button></div>
@@ -4702,7 +4706,7 @@ function onbMod(){
   const last=onbQ===m.q.length-1;
   const btn=onbPick===null?'':onbPick===q.ans?`<button class="btn" onclick="onbNext()">${last?(onbI===n-1?L.endB:L.nextMod):L.next} →</button>`:`<button class="btn" onclick="onbPick=null;onbOrd=null;render()">↺ ${L.again}</button>`;
   app.innerHTML=`<div class="fade">${top}<div class="qcard glass">
-   <div class="qmeta"><span class="muted">${m.ico} ${m.t[lang]} · ${L.q} ${onbQ+1}/${m.q.length}</span></div>
+   <div class="qmeta"><span class="muted">${m.ico} ${m.t[lang]} · ${L.q} ${gq} ${L.of} ${tot}</span></div>
    <div class="qtext">${q.t[lang]}</div>
    <div class="opts">${onbOrd.map((oi,k)=>`<button class="opt glass" ${onbPick!==null?'disabled':''} style="${onbPick!==null&&oi===q.ans&&onbPick===q.ans?'border-color:#22c55e;background:rgba(34,197,94,.18)':''}${onbPick===oi&&oi!==q.ans?'border-color:#ef4444;background:rgba(239,68,68,.18)':''}" onclick="onbAns(${oi})"><span class="letter">${'ABC'[k]}</span><span>${q.o[lang][oi]}</span></button>`).join('')}</div>
    ${fb}<div class="qfoot"><span></span>${btn}</div></div></div>`;
@@ -4732,7 +4736,7 @@ function onbEnd(){
 /* abrir o Onboard a partir do código 0000 (teste) */
 function demoProf(){
   demoProfBase();
-  const g=document.querySelector('#app .glass');if(g)g.insertAdjacentHTML('beforeend',`<button class="btn ghost" style="width:100%;margin-top:14px" onclick="onbStart({preview:true})">✈️ ${{pt:'Ver o Onboard (teste)',en:'View the Onboard (test)',es:'Ver el Onboard (prueba)'}[lang]}</button>`);
+  const g=document.querySelector('#app .glass');if(g)g.insertAdjacentHTML('beforeend',`<button class="btn ghost" style="width:100%;margin-top:14px" onclick="onbStart({preview:true})">✈️ ${t('viewOnb')}</button>`);
 }
 
 /* ---------- PAINEL: código do Onboard e situação ---------- */
@@ -4758,6 +4762,641 @@ async function genOnb(id){
 }
 /* link direto para testar só o Onboard: .../skill-station/?onboard */
 (function(){try{const u=new URL(location.href);if(u.searchParams.has('onboard')){u.searchParams.delete('onboard');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(()=>onbStart({preview:true}),300)}}catch(e){}})();
+
+
+/* =====================================================================
+   16/11/2026 (4): 6 idiomas para o candidato e o funcionário (PT, EN, ES, DE, TR, ZH),
+   escolhidos só pela bandeira na página inicial. Painel do RH: só PT e EN.
+   Onde ainda não há tradução (testes das profissões), aparece em inglês.
+   ===================================================================== */
+const LANGS=['pt','en','es','de','tr','zh'];
+const SPK={pt:'pt-BR',en:'en-US',es:'es-US',de:'de-DE',tr:'tr-TR',zh:'zh-CN'};
+['de','tr','zh'].forEach(k=>{try{Object.defineProperty(Object.prototype,k,{configurable:true,
+  get(){return Object.prototype.hasOwnProperty.call(this,'en')?this.en:undefined},
+  set(v){Object.defineProperty(this,k,{value:v,writable:true,enumerable:true,configurable:true})}})}catch(e){}});
+
+/* bandeiras novas */
+const STAR=(cx,cy,r,rot)=>{let d='';for(let i=0;i<10;i++){const a=(rot||-90)*Math.PI/180+i*Math.PI/5,rr=i%2?r*.4:r;d+=(i?'L':'M')+(cx+Math.cos(a)*rr).toFixed(2)+' '+(cy+Math.sin(a)*rr).toFixed(2)}return d+'Z'};
+FLAG.de=`<svg viewBox="0 0 60 40" class="flg"><rect width="60" height="13.4" fill="#000"/><rect y="13.3" width="60" height="13.4" fill="#dd0000"/><rect y="26.6" width="60" height="13.4" fill="#ffce00"/></svg>`;
+FLAG.tr=`<svg viewBox="0 0 60 40" class="flg"><rect width="60" height="40" fill="#e30a17"/><circle cx="22" cy="20" r="10" fill="#fff"/><circle cx="24.6" cy="20" r="8" fill="#e30a17"/><path d="${STAR(35,20,5,0)}" fill="#fff"/></svg>`;
+FLAG.cn=`<svg viewBox="0 0 60 40" class="flg"><rect width="60" height="40" fill="#de2910"/><path d="${STAR(10,10,6)}" fill="#ffde00"/><path d="${STAR(20,4,2,-60)}" fill="#ffde00"/><path d="${STAR(24,8,2,-80)}" fill="#ffde00"/><path d="${STAR(24,14,2,-100)}" fill="#ffde00"/><path d="${STAR(20,18,2,-120)}" fill="#ffde00"/></svg>`;
+(function(){const st=document.createElement('style');st.textContent=`.langs.flagsOnly{display:grid!important;grid-template-columns:repeat(6,1fr);gap:8px}
+.langs.flagsOnly .lang{padding:8px!important;justify-content:center;min-height:0}.langs.flagsOnly .flag{margin:0!important}.langs.flagsOnly .flg{width:44px;height:30px;border-radius:5px;display:block}
+@media(max-width:520px){.langs.flagsOnly{grid-template-columns:repeat(3,1fr)}}`;document.head.appendChild(st)})();
+const LANG_FLAGS=[['pt','br'],['en','us'],['es','es'],['de','de'],['tr','tr'],['zh','cn']];
+
+/* textos das telas do candidato */
+Object.assign(L.pt,{testMode:'Modo de teste',chooseProf:'Escolha a profissão',viewOnb:'Ver o Onboard (teste)'});
+Object.assign(L.en,{testMode:'Test mode',chooseProf:'Choose the position',viewOnb:'View the Onboard (test)'});
+Object.assign(L.es,{testMode:'Modo de prueba',chooseProf:'Elija el puesto',viewOnb:'Ver el Onboard (prueba)'});
+L.de=Object.assign({},L.en,{start:'Zum Starten tippen',startSub:'Tap to start',v1:'Sicherheit zuerst',v2:'Exzellente Qualität',v3:'Immer innovativ',
+ code:'Zugangscode eingeben',codeSub:'Den Code erhalten Sie von der Personalabteilung.',badCode:'Ungültiger Code. Bitte wenden Sie sich an die Personalabteilung.',hint:'Fragen Sie die Personalabteilung nach Ihrem Code.',
+ hello:'Hallo',role:'Stelle',confirm:'Das bin ich, weiter',notMe:'Das bin ich nicht',howTitle:'So funktioniert der Test',
+ how:['Eine Frage nach der anderen. Zurückgehen ist nicht möglich.','Jede Frage hat ein Zeitlimit.','Tippen Sie auf 🔊, um die Frage zu hören.','Nutzen Sie die Zeit innerhalb des Limits. Viel Erfolg!'],
+ ready:'Ich bin bereit',next:'Bestätigen',skip:'Jetzt nicht',listen:'Anhören',q:'Frage',of:'von',crit:'Sicherheit',doneT:'Test abgeschlossen!',doneS:'Vielen Dank. Die Personalabteilung meldet sich bei Ihnen.',
+ back:'Zurück zum Start in',sec:'s',clear:'Löschen',orderHint:'Tippen Sie die Schritte in der richtigen Reihenfolge an.',soon:'Echtes Foto folgt',photoT:'Machen Sie Ihr Foto',
+ photoS:'Das Foto dient nur dazu, Ihre Identität in den nächsten Schritten zu bestätigen. Es zählt nicht zur Bewertung.',consent:'Ich bin einverstanden, ein Foto zur Identitätsprüfung zu machen',
+ take:'Foto aufnehmen',retake:'Neu aufnehmen',use:'Dieses Foto verwenden',open:'Kamera öffnen',codeUsed:'Dieser Code wurde bereits verwendet. Bitte wenden Sie sich an die Personalabteilung.',
+ codeExp:'Dieser Code ist abgelaufen. Bitte wenden Sie sich an die Personalabteilung.',prof:'Stelle',notMeT:'Bitte wenden Sie sich an die Personalabteilung',
+ notMeS:'Dieser Code ist auf eine andere Person registriert. Bitte holen Sie sich Ihren eigenen Code bei der Personalabteilung.',abT:'Test beendet',
+ abS:'Sie haben den Test verlassen. Aus Sicherheitsgründen ist der Code nicht mehr gültig. Bitte wenden Sie sich an die Personalabteilung.',conn:'Verbindung wird hergestellt...',
+ noConn:'Keine Verbindung zur Datenbank. Bitte wenden Sie sich an die Personalabteilung.',testMode:'Testmodus',chooseProf:'Wählen Sie die Stelle',viewOnb:'Onboard ansehen (Test)'});
+L.tr=Object.assign({},L.en,{start:'Başlamak için dokunun',startSub:'Tap to start',v1:'Önce güvenlik',v2:'Kalitede mükemmellik',v3:'Her zaman yenilik',
+ code:'Erişim kodunu girin',codeSub:'Kodu İnsan Kaynakları verir.',badCode:'Geçersiz kod. Lütfen İnsan Kaynakları ile görüşün.',hint:'Kodunuzu İnsan Kaynakları’ndan isteyin.',
+ hello:'Merhaba',role:'Pozisyon',confirm:'Bu benim, devam et',notMe:'Bu ben değilim',howTitle:'Test nasıl işler',
+ how:['Her seferinde bir soru. Geri dönülemez.','Her sorunun bir süre sınırı vardır.','Soruyu dinlemek için 🔊 simgesine dokunun.','Süre içinde acele etmeyin. Başarılar!'],
+ ready:'Hazırım',next:'Onayla',skip:'Şimdi değil',listen:'Dinle',q:'Soru',of:'/',crit:'Güvenlik',doneT:'Test tamamlandı!',doneS:'Teşekkürler. İnsan Kaynakları sizinle iletişime geçecek.',
+ back:'Başlangıca dönülüyor:',sec:'sn',clear:'Temizle',orderHint:'Adımlara doğru sırayla dokunun.',soon:'Gerçek fotoğraf yakında',photoT:'Fotoğrafınızı çekin',
+ photoS:'Fotoğraf yalnızca sonraki adımlarda kimliğinizi doğrulamak için kullanılır. Puanınıza dahil edilmez.',consent:'Kimlik doğrulaması için fotoğraf çekilmesini kabul ediyorum',
+ take:'Fotoğraf çek',retake:'Yeniden çek',use:'Bu fotoğrafı kullan',open:'Kamerayı aç',codeUsed:'Bu kod zaten kullanıldı. Lütfen İnsan Kaynakları ile görüşün.',
+ codeExp:'Bu kodun süresi doldu. Lütfen İnsan Kaynakları ile görüşün.',prof:'Pozisyon',notMeT:'Lütfen İnsan Kaynakları ile görüşün',
+ notMeS:'Bu kod başka bir kişiye kayıtlı. Kendi kodunuz için İnsan Kaynakları’na başvurun.',abT:'Test sona erdi',
+ abS:'Testten çıktınız. Güvenlik nedeniyle kod artık geçerli değil. Lütfen İnsan Kaynakları ile görüşün.',conn:'Bağlanıyor...',
+ noConn:'Veritabanı bağlantısı yok. Lütfen İnsan Kaynakları ile görüşün.',testMode:'Test modu',chooseProf:'Pozisyonu seçin',viewOnb:'Onboard’u gör (test)'});
+L.zh=Object.assign({},L.en,{start:'点击开始',startSub:'Tap to start',v1:'安全第一',v2:'卓越品质',v3:'不断创新',
+ code:'请输入访问码',codeSub:'访问码由人力资源部提供。',badCode:'访问码无效，请联系人力资源部。',hint:'请向人力资源部索取您的访问码。',
+ hello:'您好',role:'职位',confirm:'是我，继续',notMe:'不是我',howTitle:'测试说明',
+ how:['每次一道题，不能返回上一题。','每道题都有时间限制。','点击 🔊 可以听题目。','在限定时间内认真作答，祝您好运！'],
+ ready:'我准备好了',next:'确认',skip:'暂不',listen:'朗读',q:'第',of:'/',crit:'安全',doneT:'测试完成！',doneS:'谢谢。人力资源部会与您联系。',
+ back:'返回首页倒计时',sec:'秒',clear:'清除',orderHint:'请按正确顺序点击各个步骤。',soon:'实物照片即将添加',photoT:'请拍照',
+ photoS:'照片仅用于在后续步骤中确认您的身份，不计入成绩。',consent:'我同意拍照用于身份验证',
+ take:'拍照',retake:'重拍',use:'使用这张照片',open:'打开相机',codeUsed:'此访问码已被使用，请联系人力资源部。',
+ codeExp:'此访问码已过期，请联系人力资源部。',prof:'职位',notMeT:'请联系人力资源部',notMeS:'此访问码登记在其他人名下。请向人力资源部领取您自己的访问码。',abT:'测试已结束',
+ abS:'您离开了测试。出于安全原因，此访问码已失效。请联系人力资源部。',conn:'正在连接...',noConn:'无法连接数据库，请联系人力资源部。',testMode:'测试模式',chooseProf:'请选择职位',viewOnb:'查看入职培训（测试）'});
+
+/* profissões */
+const PROF_I18N={
+ limpeza:['Reinigungskraft','Temizlik Görevlisi','保洁员'],laminador:['Laminierer','Laminasyon Operatörü','层压工'],leader_lam:['Teamleiter Laminierung','Laminasyon Lideri','层压组长'],
+ gel_tech:['Gelcoat-Techniker','Gelkot Teknisyeni','胶衣技术员'],comp_tech:['Injektionsmaschinenbediener (Infusion / RTM)','Enjeksiyon Makinesi Operatörü (İnfüzyon / RTM)','注射机操作员（灌注 / RTM）'],
+ moldcare:['Formenpflege','Kalıp Bakımı','模具保养'],assembler:['Monteur','Montajcı','装配工'],leader_asm:['Teamleiter Montage','Montaj Lideri','装配组长'],
+ qualidade:['Qualitätsprüfer','Kalite Kontrolcüsü','质检员'],acabamento:['Oberflächenbearbeiter (Schleifen & Polieren)','Son İşlemci (Zımparalama ve Parlatma)','打磨抛光工'],
+ cnc:['CNC-Bediener','CNC Operatörü','数控操作员'],manutencao:['Instandhaltungstechniker','Bakım Teknisyeni','维修技术员'],almox:['Lagerist','Depo Sorumlusu','仓库管理员'],
+ logistica:['Logistik (Versand / Stapler)','Lojistik (Sevkiyat / Forklift)','物流（发运 / 叉车）'],seguranca:['Arbeitsschutztechniker (EHS)','İSG Teknisyeni (EHS)','安全环保技术员 (EHS)'],
+ supervisor:['Produktionsleiter','Üretim Şefi','生产主管'],processista:['Prozesstechniker','Proses Teknisyeni','工艺技术员'],engenheiro:['Ingenieur','Mühendis','工程师'],
+ especialista:['Verbundwerkstoff-Spezialist','Kompozit Uzmanı','复合材料专家'],rh:['Personalabteilung (HR)','İnsan Kaynakları (İK)','人力资源 (HR)']};
+PROFS.forEach(p=>{const x=PROF_I18N[p.id];if(x){p.n.de=x[0];p.n.tr=x[1];p.n.zh=x[2]}});
+const SEC_I18N={prod:['Produktion','Üretim','生产'],qual:['Qualität und Technik','Kalite ve Mühendislik','质量与工程'],mant:['Instandhaltung und Sicherheit','Bakım ve Güvenlik','维修与安全'],
+ log:['Logistik und Lager','Lojistik ve Depo','物流与仓库'],serv:['Reinigung und Dienste','Temizlik ve Hizmetler','保洁与后勤'],adm:['Verwaltung (HR)','İdari (İK)','行政（人力资源）'],out:['Sonstige','Diğer','其他']};
+SECTORS.forEach(s=>{const x=SEC_I18N[s.id];if(x){s.n.de=x[0];s.n.tr=x[1];s.n.zh=x[2]}});
+PICK.de={t:'Wählen Sie Ihren Bereich und Ihre Stelle',sec:'Bereich',fn:'Stelle',go:'Teil 2 starten',need:'Wählen Sie den Bereich und die Stelle.'};
+PICK.tr={t:'Bölümünüzü ve pozisyonunuzu seçin',sec:'Bölüm',fn:'Pozisyon',go:'2. Bölüme başla',need:'Bölümü ve pozisyonu seçin.'};
+PICK.zh={t:'请选择您的部门和职位',sec:'部门',fn:'职位',go:'开始第2部分',need:'请选择部门和职位。'};
+CONTACT.de={t:'Ihre Kontaktdaten',addr:'Vollständige Adresse (Straße, Hausnummer, Stadt, Bundesstaat, ZIP)',phone:'Telefon',addrPh:'z. B. 123 Main St, Pensacola, FL 32501',phonePh:'z. B. (850) 555-0123',bad:'Bitte Adresse und eine gültige Telefonnummer angeben.'};
+CONTACT.tr={t:'İletişim bilgileriniz',addr:'Tam adres (sokak, numara, şehir, eyalet, ZIP)',phone:'Telefon',addrPh:'Örn. 123 Main St, Pensacola, FL 32501',phonePh:'Örn. (850) 555-0123',bad:'Adresi ve geçerli bir telefon numarasını girin.'};
+CONTACT.zh={t:'您的联系方式',addr:'完整地址（街道、门牌号、城市、州、邮编）',phone:'电话',addrPh:'例如：123 Main St, Pensacola, FL 32501',phonePh:'例如：(850) 555-0123',bad:'请填写地址和有效的电话号码。'};
+PSYPART.de=['Teil 1','Teil 2'];PSYPART.tr=['1. Bölüm','2. Bölüm'];PSYPART.zh=['第1部分','第2部分'];
+MEMO_T.de='Merken Sie sich die folgenden Informationen';MEMO_T.tr='Aşağıdaki bilgileri aklınızda tutun';MEMO_T.zh='请记住以下信息';
+MEMO_S.de='Sie verschwinden in';MEMO_S.tr='Kaybolacak:';MEMO_S.zh='将在以下时间后消失';
+TAPL.de={done:'Fertig',hint:'Tippen Sie so viele wie möglich an, bevor die Zeit abläuft. Falsches Tippen zählt als Fehler.',res:(h,T,w)=>`${h}/${T} richtig, ${w} falsch getippt`};
+TAPL.tr={done:'Tamam',hint:'Süre bitmeden olabildiğince çoğuna dokunun. Yanlış dokunuş hata sayılır.',res:(h,T,w)=>`${h}/${T} doğru, ${w} yanlış dokunuş`};
+TAPL.zh={done:'完成',hint:'在时间结束前尽量多点。点错会记为错误。',res:(h,T,w)=>`${h}/${T} 正确，${w} 次点错`};
+BACKL.de='Zurück';BACKL.tr='Geri';BACKL.zh='返回';
+PSYL.de={log:'Logisches Denken',att:'Aufmerksamkeit und Konzentration',vis:'Visuelle und mechanische Wahrnehmung',mem:'Gedächtnis',beh:'Verhalten am Arbeitsplatz',tap:'Konzentrierte Aufmerksamkeit (Tippen)'};
+PSYL.tr={log:'Mantıksal akıl yürütme',att:'Dikkat ve konsantrasyon',vis:'Görsel ve mekanik algı',mem:'Hafıza',beh:'İş yerinde davranış',tap:'Odaklı dikkat (dokunma)'};
+PSYL.zh={log:'逻辑推理',att:'注意力与专注',vis:'视觉与机械感知',mem:'记忆力',beh:'工作行为',tap:'集中注意力（点击）'};
+
+
+/* termo de consentimento em alemão, turco e chinês */
+TERMS.de={title:'Einwilligungserklärung',sub:'Bluewind Technology – Pensacola, FL · Bluewind Skill Station',
+ intro:'Bitte lesen Sie sorgfältig, bevor Sie beginnen. Indem Sie „Ich habe gelesen und stimme zu“ ankreuzen und unterschreiben, erlauben Sie Bluewind Technology, die folgenden Informationen nur für dieses Auswahlverfahren zu erheben und zu verwenden.',
+ items:[['Erhobene Daten','Ihr Name, ein Foto Ihres Gesichts, Adresse, Telefonnummer, die angestrebte Stelle, Ihre Antworten, die Zeit pro Antwort, Ihre Ergebnisse und eine Aufzeichnung, ob Sie die App während des Tests verlassen.'],
+  ['Wofür','Nur um Ihre Bewerbung bei Bluewind zu prüfen und Sie zu diesem Verfahren zu kontaktieren.'],
+  ['Wer sie sehen kann','Nur die Personalabteilung und die Geschäftsleitung von Bluewind, mit passwortgeschütztem Zugang. Ihre Daten werden nicht verkauft und nicht an andere Firmen weitergegeben.'],
+  ['Ergebnisse','Die Testergebnisse sind nur für den internen Gebrauch und werden Ihnen in der App nicht angezeigt.'],
+  ['So funktioniert der Test','Der Test hat mehrere Stufen. Ob Sie weitermachen, hängt vom Ergebnis jeder Stufe ab. Ihr Zugangscode gilt nur einmal.'],
+  ['Regel gegen Schummeln','Verlassen Sie während des Tests die App nicht, öffnen Sie keine anderen Apps oder Websites und bitten Sie niemanden um Hilfe. Wenn Sie die App verlassen, verfällt der Code, und der Test wird beendet und als abgebrochen gespeichert.'],
+  ['Wo sie gespeichert werden','In einer Cloud-Datenbank mit eingeschränktem Zugang, so lange, wie es das Gesetz für Einstellungsunterlagen verlangt. Danach werden sie gelöscht.'],
+  ['Freiwillig','Sie müssen nicht zustimmen. Wenn Sie nicht zustimmen, sagen Sie es der Personalabteilung, damit eine andere Form der Bewertung vereinbart wird.'],
+  ['Anpassungen','Wenn Sie für den Test eine Anpassung brauchen (zum Beispiel wegen einer Behinderung, beim Lesen oder bei der Sprache), sprechen Sie vor dem Start mit der Personalabteilung.'],
+  ['Ihre Rechte','Sie können die Personalabteilung bitten, Ihre persönlichen Daten einzusehen oder zu korrigieren.']],
+ decl:'Ich habe diese Erklärung gelesen und verstanden und stimme der Erhebung und Verwendung meiner Daten für dieses Auswahlverfahren zu.',
+ agree:'Ich habe gelesen und stimme zu',sign:'Unterschreiben Sie mit dem Finger im Feld unten',clear:'Unterschrift löschen',ok:'Zustimmen und weiter',no:'Ich stimme nicht zu',
+ needAll:'Kreuzen Sie „Ich habe gelesen und stimme zu“ an und unterschreiben Sie, um fortzufahren.',refT:'Kein Problem',refS:'Ohne Zustimmung kann der Test nicht beginnen. Sprechen Sie mit der Personalabteilung, um eine andere Form der Bewertung zu vereinbaren.',
+ signedBy:'Unterschrieben von',on:'am'};
+TERMS.tr={title:'Onay Formu',sub:'Bluewind Technology – Pensacola, FL · Bluewind Skill Station',
+ intro:'Başlamadan önce lütfen dikkatle okuyun. “Okudum ve kabul ediyorum” kutusunu işaretleyip imzalayarak, Bluewind Technology’nin aşağıdaki bilgileri yalnızca bu işe alım süreci için toplamasına ve kullanmasına izin vermiş olursunuz.',
+ items:[['Toplanan bilgiler','Adınız, yüzünüzün fotoğrafı, adresiniz, telefon numaranız, başvurduğunuz pozisyon, cevaplarınız, her cevabın süresi, puanlarınız ve test sırasında uygulamadan çıkıp çıkmadığınızın kaydı.'],
+  ['Ne için kullanılır','Yalnızca Bluewind’deki iş başvurunuzu değerlendirmek ve bu süreçle ilgili sizinle iletişim kurmak için.'],
+  ['Kimler görebilir','Yalnızca Bluewind İnsan Kaynakları ve yönetimi, şifre korumalı erişimle. Bilgileriniz satılmaz ve başka şirketlerle paylaşılmaz.'],
+  ['Puanlar','Test puanları yalnızca şirket içi kullanım içindir ve uygulamada size gösterilmez.'],
+  ['Test nasıl işler','Test birkaç aşamadan oluşur ve devam etmek her aşamanın sonucuna bağlıdır. Erişim kodunuz yalnızca bir kez kullanılabilir.'],
+  ['Kopya kuralı','Test sırasında uygulamadan çıkmayın, başka uygulama veya web sitesi açmayın ve kimseden yardım istemeyin. Uygulamadan çıkarsanız kodun süresi dolar, test sona erer ve yarım bırakılmış olarak kaydedilir.'],
+  ['Nerede saklanır','Erişimi kısıtlı bir bulut veritabanında, işe alım kayıtları için yasanın gerektirdiği süre boyunca. Sonra silinir.'],
+  ['Gönüllülük','Kabul etmek zorunda değilsiniz. Kabul etmezseniz, başka bir değerlendirme yolu ayarlanması için İnsan Kaynakları’na söyleyin.'],
+  ['Uyarlamalar','Testi yapmak için bir uyarlamaya ihtiyacınız varsa (örneğin engellilik, okuma veya dil nedeniyle), başlamadan önce İnsan Kaynakları ile konuşun.'],
+  ['Haklarınız','Kişisel bilgilerinizi görmek veya düzeltmek için İnsan Kaynakları’ndan talepte bulunabilirsiniz.']],
+ decl:'Bu formu okudum ve anladım; bilgilerimin bu işe alım süreci için toplanmasını ve kullanılmasını kabul ediyorum.',
+ agree:'Okudum ve kabul ediyorum',sign:'Aşağıdaki kutuya parmağınızla imza atın',clear:'İmzayı sil',ok:'Kabul et ve devam et',no:'Kabul etmiyorum',
+ needAll:'Devam etmek için “Okudum ve kabul ediyorum” kutusunu işaretleyin ve imzalayın.',refT:'Sorun değil',refS:'Form kabul edilmeden test başlayamaz. Başka bir değerlendirme yolu için İnsan Kaynakları ile görüşün.',
+ signedBy:'İmzalayan',on:'tarih'};
+TERMS.zh={title:'知情同意书',sub:'Bluewind Technology – Pensacola, FL · Bluewind Skill Station',
+ intro:'开始前请仔细阅读。勾选“我已阅读并同意”并签名，即表示您允许 Bluewind Technology 仅为本次招聘收集和使用以下信息。',
+ items:[['收集的信息','您的姓名、面部照片、地址、电话、应聘职位、您的答案、每题用时、成绩，以及测试期间是否离开应用的记录。'],
+  ['用途','仅用于评估您在 Bluewind 的求职申请，并就本次招聘与您联系。'],
+  ['谁可以查看','只有 Bluewind 的人力资源部和管理层，通过密码保护的权限查看。您的信息不会被出售，也不会分享给其他公司。'],
+  ['成绩','测试成绩仅供公司内部使用，不会在应用中向您显示。'],
+  ['测试方式','测试分为几个阶段，能否继续取决于每个阶段的结果。您的访问码只能使用一次。'],
+  ['防作弊规定','测试期间请不要离开应用，不要打开其他应用或网站，也不要请别人帮忙。如果离开应用，访问码将失效，测试结束并记录为中途放弃。'],
+  ['存放位置','存放在访问受限的云端数据库中，保存时间为法律对招聘记录要求的期限，之后删除。'],
+  ['自愿原则','您可以不同意。如果不同意，请告诉人力资源部，以便安排其他评估方式。'],
+  ['特殊安排','如果您需要特殊安排才能参加测试（例如残障、阅读或语言原因），请在开始前与人力资源部沟通。'],
+  ['您的权利','您可以要求人力资源部查看或更正您的个人信息。']],
+ decl:'我已阅读并理解本同意书，同意为本次招聘收集和使用我的信息。',
+ agree:'我已阅读并同意',sign:'请用手指在下方框内签名',clear:'清除签名',ok:'同意并继续',no:'我不同意',
+ needAll:'请勾选“我已阅读并同意”并签名后继续。',refT:'没关系',refS:'未同意本同意书，测试无法开始。请联系人力资源部安排其他评估方式。',
+ signedBy:'签名人',on:'日期'};
+
+
+/* psicotécnico (10 de múltipla escolha + 5 de tocar) em alemão, turco e chinês */
+(function(){
+  const set=(q,lg,t,o,memo)=>{q.t[lg]=t;if(o)q.o[lg]=o;if(memo)q.memo[lg]=memo};
+  const T={
+   0:{de:['Welche Zahl setzt die Reihe fort? 3 · 6 · 12 · 24 · ?'],tr:['Diziyi hangi sayı devam ettirir? 3 · 6 · 12 · 24 · ?'],zh:['下一个数字是什么？3 · 6 · 12 · 24 · ?']},
+   2:{de:['Eine Maschine fertigt 40 Teile in 2 Stunden. Wie viele Teile fertigt sie im gleichen Tempo in 5 Stunden?'],tr:['Bir makine 2 saatte 40 parça üretiyor. Aynı hızda 5 saatte kaç parça üretir?'],zh:['一台机器2小时生产40个零件。按同样速度，5小时生产多少个？']},
+   6:{de:['Das Etikett des Teils lautet BW-58A-3317. Welche Option ist genau gleich?'],tr:['Parçanın etiketi BW-58A-3317. Hangi seçenek tamamen aynıdır?'],zh:['零件标签是 BW-58A-3317。哪个选项完全一样？']},
+   9:{de:['Auf dem Zettel stehen 24 Teile. Sie haben 6 Kisten mit 4 Teilen und 1 Kiste mit 3 Teilen gezählt. Die Charge ist:',['Vollständig','Es fehlen 3 Teile','3 Teile zu viel','Es fehlt 1 Teil']],
+      tr:['Formda 24 parça yazıyor. 4 parçalık 6 kutu ve 3 parçalık 1 kutu saydınız. Parti:',['Tam','3 parça eksik','3 parça fazla','1 parça eksik']],
+      zh:['单子上写着24个零件。您数了6箱每箱4个，还有1箱3个。这批货：',['数量正确','少3个','多3个','少1个']]},
+   10:{de:['Wenn Sie die Figur ◢ eine Vierteldrehung im Uhrzeigersinn drehen, wie sieht sie aus?'],tr:['◢ şeklini saat yönünde çeyrek tur döndürürseniz nasıl görünür?'],zh:['把图形 ◢ 顺时针旋转四分之一圈，会变成什么样？']},
+   14:{de:['Eine normale Schraube (Rechtsgewinde) wird im Uhrzeigersinn gedreht. Was passiert?',['Sie wird festgezogen','Sie wird gelöst','Nichts ändert sich','Es hängt von der Größe ab']],
+      tr:['Normal bir vida (sağ diş) saat yönünde çevriliyor. Ne olur?',['Sıkışır','Gevşer','Hiçbir şey değişmez','Boyutuna bağlıdır']],
+      zh:['普通螺丝（右旋螺纹）顺时针拧，会怎样？',['拧紧','松开','没有变化','取决于大小']]},
+   15:{de:['Welche Schicht war es?',null,'Form: M-27 · Teil: Gondel · Schicht: B'],tr:['Hangi vardiyaydı?',null,'Kalıp: M-27 · Parça: Nasel · Vardiya: B'],zh:['是哪个班次？',null,'模具：M-27 · 零件：机舱罩 · 班次：B']},
+   18:{de:['Wie lautete die Chargennummer?',null,'Harz: Charge 5832 · haltbar bis 12/2026'],tr:['Parti numarası neydi?',null,'Reçine: parti 5832 · son kullanma 12/2026'],zh:['批号是多少？',null,'树脂：批号 5832 · 有效期 12/2026']},
+   20:{de:['Sie sehen einen Kollegen ohne PSA in der Nähe des Gelcoats. Was tun Sie?',['Nichts, das ist nicht Ihr Problem','Ihn respektvoll ansprechen und, wenn es so bleibt, den Teamleiter informieren','Ein Foto machen und in die Gruppe schicken','Warten, bis er sich verletzt, damit er lernt']],
+      tr:['Gelkotun yanında KKD kullanmayan bir iş arkadaşınızı görüyorsunuz. Ne yaparsınız?',['Hiçbir şey, sizin sorununuz değil','Onunla saygıyla konuşur, devam ederse lidere haber verirsiniz','Fotoğrafını çekip gruba atarsınız','Ders alması için yaralanmasını beklersiniz']],
+      zh:['您看到一位同事在胶衣附近没有穿戴防护用品。您会怎么做？',['什么都不做，不关我的事','礼貌地提醒他，如果他继续这样，就告诉组长','拍照发到群里','等他受伤了自然会吸取教训']]},
+   21:{de:['Sie haben einen Fehler gemacht und ein Teil ist fehlerhaft. Niemand hat es gesehen. Was tun Sie?',['Das Teil zwischen den anderen verstecken','Der vorherigen Schicht die Schuld geben','Den Teamleiter informieren und den Fehler melden','Es auf eigene Faust reparieren, ohne jemandem etwas zu sagen']],
+      tr:['Bir hata yaptınız ve bir parça kusurlu çıktı. Kimse görmedi. Ne yaparsınız?',['Parçayı diğerlerinin arasına saklarsınız','Önceki vardiyayı suçlarsınız','Lidere haber verir ve kusuru kaydedersiniz','Kimseye söylemeden kendi bildiğiniz gibi düzeltirsiniz']],
+      zh:['您操作失误，一个零件出现了缺陷，没有人看到。您会怎么做？',['把零件藏在其他零件中间','怪上一个班次','告诉组长并记录缺陷','自己随便修一下，不告诉任何人']]}};
+  Object.entries(T).forEach(([i,v])=>{const q=PSY_ALL[+i];['de','tr','zh'].forEach(lg=>{const x=v[lg];set(q,lg,x[0],x[1]||null,x[2]||null)})});
+  /* opções que são só números, letras ou símbolos: iguais em todos os idiomas */
+  PSY_ALL.forEach(q=>{['de','tr','zh'].forEach(lg=>{if(!Object.prototype.hasOwnProperty.call(q.o,lg))q.o[lg]=q.o.en})});
+  const TT=[
+   ['Tippen Sie auf jedes ▲ (ausgefülltes Dreieck).','Her ▲ işaretine (dolu üçgen) dokunun.','点击所有的 ▲（实心三角形）。'],
+   ['Tippen Sie auf jede Zahl 7.','Her 7 rakamına dokunun.','点击所有的数字 7。'],
+   ['Tippen Sie nur auf die ▲, die oben einen Punkt haben.','Yalnızca üstünde nokta olan ▲ işaretlerine dokunun.','只点击上方有一个点的 ▲。'],
+   ['Tippen Sie auf jeden Buchstaben b (Vorsicht bei d, p und q).','Her b harfine dokunun (d, p ve q’ya dikkat).','点击所有字母 b（注意不要和 d、p、q 混淆）。'],
+   ['Tippen Sie die Zahlen der Reihe nach an: 1, 2, 3 … bis 10.','Sayılara sırayla dokunun: 1, 2, 3… 10’a kadar.','按顺序点击数字：1、2、3……直到10。']];
+  PSY_TAP.forEach((q,i)=>{q.t.de=TT[i][0];q.t.tr=TT[i][1];q.t.zh=TT[i][2]});
+})();
+
+
+/* Onboard: textos da tela, módulos e as 14 perguntas originais em alemão, turco e chinês */
+ONBL.de={start:'Starten',mod:'Modul',of:'von',learn:'Verstanden, zu den Fragen',q:'Frage',next:'Weiter',again:'Nochmal versuchen',right:'Richtig!',wrong:'Noch nicht.',nextMod:'Nächstes Modul',
+ endT:'Willkommen an Bord!',endS:'Sie haben die Sicherheitseinweisung von BlueWind abgeschlossen. Die Personalabteilung wurde informiert. Bei Fragen wenden Sie sich immer an Ihren Teamleiter.',endB:'Abschließen',
+ note:'Diese Schulung ersetzt nicht die praktischen Schulungen (Stapler, Atemschutz, Maschinen), die die Personalabteilung mit Ihnen plant.',listen:'Anhören',preview:'Onboard-Vorschau (nichts wird gespeichert)'};
+ONBL.tr={start:'Başla',mod:'Modül',of:'/',learn:'Anladım, sorulara geç',q:'Soru',next:'Sonraki',again:'Tekrar dene',right:'Doğru!',wrong:'Henüz değil.',nextMod:'Sonraki modül',
+ endT:'Aramıza hoş geldiniz!',endS:'BlueWind güvenlik oryantasyonunu tamamladınız. İnsan Kaynakları bilgilendirildi. Herhangi bir sorunuz olursa her zaman liderinizle konuşun.',endB:'Bitir',
+ note:'Bu eğitim, İnsan Kaynakları’nın sizinle planlayacağı uygulamalı eğitimlerin (forklift, solunum koruyucu, makineler) yerini tutmaz.',listen:'Dinle',preview:'Onboard önizlemesi (hiçbir şey kaydedilmez)'};
+ONBL.zh={start:'开始',mod:'模块',of:'/',learn:'明白了，开始答题',q:'问题',next:'下一题',again:'再试一次',right:'正确！',wrong:'还不对。',nextMod:'下一个模块',
+ endT:'欢迎加入！',endS:'您已完成 BlueWind 安全入职培训，人力资源部已收到通知。如有任何疑问，请随时询问您的组长。',endB:'完成',
+ note:'本培训不能替代实操培训（叉车、呼吸器、机器），人力资源部会与您另行安排。',listen:'朗读',preview:'入职培训预览（不保存任何内容）'};
+(function(){
+ const D={
+ de:[
+  {t:'Chemikalien und Sicherheitsdatenblätter',pts:['Wir verwenden hier Harz, Gelcoat, Härter, Beschleuniger, Farben und Lösemittel. Viele sind entzündlich und schädlich beim Einatmen oder bei Hautkontakt.','Jedes Produkt hat ein Etikett mit Gefahrensymbolen und ein Sicherheitsdatenblatt (SDS). Fragen Sie Ihren Teamleiter, wo die Datenblätter Ihres Bereichs liegen.','Styrol, das aus Harz und Gelcoat verdunstet, ist der wichtigste Dampf bei Glasfaserarbeiten. Nutzen Sie die Lüftung und den richtigen Atemschutz.','Mischen Sie Härter niemals direkt mit Beschleuniger. Verwenden Sie nie ein Produkt aus einem Behälter ohne Etikett.','Lappen mit Harz oder Lösemittel gehören in einen Metallbehälter mit Deckel, weil sie sich von selbst entzünden können.'],
+   q:[['Wo finden Sie die Gefahren und Vorsichtsmaßnahmen eines chemischen Produkts?',['Auf dem Etikett und im Sicherheitsdatenblatt (SDS)','Indem Sie daran riechen','Auf der Rechnung'],'Etikett und SDS zeigen die Gefahren, die PSA und was im Notfall zu tun ist.'],
+      ['Was machen Sie mit einem Lappen voller Harz oder Lösemittel?',['In den normalen Müll werfen','In den Metallbehälter mit Deckel legen','Auf der Werkbank trocknen lassen'],'Solche Lappen können sich erhitzen und von selbst entzünden. Der Metallbehälter mit Deckel verhindert Brände.']]},
+  {t:'PSA: persönliche Schutzausrüstung',pts:['In der Produktion tragen Sie immer Schutzbrille und Sicherheitsschuhe. Ihr Teamleiter zeigt Ihnen die zusätzliche PSA für jeden Bereich.','Laminierung, Harz und Gelcoat: Nitrilhandschuhe, lange Ärmel oder Schürze und Atemschutz gegen organische Dämpfe.','Schleifen und Schneiden von Glasfaser: Staubmaske (N95 oder besser), Gehörschutz und Kleidung, die die Haut bedeckt.','Ziehen Sie die PSA an, bevor Sie den Bereich betreten, legen Sie sie danach ab und bewahren Sie sie sauber auf. Zerrissene, zerkratzte oder abgelaufene PSA vor dem Weiterarbeiten ersetzen.'],
+   q:[['Welchen Handschuh verwenden Sie für Harz und Härter?',['Baumwollhandschuh','Nitrilhandschuh','Keinen, das geht schneller'],'Nitril ist chemikalienbeständig. Baumwolle saugt das Harz auf und lässt es an die Haut.'],
+      ['Ihre Schutzbrille ist zerkratzt und Ihr Handschuh hat ein Loch. Was tun Sie?',['Bis Schichtende weitermachen','Anhalten und die PSA vor dem Weiterarbeiten ersetzen','Die Brille abnehmen, um besser zu sehen'],'Beschädigte PSA schützt nicht. Holen Sie sich neue beim Teamleiter oder im Lager.']]},
+  {t:'Atemschutz und Staub',pts:['Es gibt zwei Haupttypen: Staubfilter (Schleifen und Schneiden) und Patronen gegen organische Dämpfe (Harz, Gelcoat und Farbe).','Bevor Sie einen Atemschutz benutzen, erhalten Sie eine Schulung und einen Dichtsitztest. Ein Bart verhindert eine gute Abdichtung.','Machen Sie bei jedem Aufsetzen eine Dichtheitsprüfung: Ausgang zuhalten und atmen. Die Maske soll sich ohne Undichtigkeit ans Gesicht ziehen.','Wenn Sie mit Atemschutz Styrol riechen oder das Atmen schwer wird, verlassen Sie den Bereich und wechseln Sie Filter oder Patrone.'],
+   q:[['Welchen Atemschutz verwenden Sie beim Spritzen von Gelcoat?',['Stoffmaske','Atemschutz mit Patronen gegen organische Dämpfe','Keinen, wenn die Tür offen ist'],'Gelcoat-Dampf (Styrol) wird nur von einer Patrone gegen organische Dämpfe zurückgehalten.'],
+      ['Sie tragen Atemschutz und riechen plötzlich Styrol. Was bedeutet das?',['Alles ist normal','Die Patrone ist verbraucht oder die Abdichtung undicht: Bereich verlassen und wechseln','Die Maske muss lockerer sitzen'],'Wenn Sie mit Atemschutz etwas riechen, schützt er Sie nicht.']]},
+  {t:'Lärm und Gehörschutz',pts:['Schleifer, Sägen, Druckluft und einige Maschinen sind laut. Hörverlust kommt langsam, tut nicht weh und ist dauerhaft.','Tragen Sie Gehörschutz überall, wo ein Pflichtschild hängt oder es laut ist.','Schaumstoffstöpsel: dünn rollen, das Ohr nach oben ziehen, einsetzen und halten, bis sie sich ausdehnen.','Kapselgehörschutz: Die Kapseln müssen das ganze Ohr bedecken, ohne dass Haare, Mütze oder Brille die Abdichtung stören.'],
+   q:[['Wann ist Gehörschutz Pflicht?',['Nur wenn der Lärm stört','Überall mit Pflichtschild oder lautem Lärm, z. B. beim Schleifen und Schneiden','Nie, er stört'],'Das Ohr gewöhnt sich an den Lärm, aber der Schaden geht weiter. Halten Sie sich an die Schilder.'],
+      ['Wie setzen Sie Schaumstoffstöpsel richtig ein?',['Dünn rollen, einsetzen und halten, bis er sich ausdehnt','Nur am Eingang des Ohrs lassen','In der Mitte durchschneiden'],'Er schützt nur, wenn er sich im Gehörgang ausdehnt.']]},
+  {t:'Maschinen und Geräte',pts:['Stapler, Hallenkran und Scherenbühne: Nur geschulte und vom Unternehmen befugte Personen dürfen sie bedienen.','Stehen oder gehen Sie nie unter einer schwebenden Last. Beachten Sie abgesperrte Bereiche.','In der Nähe von Staplern: Fußgängerweg benutzen und vor dem Vorbeigehen Blickkontakt mit dem Fahrer aufnehmen.','Wartung oder Reinigung in einer Maschine: nur mit abgeschalteter und mit Schloss und Anhänger gesicherter Energie (Lockout/Tagout). Entfernen Sie nie den Anhänger einer anderen Person.'],
+   q:[['Der Hallenkran hebt ein Teil. Was ist verboten?',['Unter der Last stehen oder gehen','Den abgesperrten Bereich beachten','Den Zeichen des Bedieners folgen'],'Wenn die Last fällt, hat niemand darunter Zeit wegzukommen.'],
+      ['Was ist Pflicht, bevor Sie in einer Maschine reinigen oder reparieren?',['Nur den Stopp-Knopf drücken','Energie abschalten und mit Schloss und Anhänger sichern','Einen Kollegen bitten, auf den Knopf aufzupassen'],'Die Sperre stellt sicher, dass niemand die Maschine einschaltet, während Sie darin sind.']]},
+  {t:'Notfälle',pts:['Lernen Sie den Alarmton, die Fluchtwege und den Sammelpunkt Ihres Bereichs. Ihr Teamleiter zeigt sie Ihnen am ersten Tag.','Beim Alarm: Arbeit sicher beenden, ohne zu rennen über den markierten Weg hinausgehen und zum Sammelpunkt für die Zählung.','Wissen Sie, wo Feuerlöscher, Augendusche, Notdusche und Erste-Hilfe-Kasten sind.','Chemikalie im Auge: mindestens 15 Minuten an der Augendusche spülen und den Teamleiter informieren. Spritzer auf der Haut: verschmutzte Kleidung ausziehen und mit Wasser waschen.'],
+   q:[['Der Notfallalarm geht los. Was tun Sie?',['Erst das Teil fertig machen','Sicher anhalten, über den Fluchtweg hinaus und zum Sammelpunkt','Sich in der Toilette verstecken'],'Am Sammelpunkt wird gezählt, damit klar ist, dass alle draußen sind.'],
+      ['Harz ist Ihnen ins Auge gespritzt. Was tun Sie zuerst?',['Das Auge reiben','Mindestens 15 Minuten an der Augendusche spülen und den Teamleiter informieren','Augentropfen nehmen und weiterarbeiten'],'Schnelles und langes Spülen verringert den Schaden am Auge.']]},
+  {t:'Ihre Rechte und wie Sie melden',pts:['Jeder Unfall, Beinaheunfall oder arbeitsbedingte Beschwerde muss so schnell wie möglich dem Teamleiter gemeldet werden, auch wenn es klein erscheint.','Sie haben das Recht, Arbeitsverletzungen und -erkrankungen zu melden und Sicherheitsbedenken zu äußern, ohne Vergeltung. Das ist Gesetz (OSHA).','Sie sehen eine Gefahr, z. B. ein Leck, eine fehlende Schutzvorrichtung oder einen rutschigen Boden? Sagen Sie es dem Teamleiter oder dem Sicherheitsteam.','Wenn Sie nicht sicher sind, wie etwas sicher geht: anhalten und fragen. Niemand soll mit Risiko arbeiten.'],
+   q:[['Sie haben sich bei der Arbeit leicht verletzt. Was tun Sie?',['Nichts sagen, um keinen Ärger zu machen','So schnell wie möglich den Teamleiter informieren','Eine Woche abwarten, ob es besser wird'],'Sofortiges Melden sichert Ihre Versorgung und hilft, Wiederholungen zu vermeiden.'],
+      ['Darf jemand nur dafür bestraft werden, dass er einen Unfall oder eine Gefahr meldet?',['Ja, wenn es die Produktion verzögert','Nein, das Gesetz schützt Personen, die melden','Das hängt vom Teamleiter ab'],'Das US-Recht verbietet Vergeltung gegen Personen, die Verletzungen, Erkrankungen oder Gefahren melden.']]}],
+ tr:[
+  {t:'Kimyasallar ve güvenlik bilgi formları',pts:['Burada reçine, gelkot, katalizör, hızlandırıcı, boya ve solvent kullanıyoruz. Birçoğu yanıcıdır; solunduğunda veya cilde temas ettiğinde zararlıdır.','Her ürünün tehlike piktogramlı bir etiketi ve bir Güvenlik Bilgi Formu (SDS) vardır. Bölümünüzün formlarının nerede durduğunu liderinize sorun.','Reçine ve gelkottan buharlaşan stiren, fiberglas işindeki ana buhardır. Havalandırmayı ve doğru solunum koruyucuyu kullanın.','Katalizörü asla doğrudan hızlandırıcıyla karıştırmayın. Etiketsiz bir kaptaki ürünü asla kullanmayın.','Reçineli veya solventli bezler kapaklı metal kutuya atılır, çünkü kendiliğinden tutuşabilirler.'],
+   q:[['Bir kimyasalın tehlikelerini ve önlemlerini nerede bulursunuz?',['Etikette ve Güvenlik Bilgi Formunda (SDS)','Koklayarak','Faturada'],'Etiket ve SDS tehlikeleri, KKD’yi ve acil durumda ne yapılacağını gösterir.'],
+      ['Reçine veya solvent bulaşmış bir bezle ne yaparsınız?',['Normal çöpe atarım','Kapaklı metal kutuya koyarım','Tezgâhta kurumaya bırakırım'],'Bu bezler ısınıp kendiliğinden tutuşabilir. Kapaklı metal kutu yangını önler.']]},
+  {t:'KKD: kişisel koruyucu donanım',pts:['Üretim alanında her zaman koruyucu gözlük ve iş ayakkabısı giyin. Liderin her bölüm için ek KKD’yi size gösterecek.','Laminasyon, reçine ve gelkot: nitril eldiven, uzun kollu giysi veya önlük ve organik buhar filtreli solunum koruyucu.','Fiberglas zımparalama ve kesme: toz maskesi (N95 veya üstü), kulak koruyucu ve cildi kapatan giysi.','KKD’yi alana girmeden önce giyin, çıktıktan sonra çıkarın ve temiz saklayın. Yırtık, çizik veya süresi geçmiş KKD’yi devam etmeden önce değiştirin.'],
+   q:[['Reçine ve katalizörle çalışırken hangi eldiveni kullanırsınız?',['Pamuk eldiven','Nitril eldiven','Eldivensiz, daha hızlı'],'Nitril kimyasallara dayanır. Pamuk reçineyi emer ve cilde değmesine izin verir.'],
+      ['Gözlüğünüz çizik ve eldiveniniz delik. Ne yaparsınız?',['Vardiya sonuna kadar devam ederim','Durur ve devam etmeden KKD’yi değiştiririm','Daha iyi görmek için gözlüğü çıkarırım'],'Hasarlı KKD korumaz. Liderinizden veya depodan yenisini isteyin.']]},
+  {t:'Solunum koruyucu ve toz',pts:['İki ana tür vardır: toz filtresi (zımparalama ve kesme) ve organik buhar kartuşu (reçine, gelkot ve boya).','Solunum koruyucuyu kullanmadan önce şirket size eğitim ve yüz uyum testi yapar. Sakal sızdırmazlığı engeller.','Her takışta sızdırmazlık kontrolü yapın: çıkışı kapatıp nefes alın. Maske sızdırmadan yüzünüze yapışmalı.','Solunum koruyucu takılıyken stiren kokusu alırsanız veya nefes almak zorlaşırsa alandan çıkın ve filtreyi ya da kartuşu değiştirin.'],
+   q:[['Gelkotu tabanca ile uygularken hangi solunum koruyucuyu kullanırsınız?',['Bez maske','Organik buhar kartuşlu solunum koruyucu','Kapı açıksa hiçbiri'],'Gelkot buharını (stiren) yalnızca organik buhar kartuşu tutar.'],
+      ['Solunum koruyucu takılıyken stiren kokusu almaya başladınız. Bu ne anlama gelir?',['Her şey normal','Kartuş bitmiş veya sızdırmazlık bozulmuş: alandan çıkın ve değiştirin','Daha gevşek takılmalı'],'Solunum koruyucu takılıyken koku almanız, sizi korumadığının işaretidir.']]},
+  {t:'Gürültü ve kulak koruma',pts:['Zımpara makineleri, testereler, basınçlı hava ve bazı makineler çok gürültülüdür. İşitme kaybı yavaş gelir, acıtmaz ve kalıcıdır.','Zorunluluk levhası olan veya gürültünün yüksek olduğu her yerde kulak koruyucu takın.','Köpük tıkaç: ince şekilde yuvarlayın, kulağınızı yukarı çekin, takın ve genişleyene kadar tutun.','Kulaklık tipi koruyucu: kapaklar kulağın tamamını kapatmalı; saç, şapka veya gözlük sızdırmazlığı bozmamalı.'],
+   q:[['Kulak koruyucu ne zaman zorunludur?',['Sadece gürültü rahatsız ettiğinde','Zorunluluk levhası olan veya zımparalama ve kesme gibi yüksek gürültülü yerlerde','Asla, rahatsız eder'],'Kulak gürültüye alışır ama hasar devam eder. Levhalara uyun.'],
+      ['Köpük tıkacı doğru takma yolu hangisidir?',['İnce yuvarlayıp takmak ve genişleyene kadar tutmak','Kulağın girişinde bırakmak','Ortadan ikiye kesmek'],'Yalnızca kulak kanalında genişlediğinde korur.']]},
+  {t:'Makineler ve ekipmanlar',pts:['Forklift, tavan vinci ve makaslı platform: yalnızca şirketin eğittiği ve yetkilendirdiği kişiler kullanabilir.','Asılı yükün altında asla durmayın ve geçmeyin. Kordon altına alınmış alanlara uyun.','Forklift yakınında: yaya yolunu kullanın ve geçmeden önce operatörle göz teması kurun.','Makine içinde bakım veya temizlik: yalnızca enerji kapatılıp kilit ve etiketle kilitlendiğinde (lockout/tagout). Başkasının etiketini asla çıkarmayın.'],
+   q:[['Tavan vinci bir parçayı kaldırıyor. Ne yasaktır?',['Yükün altında durmak veya geçmek','Kordon altındaki alana uymak','Operatörün işaretlerini takip etmek'],'Yük düşerse altında olan kişinin kaçacak zamanı olmaz.'],
+      ['Bir makinenin içinde temizlik veya tamir yapmadan önce ne zorunludur?',['Sadece durdurma düğmesine basmak','Enerjiyi kapatıp kilit ve etiketle kilitlemek','Bir iş arkadaşından düğmeyi beklemesini istemek'],'Kilitleme, siz içerideyken kimsenin makineyi çalıştırmamasını sağlar.']]},
+  {t:'Acil durumlar',pts:['Alarm sesini, kaçış yollarını ve bölümünüzün toplanma noktasını öğrenin. Liderin ilk gün size gösterecek.','Alarm çaldığında: işi güvenli şekilde durdurun, koşmadan işaretli yoldan çıkın ve sayım için toplanma noktasına gidin.','Yangın söndürücü, göz duşu, acil duş ve ilk yardım çantasının yerini bilin.','Göze kimyasal: göz duşunda en az 15 dakika yıkayın ve liderinize haber verin. Cilde sıçrama: kirlenen giysiyi çıkarın ve suyla yıkayın.'],
+   q:[['Acil durum alarmı çaldı. Ne yaparsınız?',['Önce parçayı bitiririm','Güvenli şekilde durur, kaçış yolundan çıkar ve toplanma noktasına giderim','Tuvalete saklanırım'],'Herkesin çıktığını anlamak için sayım toplanma noktasında yapılır.'],
+      ['Gözünüze reçine sıçradı. İlk ne yaparsınız?',['Gözümü ovuşturum','Göz duşunda en az 15 dakika yıkar ve liderime haber veririm','Göz damlası damlatıp çalışmaya devam ederim'],'Hızlı ve uzun süre yıkamak gözdeki hasarı azaltır.']]},
+  {t:'Haklarınız ve nasıl bildirirsiniz',pts:['Her kaza, ramak kala olay veya işle ilgili rahatsızlık, küçük görünse bile en kısa sürede liderinize bildirilmelidir.','İşle ilgili yaralanma ve hastalıkları bildirme ve güvenlik endişelerini dile getirme hakkınız vardır; misilleme yapılamaz. Bu yasadır (OSHA).','Sızıntı, eksik koruyucu veya kaygan zemin gibi bir tehlike mi gördünüz? Liderinize veya güvenlik ekibine söyleyin.','Bir işi güvenli nasıl yapacağınızdan emin değilseniz durun ve sorun. Kimse risk altında çalışmamalı.'],
+   q:[['İşte hafifçe yaralandınız. Ne yaparsınız?',['Sorun çıkarmamak için hiçbir şey söylemem','En kısa sürede liderime haber veririm','İyileşip iyileşmeyeceğini görmek için bir hafta beklerim'],'Hemen bildirmek tedavi almanızı sağlar ve tekrarlanmasını önlemeye yardım eder.'],
+      ['Biri sadece bir kazayı veya tehlikeyi bildirdiği için cezalandırılabilir mi?',['Evet, üretimi geciktirirse','Hayır, yasa bildirenleri korur','Lidere bağlıdır'],'ABD yasaları, yaralanma, hastalık veya tehlike bildirenlere misillemeyi yasaklar.']]}],
+ zh:[
+  {t:'化学品与安全数据表',pts:['我们这里使用树脂、胶衣、固化剂、促进剂、油漆和溶剂。很多是易燃物，吸入或接触皮肤都有害。','每种产品都有带危险图标的标签和一份安全数据表（SDS）。请问组长您所在区域的安全数据表放在哪里。','苯乙烯会从树脂和胶衣中挥发，是玻璃钢作业中的主要蒸气。请使用通风设备和正确的呼吸器。','绝不能把固化剂直接和促进剂混合。绝不能使用没有标签的容器里的产品。','沾有树脂或溶剂的抹布要放进带盖的金属桶，因为它们可能自燃。'],
+   q:[['化学品的危害和注意事项在哪里查看？',['标签和安全数据表（SDS）','闻一闻','发票上'],'标签和 SDS 会写明危害、防护用品和紧急情况下怎么做。'],
+      ['沾满树脂或溶剂的抹布应该怎么处理？',['扔进普通垃圾桶','放进带盖的金属桶','放在工作台上晾干'],'这类抹布会发热并自燃，带盖的金属桶可以防止火灾。']]},
+  {t:'个人防护用品（PPE）',pts:['在生产区必须一直佩戴安全眼镜、穿安全鞋。组长会告诉您各区域需要的其他防护用品。','层压、树脂和胶衣作业：丁腈手套、长袖衣服或围裙，以及防有机蒸气的呼吸器。','打磨和切割玻璃纤维：防尘口罩（N95 或更高）、听力保护和遮盖皮肤的衣服。','进入区域前穿戴好防护用品，离开后再脱下，并保持干净存放。防护用品破损、刮花或过期，必须先更换再继续工作。'],
+   q:[['处理树脂和固化剂应戴哪种手套？',['棉手套','丁腈手套','不戴手套，更快'],'丁腈手套耐化学品。棉手套会吸收树脂，让它接触皮肤。'],
+      ['您的安全眼镜刮花了，手套也破了。怎么办？',['坚持到下班','停下来，先更换防护用品再继续','摘掉眼镜看得更清楚'],'损坏的防护用品起不到保护作用。请向组长或仓库领取新的。']]},
+  {t:'呼吸器与粉尘',pts:['主要有两种：防尘滤棉（打磨和切割）和防有机蒸气滤毒盒（树脂、胶衣和油漆）。','第一次使用呼吸器前，公司会为您培训并做面部密合测试。胡须会影响密合。','每次戴上都要做密合检查：堵住出气口吸气，面罩应贴紧脸部，不漏气。','戴着呼吸器还能闻到苯乙烯，或呼吸变困难，请离开该区域并更换滤棉或滤毒盒。'],
+   q:[['用喷枪喷涂胶衣时，应使用哪种呼吸器？',['布口罩','带防有机蒸气滤毒盒的呼吸器','门开着就不用'],'只有防有机蒸气滤毒盒能挡住胶衣的蒸气（苯乙烯）。'],
+      ['戴着呼吸器时开始闻到苯乙烯味，这说明什么？',['一切正常','滤毒盒失效或密合不好：离开并更换','需要戴松一点'],'戴着呼吸器还能闻到气味，说明它没有起到保护作用。']]},
+  {t:'噪声与听力保护',pts:['打磨机、锯、压缩空气和一些机器噪声很大。听力损失是慢慢发生的，不会疼，而且无法恢复。','凡是有强制标志或噪声大的地方，都要戴听力保护。','泡沫耳塞：搓细，把耳朵向上拉，塞进去，按住直到膨胀。','耳罩：罩杯要完全盖住耳朵，头发、帽子或眼镜不能影响密封。'],
+   q:[['什么时候必须戴听力保护？',['只有觉得吵的时候','有强制标志或噪声大的地方，比如打磨和切割','从来不用，戴着碍事'],'耳朵会习惯噪声，但损伤一直在发生。请按标志要求佩戴。'],
+      ['泡沫耳塞的正确戴法是哪种？',['搓细后塞入，按住直到膨胀','只放在耳朵口','剪成两半'],'耳塞只有在耳道内膨胀后才能起到保护作用。']]},
+  {t:'机器与设备',pts:['叉车、行车（起重机）和剪叉式升降平台：只有经过培训并获得公司授权的人员才能操作。','绝不能站在或走过悬吊的货物下方。请遵守隔离区域。','在叉车附近：走人行通道，经过前先和司机有眼神交流。','在机器内部维修或清洁：必须先关闭能源并用锁和标签上锁挂牌（lockout/tagout）。绝不能摘掉别人的标签。'],
+   q:[['行车正在吊起一个零件。以下哪项是禁止的？',['站在或走过货物下方','遵守隔离区域','听从操作员的信号'],'如果货物掉下来，下面的人根本来不及躲开。'],
+      ['在机器内部清洁或维修前，必须做什么？',['只按停止按钮','关闭能源并用锁和标签上锁挂牌','让同事帮忙看着按钮'],'上锁挂牌可以确保您在机器里时没有人能启动它。']]},
+  {t:'紧急情况',pts:['熟悉警报声、逃生路线和您所在区域的集合点。组长会在第一天带您认识。','警报响起时：安全地停止工作，不要跑，沿标识路线撤离，到集合点清点人数。','了解灭火器、洗眼器、紧急淋浴和急救箱的位置。','化学品进眼：用洗眼器冲洗至少15分钟并告诉组长。溅到皮肤上：脱掉被污染的衣服，用水冲洗。'],
+   q:[['紧急警报响了，您该怎么做？',['先把手上的零件做完','安全停下，沿逃生路线撤离，到集合点','躲进洗手间'],'在集合点清点人数，才能确认所有人都已撤出。'],
+      ['树脂溅进了眼睛，首先该怎么做？',['揉眼睛','用洗眼器冲洗至少15分钟并告诉组长','滴眼药水后继续工作'],'尽快并长时间冲洗可以减轻对眼睛的伤害。']]},
+  {t:'您的权利与如何报告',pts:['任何事故、险些发生的事故或与工作有关的身体不适，即使看起来很小，也要尽快告诉组长。','您有权报告工伤和职业病并提出安全问题，任何人不得报复。这是法律规定（OSHA）。','发现危险，比如泄漏、防护装置缺失或地面湿滑？请告诉组长或安全团队。','如果不确定怎样安全地做某件事，先停下来问。任何人都不应冒险工作。'],
+   q:[['您在工作中受了轻伤，怎么办？',['什么都不说，免得添麻烦','尽快告诉组长','等一个星期看看会不会好'],'及时报告可以让您得到处理，也有助于防止再次发生。'],
+      ['有人仅仅因为报告事故或危险就可以被惩罚吗？',['可以，如果耽误了生产','不可以，法律保护报告的人','要看组长'],'美国法律禁止报复报告工伤、职业病或危险的人。']]}]};
+ ['de','tr','zh'].forEach(lg=>ONB.forEach((m,i)=>{const x=D[lg][i];m.t[lg]=x.t;m.pts[lg]=x.pts;x.q.forEach((qq,k)=>{const q=m.q[k];q.t[lg]=qq[0];q.o[lg]=qq[1];q.why[lg]=qq[2]})}));
+})();
+
+
+/* Onboard: 8 perguntas novas por módulo (10 no total), em 6 idiomas. A resposta certa é sempre a 1ª opção dos dados; a tela embaralha. */
+const NQ=(pt,en,es,de,tr,zh)=>{const L6={pt,en,es,de,tr,zh},t={},o={},why={};Object.entries(L6).forEach(([k,v])=>{t[k]=v[0];o[k]=v[1];why[k]=v[2]});return{t,o,ans:0,why}};
+const ONB_MORE=[
+/* 1 — químicos */
+[NQ(['O que significa o pictograma de chama no rótulo?',['Produto inflamável','Produto gelado','Produto reciclável'],'A chama avisa que o produto pega fogo com facilidade. Mantenha longe de faíscas e calor.'],
+    ['What does the flame pictogram on a label mean?',['Flammable product','Cold product','Recyclable product'],'The flame warns that the product catches fire easily. Keep it away from sparks and heat.'],
+    ['¿Qué significa el pictograma de llama en la etiqueta?',['Producto inflamable','Producto frío','Producto reciclable'],'La llama avisa que el producto se prende fácilmente. Manténgalo lejos de chispas y calor.'],
+    ['Was bedeutet das Flammensymbol auf dem Etikett?',['Entzündliches Produkt','Kaltes Produkt','Recycelbares Produkt'],'Die Flamme warnt, dass das Produkt leicht brennt. Von Funken und Hitze fernhalten.'],
+    ['Etiketteki alev piktogramı ne anlama gelir?',['Yanıcı ürün','Soğuk ürün','Geri dönüştürülebilir ürün'],'Alev, ürünün kolayca tutuştuğunu gösterir. Kıvılcım ve ısıdan uzak tutun.'],
+    ['标签上的火焰图标是什么意思？',['易燃产品','冷冻产品','可回收产品'],'火焰表示产品很容易着火，要远离火花和热源。']),
+ NQ(['Antes de usar um produto químico novo, o que você faz?',['Leio o rótulo e a ficha de segurança e peço orientação ao líder','Uso igual ao produto antigo','Peço para um colega testar primeiro'],'Cada produto tem perigos diferentes. A empresa deve treinar você antes do uso.'],
+    ['Before using a new chemical, what do you do?',['Read the label and the safety data sheet and ask my lead for guidance','Use it like the old product','Ask a coworker to try it first'],'Each product has different hazards. The company must train you before you use it.'],
+    ['Antes de usar un producto químico nuevo, ¿qué hace?',['Leo la etiqueta y la hoja de seguridad y pido orientación al líder','Lo uso igual que el producto anterior','Le pido a un compañero que lo pruebe primero'],'Cada producto tiene peligros distintos. La empresa debe capacitarlo antes de usarlo.'],
+    ['Was tun Sie, bevor Sie ein neues chemisches Produkt verwenden?',['Etikett und Sicherheitsdatenblatt lesen und den Teamleiter um Anleitung bitten','Es wie das alte Produkt verwenden','Einen Kollegen bitten, es zuerst auszuprobieren'],'Jedes Produkt hat andere Gefahren. Das Unternehmen muss Sie vor der Verwendung schulen.'],
+    ['Yeni bir kimyasalı kullanmadan önce ne yaparsınız?',['Etiketi ve güvenlik bilgi formunu okur, liderimden bilgi isterim','Eski ürün gibi kullanırım','Önce bir iş arkadaşımın denemesini isterim'],'Her ürünün tehlikeleri farklıdır. Şirket, kullanmadan önce sizi eğitmelidir.'],
+    ['使用新的化学品之前，您应该怎么做？',['阅读标签和安全数据表，并向组长请教','像以前的产品一样使用','先让同事试一下'],'每种产品的危害都不同，公司必须在您使用前对您进行培训。']),
+ NQ(['Como o catalisador (MEKP) deve ser guardado?',['No frasco original fechado, longe do calor e do acelerador','Perto da estufa, para não endurecer','Em qualquer garrafa disponível'],'O catalisador é um peróxido. Com calor ou junto do acelerador, pode reagir com violência.'],
+    ['How should the catalyst (MEKP) be stored?',['In its closed original container, away from heat and from the accelerator','Near the oven so it does not harden','In any bottle available'],'The catalyst is a peroxide. With heat or next to the accelerator it can react violently.'],
+    ['¿Cómo se debe guardar el catalizador (MEKP)?',['En su envase original cerrado, lejos del calor y del acelerador','Cerca del horno para que no se endurezca','En cualquier botella disponible'],'El catalizador es un peróxido. Con calor o junto al acelerador puede reaccionar violentamente.'],
+    ['Wie muss der Härter (MEKP) gelagert werden?',['Im geschlossenen Originalbehälter, fern von Hitze und vom Beschleuniger','Neben dem Ofen, damit er nicht hart wird','In irgendeiner Flasche'],'Der Härter ist ein Peroxid. Mit Hitze oder neben dem Beschleuniger kann er heftig reagieren.'],
+    ['Katalizör (MEKP) nasıl saklanmalıdır?',['Kapalı orijinal kabında, ısıdan ve hızlandırıcıdan uzakta','Sertleşmesin diye fırının yanında','Eldeki herhangi bir şişede'],'Katalizör bir peroksittir. Isıyla veya hızlandırıcının yanında şiddetli tepkime verebilir.'],
+    ['固化剂（MEKP）应如何存放？',['放在密闭的原装容器中，远离热源和促进剂','放在烘箱旁边，防止变硬','随便找个瓶子装'],'固化剂是过氧化物，遇热或靠近促进剂可能发生剧烈反应。']),
+ NQ(['Pode comer ou beber na área de laminação?',['Não. Só nas áreas permitidas, depois de lavar as mãos','Sim, se for rápido','Sim, se estiver de luva'],'Resina e poeira podem ir para a comida e entrar no corpo pela boca.'],
+    ['Can you eat or drink in the lamination area?',['No. Only in allowed areas, after washing your hands','Yes, if it is quick','Yes, if you are wearing gloves'],'Resin and dust can get into food and enter your body through your mouth.'],
+    ['¿Se puede comer o beber en el área de laminación?',['No. Solo en las áreas permitidas, después de lavarse las manos','Sí, si es rápido','Sí, si tiene guantes'],'La resina y el polvo pueden pasar a la comida y entrar al cuerpo por la boca.'],
+    ['Darf man im Laminierbereich essen oder trinken?',['Nein. Nur in erlaubten Bereichen, nach dem Händewaschen','Ja, wenn es schnell geht','Ja, mit Handschuhen'],'Harz und Staub können ins Essen gelangen und über den Mund in den Körper.'],
+    ['Laminasyon alanında yemek yenir veya içilir mi?',['Hayır. Sadece izin verilen alanlarda, ellerinizi yıkadıktan sonra','Evet, çabuk olursa','Evet, eldiven takılıysa'],'Reçine ve toz yiyeceğe bulaşıp ağız yoluyla vücuda girebilir.'],
+    ['层压区可以吃东西或喝水吗？',['不可以。只能在允许的区域，并且先洗手','可以，快一点就行','可以，戴着手套就行'],'树脂和粉尘可能沾到食物上，通过嘴进入身体。']),
+ NQ(['O cheiro de estireno na área ficou muito forte. O que fazer?',['Avisar o líder: pode haver falha na ventilação','Continuar, é normal','Abrir uma lata de solvente para disfarçar'],'Cheiro muito forte indica concentração alta. A ventilação precisa ser verificada.'],
+    ['The styrene smell in the area has become very strong. What do you do?',['Tell the lead: the ventilation may have failed','Keep going, it is normal','Open a can of solvent to cover the smell'],'A very strong smell means high concentration. The ventilation must be checked.'],
+    ['El olor a estireno en el área se volvió muy fuerte. ¿Qué hace?',['Avisar al líder: puede haber una falla en la ventilación','Seguir, es normal','Abrir una lata de solvente para disimular'],'Un olor muy fuerte indica concentración alta. Hay que revisar la ventilación.'],
+    ['Der Styrolgeruch im Bereich ist sehr stark geworden. Was tun Sie?',['Den Teamleiter informieren: Die Lüftung könnte ausgefallen sein','Weitermachen, das ist normal','Eine Dose Lösemittel öffnen, um es zu überdecken'],'Ein sehr starker Geruch bedeutet hohe Konzentration. Die Lüftung muss geprüft werden.'],
+    ['Alandaki stiren kokusu çok ağırlaştı. Ne yaparsınız?',['Lidere haber veririm: havalandırma arızalı olabilir','Devam ederim, normaldir','Kokuyu bastırmak için solvent kutusu açarım'],'Çok ağır koku yüksek yoğunluk demektir. Havalandırma kontrol edilmelidir.'],
+    ['区域里的苯乙烯气味变得很浓，怎么办？',['告诉组长：可能是通风出了问题','继续干，这很正常','打开一罐溶剂把味道盖住'],'气味很浓说明浓度很高，必须检查通风。']),
+ NQ(['Caiu resina na sua pele. Como limpar?',['Tirar com pano limpo e lavar com água e sabão','Limpar com acetona ou solvente','Deixar secar e arrancar depois'],'Solvente na pele faz a resina penetrar mais e irrita. Use água e sabão.'],
+    ['You got resin on your skin. How do you clean it?',['Wipe it with a clean cloth and wash with soap and water','Clean it with acetone or solvent','Let it dry and peel it off later'],'Solvent on the skin pushes the resin in and irritates it. Use soap and water.'],
+    ['Le cayó resina en la piel. ¿Cómo se limpia?',['Quitarla con un trapo limpio y lavar con agua y jabón','Limpiarla con acetona o solvente','Dejarla secar y arrancarla después'],'El solvente en la piel hace que la resina penetre más e irrita. Use agua y jabón.'],
+    ['Sie haben Harz auf die Haut bekommen. Wie reinigen Sie es?',['Mit einem sauberen Tuch abwischen und mit Wasser und Seife waschen','Mit Aceton oder Lösemittel reinigen','Trocknen lassen und später abziehen'],'Lösemittel auf der Haut treibt das Harz hinein und reizt. Wasser und Seife verwenden.'],
+    ['Cildinize reçine bulaştı. Nasıl temizlersiniz?',['Temiz bir bezle silip sabun ve suyla yıkarım','Aseton veya solventle temizlerim','Kurumasını bekleyip sonra koparırım'],'Ciltteki solvent reçinenin daha çok işlemesine ve tahrişe yol açar. Sabun ve su kullanın.'],
+    ['树脂沾到皮肤上，怎么清理？',['用干净的布擦掉，再用肥皂和水洗','用丙酮或溶剂擦','等它干了再撕掉'],'溶剂会让树脂更深地渗入皮肤并引起刺激。请用肥皂和水。']),
+ NQ(['Pode fumar ou usar isqueiro perto de resina e solvente?',['Não, são inflamáveis','Sim, se for só um pouco','Sim, se a porta estiver aberta'],'Os vapores pegam fogo com uma faísca. Fume só nas áreas indicadas.'],
+    ['Can you smoke or use a lighter near resin and solvent?',['No, they are flammable','Yes, just a little','Yes, if the door is open'],'The vapors ignite with a single spark. Smoke only in designated areas.'],
+    ['¿Se puede fumar o usar encendedor cerca de resina y solvente?',['No, son inflamables','Sí, solo un poco','Sí, si la puerta está abierta'],'Los vapores se encienden con una chispa. Fume solo en las áreas indicadas.'],
+    ['Darf man in der Nähe von Harz und Lösemittel rauchen oder ein Feuerzeug benutzen?',['Nein, sie sind entzündlich','Ja, nur ein bisschen','Ja, wenn die Tür offen ist'],'Die Dämpfe entzünden sich mit einem Funken. Rauchen nur in ausgewiesenen Bereichen.'],
+    ['Reçine ve solvent yakınında sigara içilir veya çakmak kullanılır mı?',['Hayır, yanıcıdırlar','Evet, biraz olursa','Evet, kapı açıksa'],'Buharlar tek bir kıvılcımla tutuşur. Sigarayı yalnızca belirlenen alanlarda için.'],
+    ['在树脂和溶剂附近可以吸烟或用打火机吗？',['不可以，它们是易燃物','可以，一下下就行','可以，门开着就行'],'蒸气一个火花就能点燃。只能在指定区域吸烟。']),
+ NQ(['Quem deve treinar você sobre os químicos da sua área?',['A empresa, antes de você trabalhar com eles','Ninguém, você aprende sozinho','Só se você pedir'],'A lei americana (OSHA) exige esse treinamento no início do trabalho e sempre que entra um produto novo.'],
+    ['Who must train you on the chemicals in your area?',['The company, before you work with them','Nobody, you learn on your own','Only if you ask'],'U.S. law (OSHA) requires this training when you start and whenever a new product is introduced.'],
+    ['¿Quién debe capacitarlo sobre los químicos de su área?',['La empresa, antes de que trabaje con ellos','Nadie, se aprende solo','Solo si usted lo pide'],'La ley de EE. UU. (OSHA) exige esta capacitación al empezar y cada vez que llega un producto nuevo.'],
+    ['Wer muss Sie über die Chemikalien in Ihrem Bereich schulen?',['Das Unternehmen, bevor Sie damit arbeiten','Niemand, man lernt es selbst','Nur wenn Sie danach fragen'],'Das US-Recht (OSHA) verlangt diese Schulung zu Beginn und bei jedem neuen Produkt.'],
+    ['Bölümünüzdeki kimyasallar hakkında sizi kim eğitmeli?',['Şirket, siz onlarla çalışmadan önce','Kimse, kendi başınıza öğrenirsiniz','Sadece siz isterseniz'],'ABD yasası (OSHA) bu eğitimi işe başlarken ve her yeni ürün geldiğinde zorunlu tutar.'],
+    ['应由谁对您进行所在区域化学品的培训？',['公司，在您接触这些化学品之前','没人，自己学','只有您主动要求才培训'],'美国法律（OSHA）要求在入职时以及每次引入新产品时进行这项培训。'])],
+/* 2 — EPIs */
+[NQ(['Onde os óculos de segurança são obrigatórios?',['Em toda a área de produção, o tempo todo','Só quando estiver cortando','Só quando o líder estiver olhando'],'Respingos e partículas podem atingir os olhos a qualquer momento.'],
+    ['Where are safety glasses required?',['In the whole production area, all the time','Only when cutting','Only when the lead is watching'],'Splashes and particles can hit your eyes at any moment.'],
+    ['¿Dónde son obligatorios los lentes de seguridad?',['En toda el área de producción, todo el tiempo','Solo al cortar','Solo cuando el líder está mirando'],'Las salpicaduras y partículas pueden llegar a los ojos en cualquier momento.'],
+    ['Wo ist die Schutzbrille Pflicht?',['Im gesamten Produktionsbereich, die ganze Zeit','Nur beim Schneiden','Nur wenn der Teamleiter hinschaut'],'Spritzer und Partikel können jederzeit ins Auge gelangen.'],
+    ['Koruyucu gözlük nerede zorunludur?',['Tüm üretim alanında, her zaman','Sadece keserken','Sadece lider bakarken'],'Sıçramalar ve parçacıklar her an gözünüze gelebilir.'],
+    ['哪里必须佩戴安全眼镜？',['整个生产区，任何时候','只有切割的时候','只有组长看着的时候'],'飞溅物和颗粒随时可能进入眼睛。']),
+ NQ(['Para lixar fibra de vidro, qual roupa usar?',['Manga longa e roupa que cubra a pele','Camiseta regata, por causa do calor','Qualquer roupa, a poeira não faz mal'],'A fibra causa coceira e irritação na pele. Cobrir a pele evita o contato.'],
+    ['What should you wear to sand fiberglass?',['Long sleeves and clothing that covers your skin','A tank top because of the heat','Anything, dust does no harm'],'Fiberglass causes itching and skin irritation. Covering your skin prevents contact.'],
+    ['Para lijar fibra de vidrio, ¿qué ropa usar?',['Manga larga y ropa que cubra la piel','Camiseta sin mangas por el calor','Cualquier ropa, el polvo no hace daño'],'La fibra causa picazón e irritación. Cubrir la piel evita el contacto.'],
+    ['Welche Kleidung tragen Sie beim Schleifen von Glasfaser?',['Lange Ärmel und Kleidung, die die Haut bedeckt','Ein Trägershirt wegen der Hitze','Egal, der Staub schadet nicht'],'Glasfaser verursacht Juckreiz und Hautreizungen. Bedeckte Haut verhindert den Kontakt.'],
+    ['Fiberglas zımparalarken ne giymelisiniz?',['Uzun kollu ve cildi kapatan giysi','Sıcak olduğu için atlet','Herhangi bir şey, toz zarar vermez'],'Fiber kaşıntı ve cilt tahrişi yapar. Cildi kapatmak teması önler.'],
+    ['打磨玻璃纤维时应该穿什么？',['长袖和能遮盖皮肤的衣服','因为热所以穿背心','随便穿，粉尘没什么害处'],'玻璃纤维会让皮肤发痒、发炎。遮盖皮肤可以避免接触。']),
+ NQ(['Como tirar luvas sujas de resina?',['Puxar pelo punho virando do avesso, sem tocar na parte suja','Puxar pelos dedos com a outra mão suja','Lavar as luvas e usar de novo'],'Assim a resina fica do lado de dentro e não encosta na sua pele.'],
+    ['How do you take off gloves with resin on them?',['Pull from the cuff, turning them inside out, without touching the dirty part','Pull by the fingers with the other dirty hand','Wash the gloves and use them again'],'This way the resin stays inside and does not touch your skin.'],
+    ['¿Cómo se quitan los guantes sucios de resina?',['Jalar desde el puño volteándolos al revés, sin tocar la parte sucia','Jalar de los dedos con la otra mano sucia','Lavar los guantes y usarlos de nuevo'],'Así la resina queda por dentro y no toca su piel.'],
+    ['Wie ziehen Sie Handschuhe mit Harz aus?',['Am Bündchen ziehen und dabei umstülpen, ohne den schmutzigen Teil zu berühren','Mit der anderen schmutzigen Hand an den Fingern ziehen','Handschuhe waschen und wieder benutzen'],'So bleibt das Harz innen und berührt Ihre Haut nicht.'],
+    ['Reçineli eldivenler nasıl çıkarılır?',['Bilekten tutup ters çevirerek, kirli kısma dokunmadan','Diğer kirli elle parmaklarından çekerek','Eldivenleri yıkayıp tekrar kullanarak'],'Böylece reçine içte kalır ve cildinize değmez.'],
+    ['沾有树脂的手套怎么脱？',['从袖口往下拉并翻过来，不碰到脏的部分','用另一只脏手拉手指','把手套洗洗再用'],'这样树脂留在里面，不会碰到皮肤。']),
+ NQ(['Onde guardar os EPIs depois do turno?',['Limpos, em local seco, longe de poeira e químicos','No chão da área de produção','Dentro da lata de resina'],'EPI sujo ou contaminado perde a proteção e pode irritar a pele.'],
+    ['Where do you store your PPE after the shift?',['Clean, in a dry place, away from dust and chemicals','On the floor of the production area','Inside the resin can'],'Dirty or contaminated PPE loses protection and can irritate your skin.'],
+    ['¿Dónde guardar el EPP después del turno?',['Limpio, en un lugar seco, lejos del polvo y los químicos','En el piso del área de producción','Dentro de la lata de resina'],'El EPP sucio o contaminado pierde protección y puede irritar la piel.'],
+    ['Wo bewahren Sie die PSA nach der Schicht auf?',['Sauber, an einem trockenen Ort, fern von Staub und Chemikalien','Auf dem Boden im Produktionsbereich','In der Harzdose'],'Schmutzige oder kontaminierte PSA verliert ihren Schutz und kann die Haut reizen.'],
+    ['Vardiyadan sonra KKD nerede saklanır?',['Temiz, kuru bir yerde, toz ve kimyasallardan uzakta','Üretim alanının zemininde','Reçine kutusunun içinde'],'Kirli veya bulaşmış KKD korumasını kaybeder ve cildi tahriş edebilir.'],
+    ['下班后防护用品放在哪里？',['清洁后放在干燥的地方，远离粉尘和化学品','放在生产区的地上','放进树脂桶里'],'脏的或被污染的防护用品会失去保护作用，还可能刺激皮肤。']),
+ NQ(['Pode usar o respirador ou o protetor auricular de um colega?',['Não, são de uso pessoal. Peça o seu','Sim, se ele não estiver usando','Sim, se lavar com água'],'São itens de higiene pessoal e o respirador é ajustado ao seu rosto.'],
+    ['Can you use a coworker’s respirator or earplugs?',['No, they are personal. Ask for your own','Yes, if he is not using them','Yes, if you rinse them with water'],'They are personal hygiene items and the respirator is fitted to your face.'],
+    ['¿Puede usar el respirador o los tapones de un compañero?',['No, son de uso personal. Pida los suyos','Sí, si él no los está usando','Sí, si los lava con agua'],'Son artículos de higiene personal y el respirador se ajusta a su cara.'],
+    ['Dürfen Sie den Atemschutz oder Gehörschutz eines Kollegen benutzen?',['Nein, sie sind persönlich. Fragen Sie nach Ihrem eigenen','Ja, wenn er ihn nicht benutzt','Ja, wenn Sie ihn mit Wasser abspülen'],'Es sind persönliche Hygieneartikel, und der Atemschutz ist an Ihr Gesicht angepasst.'],
+    ['Bir iş arkadaşınızın solunum koruyucusunu veya kulak tıkacını kullanabilir misiniz?',['Hayır, kişiseldir. Kendinizinkini isteyin','Evet, o kullanmıyorsa','Evet, suyla yıkarsanız'],'Bunlar kişisel hijyen ürünleridir ve solunum koruyucu yüzünüze göre ayarlanır.'],
+    ['可以用同事的呼吸器或耳塞吗？',['不可以，这些是个人用品，请领自己的','可以，他不用的时候','可以，用水冲一下就行'],'这些是个人卫生用品，呼吸器是按您的脸型调整的。']),
+ NQ(['Para que serve o calçado de segurança?',['Proteger os pés contra queda de peças, pancadas e escorregões','Só para deixar o uniforme bonito','Só para quem dirige empilhadeira'],'Na fábrica há peças pesadas e piso que pode ficar escorregadio.'],
+    ['What are safety shoes for?',['To protect your feet from falling parts, impacts and slips','Only to make the uniform look nice','Only for forklift drivers'],'The plant has heavy parts and floors that can get slippery.'],
+    ['¿Para qué sirve el calzado de seguridad?',['Proteger los pies de caídas de piezas, golpes y resbalones','Solo para que el uniforme se vea bien','Solo para quien maneja el montacargas'],'En la planta hay piezas pesadas y pisos que pueden ponerse resbalosos.'],
+    ['Wozu dienen Sicherheitsschuhe?',['Um die Füße vor fallenden Teilen, Stößen und Ausrutschen zu schützen','Nur damit die Uniform gut aussieht','Nur für Staplerfahrer'],'Im Werk gibt es schwere Teile und Böden, die rutschig werden können.'],
+    ['İş ayakkabısı ne işe yarar?',['Ayakları düşen parçalardan, darbelerden ve kaymadan korur','Sadece üniformanın güzel görünmesi için','Sadece forklift kullananlar için'],'Fabrikada ağır parçalar ve kaygan olabilen zeminler vardır.'],
+    ['安全鞋的作用是什么？',['保护双脚免受掉落零件、撞击和滑倒的伤害','只是为了让制服好看','只给开叉车的人穿'],'工厂里有很重的零件，地面也可能很滑。']),
+ NQ(['Você não sabe qual EPI usar numa tarefa nova. O que faz?',['Pergunto ao líder antes de começar','Começo sem EPI e vejo depois','Copio o que o colega do lado usa'],'Cada tarefa tem riscos próprios. O líder diz qual EPI é exigido.'],
+    ['You do not know which PPE to use for a new task. What do you do?',['Ask my lead before starting','Start without PPE and see later','Copy what the coworker next to me uses'],'Each task has its own hazards. Your lead tells you which PPE is required.'],
+    ['No sabe qué EPP usar en una tarea nueva. ¿Qué hace?',['Pregunto al líder antes de empezar','Empiezo sin EPP y veo después','Copio lo que usa el compañero de al lado'],'Cada tarea tiene sus propios riesgos. El líder le dice qué EPP se exige.'],
+    ['Sie wissen nicht, welche PSA Sie für eine neue Aufgabe brauchen. Was tun Sie?',['Vor dem Start den Teamleiter fragen','Ohne PSA anfangen und später schauen','Das nachmachen, was der Kollege daneben trägt'],'Jede Aufgabe hat eigene Gefahren. Der Teamleiter sagt, welche PSA nötig ist.'],
+    ['Yeni bir iş için hangi KKD’yi kullanacağınızı bilmiyorsunuz. Ne yaparsınız?',['Başlamadan önce liderime sorarım','KKD’siz başlar, sonra bakarım','Yanımdaki arkadaşın kullandığını taklit ederim'],'Her işin kendine özgü riskleri vardır. Hangi KKD’nin gerektiğini lideriniz söyler.'],
+    ['做一项新任务时不知道该用哪种防护用品，怎么办？',['开始前先问组长','先不戴，之后再说','照着旁边同事的来'],'每项任务都有各自的风险，由组长告诉您需要哪些防护用品。']),
+ NQ(['Entrou resina por dentro da sua luva. O que fazer?',['Trocar a luva e lavar as mãos com água e sabão','Continuar até o fim da peça','Colocar outra luva por cima'],'Resina presa dentro da luva fica em contato com a pele por muito tempo.'],
+    ['Resin got inside your glove. What do you do?',['Change the glove and wash your hands with soap and water','Keep going until the part is done','Put another glove on top'],'Resin trapped inside a glove stays on your skin for a long time.'],
+    ['Le entró resina dentro del guante. ¿Qué hace?',['Cambiar el guante y lavarse las manos con agua y jabón','Seguir hasta terminar la pieza','Ponerse otro guante encima'],'La resina atrapada dentro del guante queda mucho tiempo en contacto con la piel.'],
+    ['Harz ist in Ihren Handschuh gelangt. Was tun Sie?',['Handschuh wechseln und Hände mit Wasser und Seife waschen','Weitermachen, bis das Teil fertig ist','Einen zweiten Handschuh darüberziehen'],'Im Handschuh eingeschlossenes Harz bleibt lange auf der Haut.'],
+    ['Eldiveninizin içine reçine girdi. Ne yaparsınız?',['Eldiveni değiştirir, ellerimi sabun ve suyla yıkarım','Parça bitene kadar devam ederim','Üstüne bir eldiven daha takarım'],'Eldivenin içinde kalan reçine uzun süre cildinize temas eder.'],
+    ['树脂进到了手套里面，怎么办？',['换手套，并用肥皂和水洗手','坚持做完这个零件','在外面再套一只手套'],'困在手套里的树脂会长时间接触皮肤。'])],
+/* 3 — respirador e poeira */
+[NQ(['O filtro para poeira protege contra o vapor de estireno?',['Não. Para vapor é preciso cartucho para vapores orgânicos','Sim, protege contra tudo','Sim, se for novo'],'Filtro de poeira segura partículas. Vapor passa direto por ele.'],
+    ['Does a dust filter protect against styrene vapor?',['No. For vapor you need an organic vapor cartridge','Yes, it protects against everything','Yes, if it is new'],'A dust filter stops particles. Vapor passes right through it.'],
+    ['¿El filtro para polvo protege contra el vapor de estireno?',['No. Para vapor se necesita cartucho para vapores orgánicos','Sí, protege contra todo','Sí, si es nuevo'],'El filtro de polvo retiene partículas. El vapor pasa directo.'],
+    ['Schützt ein Staubfilter vor Styroldampf?',['Nein. Gegen Dampf braucht man eine Patrone für organische Dämpfe','Ja, er schützt gegen alles','Ja, wenn er neu ist'],'Ein Staubfilter hält Partikel zurück. Dampf geht direkt hindurch.'],
+    ['Toz filtresi stiren buharına karşı korur mu?',['Hayır. Buhar için organik buhar kartuşu gerekir','Evet, her şeye karşı korur','Evet, yeniyse'],'Toz filtresi parçacıkları tutar. Buhar doğrudan geçer.'],
+    ['防尘滤棉能防苯乙烯蒸气吗？',['不能。防蒸气需要防有机蒸气滤毒盒','能，什么都能防','能，只要是新的'],'防尘滤棉挡的是颗粒，蒸气会直接穿过去。']),
+ NQ(['Por que a barba atrapalha o respirador?',['Ela impede a vedação da máscara no rosto','Ela deixa o filtro mais pesado','Não atrapalha'],'Com barba na área de vedação, o ar contaminado entra pelas bordas.'],
+    ['Why does a beard get in the way of a respirator?',['It prevents the mask from sealing on your face','It makes the filter heavier','It does not get in the way'],'With a beard where the mask seals, contaminated air leaks in around the edges.'],
+    ['¿Por qué la barba afecta al respirador?',['Impide que la máscara selle en la cara','Hace el filtro más pesado','No afecta'],'Con barba en la zona de sellado, el aire contaminado entra por los bordes.'],
+    ['Warum stört ein Bart beim Atemschutz?',['Er verhindert, dass die Maske am Gesicht abdichtet','Er macht den Filter schwerer','Er stört nicht'],'Mit Bart im Dichtbereich dringt verunreinigte Luft an den Rändern ein.'],
+    ['Sakal solunum koruyucuyu neden etkiler?',['Maskenin yüzde sızdırmaz oturmasını engeller','Filtreyi ağırlaştırır','Etkilemez'],'Sızdırmazlık bölgesinde sakal varsa kirli hava kenarlardan girer.'],
+    ['为什么胡须会影响呼吸器？',['胡须会让面罩无法和脸部密合','会让滤棉变重','不会影响'],'密合区域有胡须时，被污染的空气会从边缘漏进来。']),
+ NQ(['Quando fazer a checagem de vedação do respirador?',['Toda vez que colocar','Uma vez por mês','Só no primeiro dia'],'A máscara pode assentar diferente a cada vez. A checagem leva poucos segundos.'],
+    ['When should you do the respirator seal check?',['Every time you put it on','Once a month','Only on the first day'],'The mask can sit differently each time. The check takes just a few seconds.'],
+    ['¿Cuándo revisar el sello del respirador?',['Cada vez que se lo pone','Una vez al mes','Solo el primer día'],'La máscara puede quedar distinta cada vez. La revisión toma pocos segundos.'],
+    ['Wann machen Sie die Dichtheitsprüfung des Atemschutzes?',['Jedes Mal beim Aufsetzen','Einmal im Monat','Nur am ersten Tag'],'Die Maske kann jedes Mal anders sitzen. Die Prüfung dauert nur Sekunden.'],
+    ['Solunum koruyucunun sızdırmazlık kontrolü ne zaman yapılır?',['Her takışta','Ayda bir','Sadece ilk gün'],'Maske her seferinde farklı oturabilir. Kontrol birkaç saniye sürer.'],
+    ['什么时候要做呼吸器密合检查？',['每次戴上的时候','每月一次','只在第一天'],'面罩每次佩戴的位置都可能不同，检查只需几秒钟。']),
+ NQ(['Onde guardar o respirador depois de usar?',['Em saco ou caixa limpa e fechada, longe de poeira e vapores','Pendurado no pescoço durante o intervalo','Jogado na bancada'],'Guardado aberto, o filtro continua puxando contaminação e dura menos.'],
+    ['Where do you store the respirator after use?',['In a clean, closed bag or box, away from dust and vapors','Hanging around your neck during breaks','Tossed on the bench'],'Stored in the open, the filter keeps picking up contamination and lasts less.'],
+    ['¿Dónde guardar el respirador después de usarlo?',['En una bolsa o caja limpia y cerrada, lejos del polvo y los vapores','Colgado del cuello durante el descanso','Tirado en la mesa'],'Guardado al aire, el filtro sigue captando contaminación y dura menos.'],
+    ['Wo bewahren Sie den Atemschutz nach Gebrauch auf?',['In einem sauberen, geschlossenen Beutel oder Kasten, fern von Staub und Dämpfen','In der Pause um den Hals hängend','Auf die Werkbank geworfen'],'Offen gelagert nimmt der Filter weiter Schmutz auf und hält kürzer.'],
+    ['Solunum koruyucu kullandıktan sonra nerede saklanır?',['Temiz ve kapalı bir torba veya kutuda, toz ve buhardan uzakta','Molada boynunuzda asılı','Tezgâhın üstüne atılmış'],'Açıkta saklanırsa filtre kirlenmeye devam eder ve daha kısa dayanır.'],
+    ['呼吸器用完后放在哪里？',['放进干净、密封的袋子或盒子，远离粉尘和蒸气','休息时挂在脖子上','随手丢在工作台上'],'敞开存放时滤棉会继续吸附污染物，寿命变短。']),
+ NQ(['Antes de usar o respirador pela primeira vez, o que a empresa faz?',['Treinamento, avaliação médica e teste de vedação','Nada, é só colocar','Só entrega a caixa'],'A lei americana (OSHA) exige isso para quem precisa usar respirador.'],
+    ['Before you use a respirator for the first time, what does the company do?',['Training, a medical evaluation and a fit test','Nothing, you just put it on','It just hands you the box'],'U.S. law (OSHA) requires this for anyone who must wear a respirator.'],
+    ['Antes de usar el respirador por primera vez, ¿qué hace la empresa?',['Capacitación, evaluación médica y prueba de ajuste','Nada, solo se lo pone','Solo le entrega la caja'],'La ley de EE. UU. (OSHA) lo exige para quien debe usar respirador.'],
+    ['Was macht das Unternehmen, bevor Sie zum ersten Mal Atemschutz verwenden?',['Schulung, ärztliche Untersuchung und Dichtsitztest','Nichts, man setzt ihn einfach auf','Es gibt Ihnen nur die Schachtel'],'Das US-Recht (OSHA) verlangt das für alle, die Atemschutz tragen müssen.'],
+    ['Solunum koruyucuyu ilk kez kullanmadan önce şirket ne yapar?',['Eğitim, tıbbi değerlendirme ve yüz uyum testi','Hiçbir şey, sadece takarsınız','Sadece kutuyu verir'],'ABD yasası (OSHA), solunum koruyucu kullanması gereken herkes için bunu zorunlu tutar.'],
+    ['第一次使用呼吸器前，公司会做什么？',['培训、医学评估和密合测试','什么都不做，直接戴','只把盒子给您'],'美国法律（OSHA）要求所有需要佩戴呼吸器的人都要这样做。']),
+ NQ(['Com filtro de poeira, ficou difícil respirar. O que isso indica?',['O filtro está saturado: saia e troque','Que o filtro está funcionando melhor','Que precisa apertar mais'],'Filtro de poeira cheio fica entupido. Troque antes de continuar.'],
+    ['With a dust filter, breathing has become hard. What does that mean?',['The filter is clogged: leave and replace it','The filter is working better','It needs to be tighter'],'A full dust filter gets clogged. Replace it before continuing.'],
+    ['Con filtro de polvo cuesta respirar. ¿Qué indica?',['El filtro está saturado: salga y cámbielo','Que el filtro funciona mejor','Que hay que apretarlo más'],'Un filtro de polvo lleno se tapa. Cámbielo antes de continuar.'],
+    ['Mit Staubfilter wird das Atmen schwer. Was bedeutet das?',['Der Filter ist zugesetzt: Bereich verlassen und wechseln','Der Filter funktioniert besser','Die Maske muss fester sitzen'],'Ein voller Staubfilter verstopft. Vor dem Weiterarbeiten wechseln.'],
+    ['Toz filtresiyle nefes almak zorlaştı. Bu neyi gösterir?',['Filtre tıkanmış: çıkın ve değiştirin','Filtrenin daha iyi çalıştığını','Daha sıkı takılması gerektiğini'],'Dolu toz filtresi tıkanır. Devam etmeden değiştirin.'],
+    ['戴着防尘滤棉呼吸变得困难，这说明什么？',['滤棉已堵塞：离开并更换','滤棉效果更好了','需要戴得更紧'],'滤棉吸满后会堵塞，继续工作前要更换。']),
+ NQ(['Como limpar a poeira de fibra da bancada e do chão?',['Com aspirador próprio ou pano úmido','Com ar comprimido','Com vassoura seca, bem rápido'],'Ar comprimido e vassoura seca jogam a poeira no ar e você respira.'],
+    ['How do you clean fiberglass dust from the bench and floor?',['With a proper vacuum or a damp cloth','With compressed air','With a dry broom, quickly'],'Compressed air and dry sweeping throw dust into the air and you breathe it.'],
+    ['¿Cómo limpiar el polvo de fibra de la mesa y el piso?',['Con aspiradora adecuada o trapo húmedo','Con aire comprimido','Con escoba seca, rápido'],'El aire comprimido y la escoba seca levantan el polvo y usted lo respira.'],
+    ['Wie entfernen Sie Glasfaserstaub von Werkbank und Boden?',['Mit geeignetem Sauger oder feuchtem Tuch','Mit Druckluft','Schnell mit trockenem Besen'],'Druckluft und trockenes Fegen wirbeln den Staub auf, und Sie atmen ihn ein.'],
+    ['Tezgâhtaki ve zemindeki fiber tozu nasıl temizlenir?',['Uygun süpürgeyle veya nemli bezle','Basınçlı havayla','Kuru süpürgeyle, hızlıca'],'Basınçlı hava ve kuru süpürge tozu havaya kaldırır ve siz solursunuz.'],
+    ['工作台和地面上的玻璃纤维粉尘怎么清理？',['用专用吸尘器或湿布','用压缩空气吹','用干扫帚快速扫'],'压缩空气和干扫会把粉尘扬到空中，被人吸入。']),
+ NQ(['Máscara de pano ou cirúrgica protege contra poeira de fibra e vapores?',['Não, use o respirador indicado','Sim, protege igual','Sim, se usar duas'],'Essas máscaras não vedam e não filtram vapor.'],
+    ['Does a cloth or surgical mask protect against fiber dust and vapors?',['No, use the specified respirator','Yes, just the same','Yes, if you wear two'],'These masks do not seal and do not filter vapor.'],
+    ['¿La mascarilla de tela o quirúrgica protege contra polvo de fibra y vapores?',['No, use el respirador indicado','Sí, protege igual','Sí, si usa dos'],'Esas mascarillas no sellan y no filtran vapor.'],
+    ['Schützt eine Stoff- oder OP-Maske vor Faserstaub und Dämpfen?',['Nein, verwenden Sie den vorgeschriebenen Atemschutz','Ja, genauso gut','Ja, wenn man zwei trägt'],'Diese Masken dichten nicht ab und filtern keinen Dampf.'],
+    ['Bez veya cerrahi maske fiber tozuna ve buhara karşı korur mu?',['Hayır, belirtilen solunum koruyucuyu kullanın','Evet, aynı şekilde korur','Evet, iki tane takarsanız'],'Bu maskeler sızdırmaz değildir ve buharı süzmez.'],
+    ['布口罩或医用口罩能防纤维粉尘和蒸气吗？',['不能，要使用规定的呼吸器','能，效果一样','能，戴两个就行'],'这类口罩不能密合，也不能过滤蒸气。'])],
+/* 4 — ruído */
+[NQ(['Qual é um sinal de que o barulho está alto demais?',['Precisar gritar para falar com alguém a um braço de distância','Ouvir música baixinha','Escutar os passarinhos lá fora'],'Se precisa gritar a um braço de distância, o ruído pode passar do limite seguro.'],
+    ['What is a sign that the noise is too loud?',['Having to shout to talk to someone an arm’s length away','Hearing soft music','Hearing birds outside'],'If you must shout at arm’s length, the noise may be above the safe limit.'],
+    ['¿Cuál es una señal de que el ruido es demasiado alto?',['Tener que gritar para hablar con alguien a un brazo de distancia','Oír música bajita','Escuchar los pájaros afuera'],'Si debe gritar a un brazo de distancia, el ruido puede pasar el límite seguro.'],
+    ['Woran erkennen Sie, dass es zu laut ist?',['Man muss schreien, um mit jemandem auf Armlänge zu sprechen','Man hört leise Musik','Man hört draußen die Vögel'],'Wenn man auf Armlänge schreien muss, kann der Lärm über dem sicheren Grenzwert liegen.'],
+    ['Gürültünün çok yüksek olduğunun işareti nedir?',['Bir kol mesafesindeki biriyle konuşmak için bağırmak zorunda kalmak','Hafif müzik duymak','Dışarıdaki kuşları duymak'],'Bir kol mesafesinde bağırmanız gerekiyorsa gürültü güvenli sınırın üstünde olabilir.'],
+    ['什么情况说明噪声太大了？',['和一臂之外的人说话需要喊','能听到轻柔的音乐','能听到外面的鸟叫'],'如果一臂距离说话都要喊，噪声可能已经超过安全限值。']),
+ NQ(['Saiu do turno com zumbido no ouvido. O que isso indica?',['Exposição a ruído alto: use proteção e avise o líder','Que você está cansado, só isso','Que o protetor auricular funcionou'],'Zumbido é um alerta de que o ouvido sofreu com o barulho.'],
+    ['You leave your shift with ringing in your ears. What does that mean?',['Exposure to loud noise: use protection and tell your lead','Just that you are tired','That the earplugs worked'],'Ringing is a warning that your ears were harmed by the noise.'],
+    ['Salió del turno con zumbido en los oídos. ¿Qué indica?',['Exposición a ruido alto: use protección y avise al líder','Que está cansado, nada más','Que los tapones funcionaron'],'El zumbido es una alerta de que el oído sufrió por el ruido.'],
+    ['Sie verlassen die Schicht mit Ohrensausen. Was bedeutet das?',['Belastung durch lauten Lärm: Gehörschutz tragen und Teamleiter informieren','Nur, dass Sie müde sind','Dass der Gehörschutz funktioniert hat'],'Ohrensausen ist ein Warnzeichen, dass das Ohr durch Lärm geschädigt wurde.'],
+    ['Vardiyadan kulağınızda çınlamayla çıktınız. Bu neyi gösterir?',['Yüksek gürültüye maruz kalma: koruyucu kullanın ve liderinize söyleyin','Sadece yorgun olduğunuzu','Kulak tıkacının işe yaradığını'],'Çınlama, kulağın gürültüden zarar gördüğünün uyarısıdır.'],
+    ['下班时耳朵嗡嗡响，这说明什么？',['接触了高噪声：要戴听力保护并告诉组长','只是累了','说明耳塞起作用了'],'耳鸣是耳朵受到噪声伤害的警告信号。']),
+ NQ(['Quando trocar o protetor auricular de espuma?',['Quando estiver sujo, duro ou deformado','Nunca, ele dura para sempre','Só uma vez por ano'],'Protetor sujo irrita o ouvido e deformado não veda direito.'],
+    ['When should you replace foam earplugs?',['When they are dirty, hard or misshapen','Never, they last forever','Only once a year'],'Dirty earplugs irritate the ear and misshapen ones do not seal properly.'],
+    ['¿Cuándo cambiar los tapones de espuma?',['Cuando estén sucios, duros o deformados','Nunca, duran para siempre','Solo una vez al año'],'Los tapones sucios irritan el oído y los deformados no sellan bien.'],
+    ['Wann wechseln Sie Schaumstoffstöpsel?',['Wenn sie schmutzig, hart oder verformt sind','Nie, sie halten ewig','Nur einmal im Jahr'],'Schmutzige Stöpsel reizen das Ohr, verformte dichten nicht richtig.'],
+    ['Köpük tıkaç ne zaman değiştirilir?',['Kirlendiğinde, sertleştiğinde veya şekli bozulduğunda','Asla, sonsuza kadar dayanır','Yılda sadece bir kez'],'Kirli tıkaç kulağı tahriş eder; şekli bozulan iyi kapatmaz.'],
+    ['泡沫耳塞什么时候更换？',['变脏、变硬或变形时','从不更换，可以一直用','一年只换一次'],'脏耳塞会刺激耳朵，变形的耳塞密封不好。']),
+ NQ(['Suas mãos estão sujas de resina. Antes de colocar o protetor de espuma:',['Lavo as mãos','Coloco assim mesmo','Limpo os dedos na roupa'],'Sujeira levada para dentro do ouvido causa irritação e infecção.'],
+    ['Your hands have resin on them. Before inserting foam earplugs:',['I wash my hands','I put them in anyway','I wipe my fingers on my clothes'],'Dirt carried into the ear causes irritation and infection.'],
+    ['Tiene las manos sucias de resina. Antes de ponerse los tapones de espuma:',['Me lavo las manos','Me los pongo igual','Me limpio los dedos en la ropa'],'La suciedad dentro del oído causa irritación e infección.'],
+    ['Ihre Hände haben Harz. Bevor Sie Schaumstoffstöpsel einsetzen:',['Wasche ich mir die Hände','Setze ich sie trotzdem ein','Wische ich die Finger an der Kleidung ab'],'Schmutz im Ohr verursacht Reizungen und Infektionen.'],
+    ['Elleriniz reçineli. Köpük tıkacı takmadan önce:',['Ellerimi yıkarım','Yine de takarım','Parmaklarımı giysime silerim'],'Kulağın içine giren kir tahriş ve enfeksiyona yol açar.'],
+    ['手上沾着树脂，戴泡沫耳塞之前应该：',['先洗手','照样直接戴','在衣服上擦擦手指'],'把脏东西带进耳朵会引起刺激和感染。']),
+ NQ(['Posso usar fone de música no lugar do protetor auricular?',['Não. Fone não protege e atrapalha ouvir os alarmes','Sim, se o volume estiver baixo','Sim, fone com cancelamento serve'],'Fone de música não é EPI e você pode não ouvir uma empilhadeira ou o alarme.'],
+    ['Can I use music headphones instead of hearing protection?',['No. Headphones do not protect and block alarms','Yes, if the volume is low','Yes, noise-cancelling ones work'],'Music headphones are not PPE and you may not hear a forklift or the alarm.'],
+    ['¿Puedo usar audífonos de música en lugar del protector auditivo?',['No. No protegen e impiden oír las alarmas','Sí, si el volumen está bajo','Sí, los de cancelación de ruido sirven'],'Los audífonos de música no son EPP y podría no oír un montacargas o la alarma.'],
+    ['Kann ich Musikkopfhörer statt Gehörschutz tragen?',['Nein. Kopfhörer schützen nicht und man hört keine Alarme','Ja, wenn die Lautstärke niedrig ist','Ja, mit Geräuschunterdrückung geht es'],'Musikkopfhörer sind keine PSA, und Sie hören vielleicht keinen Stapler oder Alarm.'],
+    ['Kulak koruyucu yerine müzik kulaklığı kullanabilir miyim?',['Hayır. Kulaklık korumaz ve alarmları duymanızı engeller','Evet, ses kısıksa','Evet, gürültü önleyici olanlar olur'],'Müzik kulaklığı KKD değildir; forkliftı veya alarmı duymayabilirsiniz.'],
+    ['可以用听音乐的耳机代替听力保护吗？',['不可以。耳机不能保护听力，还会让您听不到警报','可以，音量小就行','可以，降噪耳机就行'],'音乐耳机不是防护用品，您可能听不到叉车或警报声。']),
+ NQ(['A perda de audição causada por barulho tem cura?',['Não, ela é permanente','Sim, passa em alguns dias','Sim, com colírio'],'Por isso a proteção precisa ser usada desde o primeiro dia.'],
+    ['Can hearing loss caused by noise be cured?',['No, it is permanent','Yes, it goes away in a few days','Yes, with eye drops'],'That is why protection must be worn from day one.'],
+    ['¿La pérdida auditiva por ruido tiene cura?',['No, es permanente','Sí, se pasa en unos días','Sí, con gotas'],'Por eso la protección se usa desde el primer día.'],
+    ['Ist lärmbedingter Hörverlust heilbar?',['Nein, er ist dauerhaft','Ja, er vergeht nach ein paar Tagen','Ja, mit Augentropfen'],'Deshalb muss der Schutz vom ersten Tag an getragen werden.'],
+    ['Gürültünün yol açtığı işitme kaybı tedavi edilebilir mi?',['Hayır, kalıcıdır','Evet, birkaç günde geçer','Evet, damlayla'],'Bu yüzden koruma ilk günden itibaren kullanılmalıdır.'],
+    ['噪声造成的听力损失能治好吗？',['不能，是永久性的','能，过几天就好','能，用眼药水'],'所以从第一天起就必须做好听力保护。']),
+ NQ(['Para que serve o exame de audição (audiometria) que a empresa faz?',['Acompanhar a sua audição quando há ruído alto no trabalho','Escolher o seu turno','Medir a sua altura'],'O exame mostra cedo se a audição está mudando, antes do dano ficar grande.'],
+    ['What is the hearing test (audiogram) the company does for?',['To track your hearing when there is loud noise at work','To choose your shift','To measure your height'],'The test shows early if your hearing is changing, before the damage grows.'],
+    ['¿Para qué sirve el examen de audición (audiometría) que hace la empresa?',['Para seguir su audición cuando hay ruido alto en el trabajo','Para elegir su turno','Para medir su estatura'],'El examen muestra temprano si la audición cambia, antes de que el daño crezca.'],
+    ['Wozu dient der Hörtest (Audiometrie) des Unternehmens?',['Um Ihr Gehör zu überwachen, wenn es bei der Arbeit laut ist','Um Ihre Schicht auszuwählen','Um Ihre Körpergröße zu messen'],'Der Test zeigt früh, ob sich das Gehör verändert, bevor der Schaden groß wird.'],
+    ['Şirketin yaptığı işitme testi (odyometri) ne içindir?',['İşte yüksek gürültü olduğunda işitmenizi takip etmek için','Vardiyanızı seçmek için','Boyunuzu ölçmek için'],'Test, hasar büyümeden işitmenizin değişip değişmediğini erkenden gösterir.'],
+    ['公司做的听力检查（听力测试）是用来干什么的？',['在工作噪声大时跟踪您的听力','安排您的班次','测量您的身高'],'检查可以在损伤扩大之前，及早发现听力的变化。']),
+ NQ(['Em área barulhenta, posso tirar o protetor por alguns minutos?',['Não. Tirar mesmo por pouco tempo reduz muito a proteção','Sim, a cada hora','Sim, quando ninguém estiver vendo'],'Poucos minutos sem proteção em ruído alto já fazem muita diferença no dano.'],
+    ['In a noisy area, can I take my hearing protection off for a few minutes?',['No. Even a short time without it greatly reduces protection','Yes, every hour','Yes, when nobody is watching'],'A few minutes unprotected in loud noise makes a big difference in damage.'],
+    ['En un área ruidosa, ¿puedo quitarme el protector unos minutos?',['No. Quitárselo aunque sea poco tiempo reduce mucho la protección','Sí, cada hora','Sí, cuando nadie mira'],'Pocos minutos sin protección en ruido alto hacen mucha diferencia en el daño.'],
+    ['Darf ich im lauten Bereich den Gehörschutz ein paar Minuten abnehmen?',['Nein. Schon kurzes Abnehmen verringert den Schutz stark','Ja, jede Stunde','Ja, wenn niemand hinschaut'],'Wenige Minuten ohne Schutz bei lautem Lärm machen beim Schaden viel aus.'],
+    ['Gürültülü alanda koruyucuyu birkaç dakika çıkarabilir miyim?',['Hayır. Kısa süre bile çıkarmak korumayı çok azaltır','Evet, her saat','Evet, kimse bakmazken'],'Yüksek gürültüde birkaç dakika korumasız kalmak bile hasarda büyük fark yaratır.'],
+    ['在噪声大的区域，可以把听力保护摘下几分钟吗？',['不可以。即使摘下一小会儿，保护效果也会大大降低','可以，每小时摘一次','可以，没人看的时候'],'在高噪声中哪怕几分钟不防护，对听力的伤害也会明显增加。'])]
+];
+
+
+ONB_MORE.push(
+/* 5 — máquinas */
+[NQ(['Quem pode operar a empilhadeira (forklift)?',['Só quem é treinado e autorizado pela empresa','Qualquer um com carteira de motorista','Quem já viu alguém operando'],'A lei (OSHA) exige treinamento e avaliação do operador de empilhadeira.'],
+    ['Who can operate the forklift?',['Only people trained and authorized by the company','Anyone with a driver license','Anyone who has watched someone do it'],'The law (OSHA) requires forklift operator training and evaluation.'],
+    ['¿Quién puede operar el montacargas?',['Solo quien está capacitado y autorizado por la empresa','Cualquiera con licencia de conducir','Quien ya vio a alguien operarlo'],'La ley (OSHA) exige capacitación y evaluación del operador de montacargas.'],
+    ['Wer darf den Stapler fahren?',['Nur vom Unternehmen geschulte und befugte Personen','Jeder mit Führerschein','Wer schon jemandem dabei zugesehen hat'],'Das Gesetz (OSHA) verlangt Schulung und Prüfung der Staplerfahrer.'],
+    ['Forkliftı kim kullanabilir?',['Sadece şirketin eğittiği ve yetkilendirdiği kişiler','Ehliyeti olan herkes','Birinin kullandığını görmüş olan herkes'],'Yasa (OSHA) forklift operatörlerinin eğitilmesini ve değerlendirilmesini zorunlu tutar.'],
+    ['谁可以驾驶叉车？',['只有经过公司培训并授权的人','任何有驾照的人','看过别人开的人'],'法律（OSHA）要求叉车司机必须经过培训和考核。']),
+ NQ(['Uma pessoa pode andar no garfo da empilhadeira?',['Nunca','Sim, se for perto','Sim, se segurar firme'],'O garfo não é feito para levar pessoas. Uma queda pode ser fatal.'],
+    ['Can a person ride on the forklift forks?',['Never','Yes, if it is a short distance','Yes, if they hold on tight'],'The forks are not made to carry people. A fall can be fatal.'],
+    ['¿Una persona puede ir en las horquillas del montacargas?',['Nunca','Sí, si es cerca','Sí, si se agarra fuerte'],'Las horquillas no son para llevar personas. Una caída puede ser mortal.'],
+    ['Darf jemand auf den Gabeln des Staplers mitfahren?',['Niemals','Ja, wenn es nicht weit ist','Ja, wenn man sich gut festhält'],'Die Gabeln sind nicht für Personen gemacht. Ein Sturz kann tödlich sein.'],
+    ['Bir kişi forkliftın çatalında taşınabilir mi?',['Asla','Evet, yakınsa','Evet, sıkı tutunursa'],'Çatallar insan taşımak için yapılmamıştır. Düşmek ölümcül olabilir.'],
+    ['人可以站在叉车的货叉上吗？',['绝对不可以','可以，距离近就行','可以，抓紧就行'],'货叉不是用来载人的，摔下来可能致命。']),
+ NQ(['Qual é o uso correto da plataforma tesoura (scissor lift)?',['Fechar o portão, ficar dentro do guarda-corpo e respeitar a carga máxima','Subir no guarda-corpo para alcançar mais alto','Mover a plataforma toda levantada em piso irregular'],'O guarda-corpo é a sua proteção contra queda. Nunca suba nele.'],
+    ['What is the correct use of a scissor lift?',['Close the gate, stay inside the guardrails and respect the load limit','Climb on the guardrail to reach higher','Drive it fully raised on uneven floor'],'The guardrail is your fall protection. Never climb on it.'],
+    ['¿Cuál es el uso correcto de la plataforma de tijera?',['Cerrar la puerta, quedarse dentro de la baranda y respetar la carga máxima','Subirse a la baranda para alcanzar más alto','Moverla totalmente levantada en piso irregular'],'La baranda es su protección contra caídas. Nunca se suba en ella.'],
+    ['Wie wird die Scherenbühne richtig benutzt?',['Tor schließen, innerhalb des Geländers bleiben und die Höchstlast einhalten','Auf das Geländer steigen, um höher zu kommen','Voll ausgefahren auf unebenem Boden fahren'],'Das Geländer ist Ihr Absturzschutz. Steigen Sie nie darauf.'],
+    ['Makaslı platformun doğru kullanımı hangisidir?',['Kapıyı kapatmak, korkulukların içinde kalmak ve azami yüke uymak','Daha yükseğe ulaşmak için korkuluğa çıkmak','Tamamen yükseltilmişken engebeli zeminde sürmek'],'Korkuluk düşmeye karşı korumanızdır. Asla üstüne çıkmayın.'],
+    ['剪叉式升降平台的正确用法是？',['关好门，待在护栏内，遵守最大载荷','爬到护栏上够高处','完全升起时在不平的地面上移动'],'护栏是您的防坠落保护，绝不能爬上去。']),
+ NQ(['Você vê um cadeado e uma etiqueta de bloqueio numa máquina. O que faz?',['Não ligo a máquina nem tiro o bloqueio. Só quem colocou pode retirar','Tiro o cadeado para adiantar o serviço','Ligo só para testar'],'Alguém pode estar trabalhando dentro da máquina.'],
+    ['You see a lockout lock and tag on a machine. What do you do?',['I do not start it or remove the lock. Only the person who placed it can remove it','Remove the lock to get the job moving','Start it just to test'],'Someone may be working inside the machine.'],
+    ['Ve un candado y una etiqueta de bloqueo en una máquina. ¿Qué hace?',['No la enciendo ni quito el bloqueo. Solo quien lo puso puede quitarlo','Quito el candado para adelantar el trabajo','La enciendo solo para probar'],'Alguien puede estar trabajando dentro de la máquina.'],
+    ['Sie sehen ein Sperrschloss mit Anhänger an einer Maschine. Was tun Sie?',['Maschine nicht einschalten und Sperre nicht entfernen. Nur wer sie angebracht hat, darf sie entfernen','Das Schloss entfernen, damit es schneller geht','Nur zum Testen einschalten'],'Es könnte jemand in der Maschine arbeiten.'],
+    ['Bir makinede kilit ve kilitleme etiketi görüyorsunuz. Ne yaparsınız?',['Makineyi çalıştırmam ve kilidi çıkarmam. Sadece takan kişi çıkarabilir','İşi hızlandırmak için kilidi çıkarırım','Sadece denemek için çalıştırırım'],'Makinenin içinde biri çalışıyor olabilir.'],
+    ['您看到一台机器上挂着锁和停用标签，怎么办？',['不启动机器，也不拆锁。只有上锁的人才能拆','把锁拆掉好赶进度','启动一下试试'],'可能有人正在机器里面工作。']),
+ NQ(['A proteção de uma máquina foi tirada. O que fazer?',['Não usar a máquina e avisar o líder','Usar com cuidado redobrado','Usar e recolocar depois'],'A proteção existe para evitar que mão, roupa ou cabelo sejam puxados.'],
+    ['A machine guard has been removed. What do you do?',['Do not use the machine and tell the lead','Use it extra carefully','Use it and put the guard back later'],'The guard is there so that hands, clothes or hair are not pulled in.'],
+    ['Quitaron la guarda de una máquina. ¿Qué hace?',['No uso la máquina y aviso al líder','La uso con doble cuidado','La uso y luego vuelvo a poner la guarda'],'La guarda existe para que no atrape manos, ropa o cabello.'],
+    ['Die Schutzvorrichtung einer Maschine wurde entfernt. Was tun Sie?',['Die Maschine nicht benutzen und den Teamleiter informieren','Besonders vorsichtig benutzen','Benutzen und die Schutzvorrichtung später wieder anbringen'],'Die Schutzvorrichtung verhindert, dass Hände, Kleidung oder Haare eingezogen werden.'],
+    ['Bir makinenin koruyucusu çıkarılmış. Ne yaparsınız?',['Makineyi kullanmam ve lidere haber veririm','İki kat dikkatle kullanırım','Kullanır, koruyucuyu sonra takarım'],'Koruyucu, el, giysi veya saçın içeri çekilmesini önlemek için vardır.'],
+    ['机器的防护罩被拆掉了，怎么办？',['不使用这台机器，并告诉组长','加倍小心地用','先用，之后再装回去'],'防护罩是为了防止手、衣服或头发被卷进去。']),
+ NQ(['Como guiar uma carga da ponte rolante?',['Com corda-guia, ficando fora da área onde a carga pode cair','Empurrando com as mãos por baixo da carga','Subindo em cima da carga'],'A corda-guia mantém você longe da carga suspensa.'],
+    ['How do you guide an overhead crane load?',['With a tag line, staying out of the area where the load could fall','Pushing it with your hands from under the load','Riding on top of the load'],'The tag line keeps you away from the suspended load.'],
+    ['¿Cómo se guía una carga del puente grúa?',['Con cuerda guía, quedándose fuera del área donde puede caer la carga','Empujándola con las manos por debajo','Subiéndose encima de la carga'],'La cuerda guía lo mantiene lejos de la carga suspendida.'],
+    ['Wie führen Sie eine Last am Hallenkran?',['Mit einem Führungsseil, außerhalb des Bereichs, in den die Last fallen könnte','Mit den Händen von unten schieben','Auf der Last mitfahren'],'Das Führungsseil hält Sie von der schwebenden Last fern.'],
+    ['Tavan vincinin yükü nasıl yönlendirilir?',['Kılavuz halatla, yükün düşebileceği alanın dışında kalarak','Yükün altından elle iterek','Yükün üstüne binerek'],'Kılavuz halat sizi asılı yükten uzak tutar.'],
+    ['行车吊的货物怎么引导？',['用牵引绳，并站在货物可能掉落的范围之外','站在货物下面用手推','站到货物上面'],'牵引绳可以让您远离悬吊的货物。']),
+ NQ(['A máquina está fazendo barulho estranho. O que fazer?',['Parar com segurança e avisar o líder, sem tentar consertar sem autorização','Bater nela até parar o barulho','Desmontar sozinho para ver'],'Só pessoas autorizadas, com bloqueio de energia, podem consertar máquinas.'],
+    ['A machine is making a strange noise. What do you do?',['Stop safely and tell the lead, without trying to fix it unless authorized','Hit it until the noise stops','Take it apart yourself to look'],'Only authorized people, with the energy locked out, may repair machines.'],
+    ['La máquina hace un ruido extraño. ¿Qué hace?',['Parar con seguridad y avisar al líder, sin intentar repararla sin autorización','Golpearla hasta que pare el ruido','Desarmarla solo para ver'],'Solo personas autorizadas, con la energía bloqueada, pueden reparar máquinas.'],
+    ['Eine Maschine macht ein seltsames Geräusch. Was tun Sie?',['Sicher anhalten und den Teamleiter informieren, ohne Befugnis nichts reparieren','Draufschlagen, bis das Geräusch aufhört','Sie allein auseinandernehmen'],'Nur befugte Personen dürfen Maschinen bei gesperrter Energie reparieren.'],
+    ['Makine garip bir ses çıkarıyor. Ne yaparsınız?',['Güvenli şekilde durdurur, lidere haber veririm; yetkim yoksa tamir etmeye çalışmam','Ses kesilene kadar vururum','Bakmak için kendim sökerim'],'Makineleri yalnızca yetkili kişiler, enerji kilitliyken tamir edebilir.'],
+    ['机器发出奇怪的声音，怎么办？',['安全停机并告诉组长，未经授权不要自己修','敲打它直到没声音','自己拆开看看'],'只有获得授权的人在能源上锁后才能维修机器。']),
+ NQ(['Perto de máquinas que giram, o que é obrigatório?',['Cabelo preso e nada de roupa solta, anéis ou correntes','Usar luva grossa de algodão','Trabalhar sem óculos'],'Partes que giram podem puxar cabelo, roupa e joias em segundos.'],
+    ['Near rotating machines, what is required?',['Hair tied back and no loose clothing, rings or chains','Wearing thick cotton gloves','Working without glasses'],'Rotating parts can pull in hair, clothes and jewelry in seconds.'],
+    ['Cerca de máquinas que giran, ¿qué es obligatorio?',['Cabello recogido y nada de ropa suelta, anillos o cadenas','Usar guantes gruesos de algodón','Trabajar sin lentes'],'Las partes que giran pueden atrapar cabello, ropa y joyas en segundos.'],
+    ['Was ist an drehenden Maschinen Pflicht?',['Haare zusammengebunden, keine lose Kleidung, Ringe oder Ketten','Dicke Baumwollhandschuhe tragen','Ohne Brille arbeiten'],'Drehende Teile können Haare, Kleidung und Schmuck in Sekunden einziehen.'],
+    ['Dönen makinelerin yakınında ne zorunludur?',['Saç toplanmış olmalı; bol giysi, yüzük veya zincir olmamalı','Kalın pamuk eldiven giymek','Gözlüksüz çalışmak'],'Dönen parçalar saçı, giysiyi ve takıları saniyeler içinde çekebilir.'],
+    ['在旋转机器附近，必须做到什么？',['把头发扎起来，不穿宽松衣服，不戴戒指和项链','戴厚棉手套','不戴眼镜工作'],'旋转部件几秒钟就能把头发、衣服和首饰卷进去。'])],
+/* 6 — emergências */
+[NQ(['Posso deixar material na frente de uma saída de emergência ou de um extintor?',['Não, eles precisam estar sempre livres','Sim, por pouco tempo','Sim, se for leve'],'Numa emergência, cada segundo conta para sair ou pegar o extintor.'],
+    ['Can I leave material in front of an emergency exit or a fire extinguisher?',['No, they must always be clear','Yes, for a short time','Yes, if it is light'],'In an emergency, every second counts to get out or grab the extinguisher.'],
+    ['¿Puedo dejar material frente a una salida de emergencia o un extintor?',['No, deben estar siempre libres','Sí, por poco tiempo','Sí, si es liviano'],'En una emergencia, cada segundo cuenta para salir o tomar el extintor.'],
+    ['Darf ich Material vor einem Notausgang oder Feuerlöscher abstellen?',['Nein, sie müssen immer frei sein','Ja, für kurze Zeit','Ja, wenn es leicht ist'],'Im Notfall zählt jede Sekunde, um hinauszukommen oder den Feuerlöscher zu holen.'],
+    ['Acil çıkışın veya yangın söndürücünün önüne malzeme bırakabilir miyim?',['Hayır, her zaman boş olmalıdır','Evet, kısa süreliğine','Evet, hafifse'],'Acil durumda dışarı çıkmak veya söndürücüyü almak için her saniye önemlidir.'],
+    ['可以把材料放在紧急出口或灭火器前面吗？',['不可以，必须始终保持畅通','可以，放一会儿','可以，东西轻就行'],'紧急情况下，逃生或拿灭火器每一秒都很重要。']),
+ NQ(['Começou um fogo pequeno. O que fazer?',['Acionar o alarme e avisar; só usar o extintor se for treinado e for seguro','Jogar água em cima da resina','Ignorar, ele apaga sozinho'],'Água espalha fogo de resina e solvente. Se o fogo crescer, saia.'],
+    ['A small fire has started. What do you do?',['Sound the alarm and warn others; only use the extinguisher if trained and it is safe','Throw water on the resin','Ignore it, it will go out by itself'],'Water spreads resin and solvent fires. If the fire grows, get out.'],
+    ['Empezó un fuego pequeño. ¿Qué hace?',['Activar la alarma y avisar; usar el extintor solo si está capacitado y es seguro','Echar agua sobre la resina','Ignorarlo, se apaga solo'],'El agua esparce el fuego de resina y solvente. Si el fuego crece, salga.'],
+    ['Ein kleines Feuer ist ausgebrochen. Was tun Sie?',['Alarm auslösen und warnen; Feuerlöscher nur benutzen, wenn geschult und sicher','Wasser auf das Harz schütten','Ignorieren, es geht von selbst aus'],'Wasser verteilt Harz- und Lösemittelbrände. Wenn das Feuer wächst, hinaus.'],
+    ['Küçük bir yangın çıktı. Ne yaparsınız?',['Alarmı çalıştırır ve haber veririm; söndürücüyü sadece eğitimliysem ve güvenliyse kullanırım','Reçinenin üstüne su dökerim','Görmezden gelirim, kendi söner'],'Su, reçine ve solvent yangınını yayar. Yangın büyürse dışarı çıkın.'],
+    ['起了一个小火，怎么办？',['拉响警报并通知他人；只有受过培训且安全时才使用灭火器','往树脂上泼水','不管它，会自己灭'],'水会让树脂和溶剂的火蔓延。火势变大时要立即撤离。']),
+ NQ(['Para onde apontar o extintor?',['Para a base do fogo','Para o alto das chamas','Para a fumaça'],'O fogo está na base. Mirar nas chamas gasta o extintor sem apagar.'],
+    ['Where do you aim the fire extinguisher?',['At the base of the fire','At the top of the flames','At the smoke'],'The fire is at the base. Aiming at the flames wastes the extinguisher.'],
+    ['¿Hacia dónde se apunta el extintor?',['A la base del fuego','A lo alto de las llamas','Al humo'],'El fuego está en la base. Apuntar a las llamas gasta el extintor sin apagarlo.'],
+    ['Wohin richten Sie den Feuerlöscher?',['Auf den Fuß des Feuers','Auf die Spitze der Flammen','Auf den Rauch'],'Das Feuer brennt an der Basis. Auf die Flammen zu zielen verschwendet den Löscher.'],
+    ['Yangın söndürücü nereye doğrultulur?',['Ateşin dibine','Alevlerin tepesine','Dumana'],'Ateş tabandadır. Alevlere nişan almak söndürücüyü boşa harcar.'],
+    ['灭火器应对准哪里？',['火的根部','火焰的顶端','烟雾'],'火源在根部，对着火焰喷只会浪费灭火器。']),
+ NQ(['Um colega desmaiou numa área com vapores. O que fazer?',['Não entrar sem proteção; chamar ajuda e acionar a emergência','Entrar correndo para tirá-lo','Esperar ele acordar'],'Quem entra sem proteção pode desmaiar também. Chame quem é treinado.'],
+    ['A coworker has passed out in an area with vapors. What do you do?',['Do not go in unprotected; call for help and trigger the emergency','Run in to pull him out','Wait for him to wake up'],'Anyone going in unprotected may pass out too. Call trained responders.'],
+    ['Un compañero se desmayó en un área con vapores. ¿Qué hace?',['No entrar sin protección; pedir ayuda y activar la emergencia','Entrar corriendo para sacarlo','Esperar a que despierte'],'Quien entra sin protección puede desmayarse también. Llame a quien está capacitado.'],
+    ['Ein Kollege ist in einem Bereich mit Dämpfen ohnmächtig geworden. Was tun Sie?',['Nicht ungeschützt hineingehen; Hilfe rufen und Notfall auslösen','Hineinrennen und ihn herausziehen','Warten, bis er aufwacht'],'Wer ungeschützt hineingeht, kann ebenfalls ohnmächtig werden. Rufen Sie geschulte Helfer.'],
+    ['Buharlı bir alanda bir iş arkadaşınız bayıldı. Ne yaparsınız?',['Korumasız içeri girmem; yardım çağırır ve acil durumu başlatırım','Onu çıkarmak için koşarak girerim','Uyanmasını beklerim'],'Korumasız giren kişi de bayılabilir. Eğitimli ekibi çağırın.'],
+    ['同事在有蒸气的区域晕倒了，怎么办？',['不要在没有防护的情况下进去；呼叫救援并启动应急程序','冲进去把他拖出来','等他醒过来'],'没有防护进去的人也可能晕倒，要叫受过训练的人来处理。']),
+ NQ(['Houve um derramamento grande de produto químico. O que fazer?',['Afastar as pessoas e avisar o líder ou a equipe de emergência','Limpar sozinho com papelão','Jogar água para diluir'],'Derramamento grande precisa de equipe treinada e material próprio.'],
+    ['There is a large chemical spill. What do you do?',['Move people away and tell the lead or the emergency team','Clean it up alone with cardboard','Pour water on it to dilute it'],'A large spill needs a trained team and proper equipment.'],
+    ['Hubo un derrame grande de producto químico. ¿Qué hace?',['Alejar a las personas y avisar al líder o al equipo de emergencia','Limpiarlo solo con cartón','Echar agua para diluirlo'],'Un derrame grande necesita un equipo capacitado y material adecuado.'],
+    ['Es gibt eine große Chemikalienverschüttung. Was tun Sie?',['Personen fernhalten und Teamleiter oder Notfallteam informieren','Allein mit Pappe aufwischen','Mit Wasser verdünnen'],'Eine große Verschüttung braucht ein geschultes Team und passende Ausrüstung.'],
+    ['Büyük bir kimyasal dökülmesi oldu. Ne yaparsınız?',['İnsanları uzaklaştırır, lidere veya acil durum ekibine haber veririm','Tek başıma kartonla temizlerim','Seyreltmek için su dökerim'],'Büyük bir dökülme eğitimli ekip ve uygun malzeme gerektirir.'],
+    ['发生了大量化学品泄漏，怎么办？',['让人员远离，并告诉组长或应急小组','自己用纸板清理','倒水稀释'],'大量泄漏需要受过训练的人员和专门的器材处理。']),
+ NQ(['Depois de sair na evacuação, posso voltar para pegar minhas coisas?',['Não, só quando for liberado','Sim, se for rápido','Sim, se for o celular'],'Voltar atrapalha a contagem e coloca você em risco.'],
+    ['After evacuating, can I go back for my things?',['No, only when the all-clear is given','Yes, if it is quick','Yes, if it is my phone'],'Going back disrupts the head count and puts you at risk.'],
+    ['Después de evacuar, ¿puedo volver por mis cosas?',['No, solo cuando lo autoricen','Sí, si es rápido','Sí, si es el celular'],'Volver complica el conteo y lo pone en riesgo.'],
+    ['Darf ich nach der Evakuierung zurück, um meine Sachen zu holen?',['Nein, erst nach der Freigabe','Ja, wenn es schnell geht','Ja, wenn es das Handy ist'],'Zurückgehen stört die Zählung und bringt Sie in Gefahr.'],
+    ['Tahliyeden sonra eşyalarımı almak için geri dönebilir miyim?',['Hayır, ancak izin verildiğinde','Evet, çabuk olursa','Evet, telefonumsa'],'Geri dönmek sayımı bozar ve sizi tehlikeye atar.'],
+    ['撤离后可以回去拿东西吗？',['不可以，要等解除警报后','可以，快一点就行','可以，拿手机就行'],'返回会打乱人数清点，也会让您陷入危险。']),
+ NQ(['Qual é o número de emergência nos Estados Unidos?',['911','190','112'],'Em caso grave, ligue 911 e avise o líder.'],
+    ['What is the emergency number in the United States?',['911','190','112'],'In a serious case, call 911 and tell your lead.'],
+    ['¿Cuál es el número de emergencia en Estados Unidos?',['911','190','112'],'En un caso grave, llame al 911 y avise al líder.'],
+    ['Wie lautet die Notrufnummer in den USA?',['911','190','112'],'Im Ernstfall 911 anrufen und den Teamleiter informieren.'],
+    ['ABD’de acil durum numarası nedir?',['911','190','112'],'Ciddi bir durumda 911’i arayın ve liderinize haber verin.'],
+    ['美国的紧急电话号码是多少？',['911','190','112'],'情况严重时请拨打911并告诉组长。']),
+ NQ(['Onde ficam as rotas de fuga?',['Indicadas pelas placas de saída. Seu líder mostra no primeiro dia','Ninguém sabe','Só no escritório'],'Conhecer as rotas antes de uma emergência faz você sair mais rápido.'],
+    ['Where are the escape routes?',['Marked by exit signs. Your lead shows you on your first day','Nobody knows','Only in the office'],'Knowing the routes before an emergency helps you get out faster.'],
+    ['¿Dónde están las rutas de evacuación?',['Indicadas por los letreros de salida. Su líder se las muestra el primer día','Nadie sabe','Solo en la oficina'],'Conocer las rutas antes de una emergencia le ayuda a salir más rápido.'],
+    ['Wo sind die Fluchtwege?',['Durch Notausgangsschilder gekennzeichnet. Ihr Teamleiter zeigt sie am ersten Tag','Niemand weiß es','Nur im Büro'],'Wer die Wege vor einem Notfall kennt, kommt schneller hinaus.'],
+    ['Kaçış yolları nerededir?',['Çıkış levhalarıyla gösterilir. Lideriniz ilk gün gösterir','Kimse bilmez','Sadece ofiste'],'Yolları acil durumdan önce bilmek daha hızlı çıkmanızı sağlar.'],
+    ['逃生路线在哪里？',['有出口标志指示，组长会在第一天带您认识','没人知道','只在办公室里'],'在紧急情况发生前熟悉路线，可以更快撤离。'])],
+/* 7 — direitos */
+[NQ(['Um quase-acidente (quando nada aconteceu) deve ser relatado?',['Sim, ajuda a evitar o próximo acidente','Não, só se alguém se machucar','Só no fim do mês'],'O quase-acidente mostra um risco antes que alguém se machuque.'],
+    ['Should a near miss (when nothing happened) be reported?',['Yes, it helps prevent the next accident','No, only if someone gets hurt','Only at the end of the month'],'A near miss shows a hazard before someone gets hurt.'],
+    ['¿Se debe reportar un casi accidente (cuando no pasó nada)?',['Sí, ayuda a evitar el próximo accidente','No, solo si alguien se lastima','Solo a fin de mes'],'El casi accidente muestra un riesgo antes de que alguien se lastime.'],
+    ['Muss ein Beinaheunfall (wenn nichts passiert ist) gemeldet werden?',['Ja, das hilft, den nächsten Unfall zu verhindern','Nein, nur wenn sich jemand verletzt','Nur am Monatsende'],'Ein Beinaheunfall zeigt eine Gefahr, bevor sich jemand verletzt.'],
+    ['Ramak kala bir olay (hiçbir şey olmadığında) bildirilmeli mi?',['Evet, bir sonraki kazayı önlemeye yardım eder','Hayır, sadece biri yaralanırsa','Sadece ay sonunda'],'Ramak kala olay, kimse yaralanmadan önce bir tehlikeyi gösterir.'],
+    ['险些发生的事故（什么也没发生）需要报告吗？',['需要，这有助于防止下一次事故','不需要，只有有人受伤才报告','月底再报'],'险兆事件能在有人受伤之前暴露出危险。']),
+ NQ(['Você tem direito de ver as fichas de segurança dos produtos que usa?',['Sim, elas devem estar disponíveis para você','Não, são só para o chefe','Só se pagar'],'A lei de comunicação de perigos garante acesso às fichas de segurança.'],
+    ['Do you have the right to see the safety data sheets of the products you use?',['Yes, they must be available to you','No, they are only for the boss','Only if you pay'],'The hazard communication law guarantees access to safety data sheets.'],
+    ['¿Tiene derecho a ver las hojas de seguridad de los productos que usa?',['Sí, deben estar disponibles para usted','No, son solo para el jefe','Solo si paga'],'La ley de comunicación de peligros garantiza el acceso a las hojas de seguridad.'],
+    ['Haben Sie das Recht, die Sicherheitsdatenblätter Ihrer Produkte einzusehen?',['Ja, sie müssen für Sie verfügbar sein','Nein, nur für den Chef','Nur gegen Bezahlung'],'Das Gesetz zur Gefahrenkommunikation garantiert den Zugang zu Sicherheitsdatenblättern.'],
+    ['Kullandığınız ürünlerin güvenlik bilgi formlarını görme hakkınız var mı?',['Evet, size açık olmalıdır','Hayır, sadece patron için','Sadece ücret öderseniz'],'Tehlike iletişimi yasası güvenlik bilgi formlarına erişimi garanti eder.'],
+    ['您有权查看所用产品的安全数据表吗？',['有，必须让您能够查阅','没有，只给老板看','要付钱才行'],'危害告知法规保障您查阅安全数据表的权利。']),
+ NQ(['Uma tarefa parece claramente perigosa, com risco imediato. O que fazer?',['Parar e avisar o líder ou a equipe de segurança antes de continuar','Fazer rápido para acabar logo','Fazer sem contar a ninguém'],'Nenhuma produção vale um ferimento. Peça uma solução segura.'],
+    ['A task looks clearly dangerous, with an immediate risk. What do you do?',['Stop and tell the lead or the safety team before continuing','Do it fast to get it over with','Do it without telling anyone'],'No production is worth an injury. Ask for a safe solution.'],
+    ['Una tarea parece claramente peligrosa, con riesgo inmediato. ¿Qué hace?',['Parar y avisar al líder o al equipo de seguridad antes de continuar','Hacerla rápido para terminar pronto','Hacerla sin decirle a nadie'],'Ninguna producción vale una lesión. Pida una solución segura.'],
+    ['Eine Aufgabe wirkt eindeutig gefährlich, mit unmittelbarem Risiko. Was tun Sie?',['Anhalten und vor dem Weitermachen den Teamleiter oder das Sicherheitsteam informieren','Schnell erledigen, damit es vorbei ist','Erledigen, ohne es jemandem zu sagen'],'Keine Produktion ist eine Verletzung wert. Fragen Sie nach einer sicheren Lösung.'],
+    ['Bir iş açıkça tehlikeli ve risk anında görünüyor. Ne yaparsınız?',['Durur, devam etmeden lidere veya güvenlik ekibine haber veririm','Bir an önce bitsin diye hızlıca yaparım','Kimseye söylemeden yaparım'],'Hiçbir üretim bir yaralanmaya değmez. Güvenli bir çözüm isteyin.'],
+    ['某项任务明显很危险，有立即发生事故的风险，怎么办？',['停下来，继续之前先告诉组长或安全团队','快点做完了事','不告诉任何人自己做'],'任何生产都不值得用受伤来换。请要求安全的解决办法。']),
+ NQ(['Você pode procurar a OSHA para relatar um perigo no trabalho?',['Sim, é um direito seu e a lei proíbe retaliação','Não, é proibido','Só com autorização do chefe'],'A lei americana protege quem relata problemas de segurança à OSHA.'],
+    ['Can you contact OSHA to report a hazard at work?',['Yes, it is your right and the law forbids retaliation','No, it is forbidden','Only with the boss’s permission'],'U.S. law protects people who report safety problems to OSHA.'],
+    ['¿Puede acudir a OSHA para reportar un peligro en el trabajo?',['Sí, es su derecho y la ley prohíbe represalias','No, está prohibido','Solo con permiso del jefe'],'La ley de EE. UU. protege a quien reporta problemas de seguridad a OSHA.'],
+    ['Dürfen Sie sich an die OSHA wenden, um eine Gefahr bei der Arbeit zu melden?',['Ja, das ist Ihr Recht, und das Gesetz verbietet Vergeltung','Nein, das ist verboten','Nur mit Erlaubnis des Chefs'],'Das US-Recht schützt Personen, die Sicherheitsprobleme bei der OSHA melden.'],
+    ['İşteki bir tehlikeyi bildirmek için OSHA’ya başvurabilir misiniz?',['Evet, bu sizin hakkınızdır ve yasa misillemeyi yasaklar','Hayır, yasaktır','Sadece patronun izniyle'],'ABD yasası, güvenlik sorunlarını OSHA’ya bildirenleri korur.'],
+    ['您可以向 OSHA 报告工作中的危险吗？',['可以，这是您的权利，法律禁止报复','不可以，这是禁止的','要老板同意才行'],'美国法律保护向 OSHA 报告安全问题的人。']),
+ NQ(['Uma lesão leve, sem precisar faltar ao trabalho, precisa ser relatada?',['Sim, toda lesão do trabalho deve ser relatada','Não, só se precisar de hospital','Não, só se for na cabeça'],'Uma lesão pequena pode piorar, e o registro protege você.'],
+    ['Does a minor injury that does not require time off need to be reported?',['Yes, every work injury must be reported','No, only if you need the hospital','No, only if it is a head injury'],'A small injury can get worse, and the record protects you.'],
+    ['¿Una lesión leve, que no requiere faltar, se debe reportar?',['Sí, toda lesión del trabajo se debe reportar','No, solo si necesita ir al hospital','No, solo si es en la cabeza'],'Una lesión pequeña puede empeorar, y el registro lo protege.'],
+    ['Muss eine leichte Verletzung ohne Arbeitsausfall gemeldet werden?',['Ja, jede Arbeitsverletzung muss gemeldet werden','Nein, nur wenn man ins Krankenhaus muss','Nein, nur bei Kopfverletzungen'],'Eine kleine Verletzung kann schlimmer werden, und die Meldung schützt Sie.'],
+    ['İşe gelmemeyi gerektirmeyen hafif bir yaralanma bildirilmeli mi?',['Evet, işle ilgili her yaralanma bildirilmelidir','Hayır, sadece hastane gerekirse','Hayır, sadece başa aldıysa'],'Küçük bir yaralanma kötüleşebilir ve kayıt sizi korur.'],
+    ['不需要请假的轻伤也要报告吗？',['要，所有工伤都必须报告','不用，要去医院才报告','不用，只有伤到头才报告'],'小伤也可能加重，留下记录可以保护您。']),
+ NQ(['Você não entendeu o treinamento por causa do idioma. O que fazer?',['Pedir explicação num idioma que você entende','Fingir que entendeu','Desistir do trabalho'],'O treinamento de segurança deve ser dado de forma que você entenda.'],
+    ['You did not understand the training because of the language. What do you do?',['Ask for an explanation in a language you understand','Pretend you understood','Quit the job'],'Safety training must be given in a way you understand.'],
+    ['No entendió la capacitación por el idioma. ¿Qué hace?',['Pedir la explicación en un idioma que entienda','Fingir que entendió','Renunciar al trabajo'],'La capacitación de seguridad debe darse de forma que usted la entienda.'],
+    ['Sie haben die Schulung wegen der Sprache nicht verstanden. Was tun Sie?',['Um eine Erklärung in einer Sprache bitten, die Sie verstehen','So tun, als hätten Sie es verstanden','Die Arbeit aufgeben'],'Sicherheitsschulungen müssen so durchgeführt werden, dass Sie sie verstehen.'],
+    ['Dil yüzünden eğitimi anlamadınız. Ne yaparsınız?',['Anladığım bir dilde açıklama isterim','Anlamış gibi yaparım','İşi bırakırım'],'Güvenlik eğitimi, anlayacağınız şekilde verilmelidir.'],
+    ['因为语言问题没听懂培训内容，怎么办？',['要求用您能听懂的语言再讲解','假装听懂了','辞职不干了'],'安全培训必须以您能理解的方式进行。']),
+ NQ(['Um colega está fazendo algo perigoso. O que fazer?',['Falar com ele com respeito e avisar o líder','Rir e filmar','Não é problema meu'],'Cuidar um do outro faz parte da segurança de todos.'],
+    ['A coworker is doing something dangerous. What do you do?',['Talk to him respectfully and tell the lead','Laugh and film it','It is not my problem'],'Looking out for each other is part of everyone’s safety.'],
+    ['Un compañero está haciendo algo peligroso. ¿Qué hace?',['Hablar con él con respeto y avisar al líder','Reírme y grabarlo','No es mi problema'],'Cuidarnos unos a otros es parte de la seguridad de todos.'],
+    ['Ein Kollege tut etwas Gefährliches. Was tun Sie?',['Ihn respektvoll ansprechen und den Teamleiter informieren','Lachen und filmen','Das ist nicht mein Problem'],'Aufeinander achten gehört zur Sicherheit aller.'],
+    ['Bir iş arkadaşınız tehlikeli bir şey yapıyor. Ne yaparsınız?',['Onunla saygıyla konuşur ve lidere haber veririm','Güler ve videoya çekerim','Benim sorunum değil'],'Birbirimize dikkat etmek herkesin güvenliğinin parçasıdır.'],
+    ['同事正在做危险的事，怎么办？',['礼貌地提醒他，并告诉组长','笑着拍视频','不关我的事'],'互相照应是每个人安全的一部分。']),
+ NQ(['Quem é responsável pela segurança na fábrica?',['Todos: a empresa dá condições e treinamento, e você segue as regras e avisa riscos','Só o técnico de segurança','Só o diretor'],'Segurança funciona quando cada um faz a sua parte.'],
+    ['Who is responsible for safety in the plant?',['Everyone: the company provides conditions and training, and you follow the rules and report hazards','Only the safety technician','Only the director'],'Safety works when everyone does their part.'],
+    ['¿Quién es responsable de la seguridad en la planta?',['Todos: la empresa da condiciones y capacitación, y usted sigue las reglas y avisa los riesgos','Solo el técnico de seguridad','Solo el director'],'La seguridad funciona cuando cada uno hace su parte.'],
+    ['Wer ist für die Sicherheit im Werk verantwortlich?',['Alle: Das Unternehmen sorgt für Bedingungen und Schulung, und Sie halten die Regeln ein und melden Gefahren','Nur die Fachkraft für Arbeitssicherheit','Nur der Direktor'],'Sicherheit funktioniert, wenn jeder seinen Teil beiträgt.'],
+    ['Fabrikada güvenlikten kim sorumludur?',['Herkes: şirket koşulları ve eğitimi sağlar, siz de kurallara uyar ve riskleri bildirirsiniz','Sadece iş güvenliği teknisyeni','Sadece müdür'],'Güvenlik, herkes kendi payına düşeni yaptığında işler.'],
+    ['工厂的安全由谁负责？',['所有人：公司提供条件和培训，您遵守规定并报告风险','只有安全技术员','只有厂长'],'只有每个人都尽到自己的责任，安全才能做好。'])]
+);
+ONB.forEach((m,i)=>{if(ONB_MORE[i])m.q.push(...ONB_MORE[i])});
+/* os 2 originais de cada módulo também ganham espanhol já existente; garantir 6 idiomas nas explicações */
+
+
+/* bandeiras de idioma (6) — usadas na capa do Onboard e no link direto do psicotécnico */
+const flagRow=(fn)=>`<div class="langs flagsOnly" style="margin:0 0 12px">${LANG_FLAGS.map(([k,f])=>`<button class="lang glass ${lang===k?'on':''}" aria-label="${k}" onclick="pickLang6('${k}',${fn})"><span class="flag">${FLAG[f]}</span></button>`).join('')}</div>`;
+function pickLang6(k,f){lang=k;f()}
+const onboardBase6=onboard;
+onboard=function(){onboardBase6();const c=document.querySelector('#app .center');if(c&&onb&&onb.preview)c.insertAdjacentHTML('afterbegin',flagRow('render'))};
+/* link direto do psicotécnico: .../skill-station/?psico — escolhe a bandeira e começa (modo demonstração) */
+function psicoLink(){
+  screen='psicoLink';
+  app.innerHTML=`<div class="center fade" style="max-width:520px;padding-top:20px">
+   <div style="display:flex;justify-content:center">${logo(.5)}</div>
+   <div style="margin-top:18px">${flagRow('psicoLink')}</div>
+   <div class="glass" style="padding:22px;margin-top:6px"><span class="badge b-mid">${t('testMode')}</span>
+   <h2 style="font-size:24px;margin-top:10px">🧠 ${PSYPART[lang]?PSYPART[lang][0]:''}</h2>
+   <button class="btn" style="width:100%;margin-top:16px" onclick="startDemo(PROFS[0].id)">${t('start')} →</button></div></div>`;
+}
+(function(){try{const u=new URL(location.href);if(u.searchParams.has('psico')){u.searchParams.delete('psico');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(psicoLink,300)}}catch(e){}})();
+if(plang==='es')plang='pt';
+
 
 render();
 </script>
