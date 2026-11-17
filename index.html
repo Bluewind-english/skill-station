@@ -4499,7 +4499,7 @@ const PSY_TAP=[
  TP({pt:'Toque nos números em ordem: 1, 2, 3… até 10.',en:'Tap the numbers in order: 1, 2, 3… up to 10.',es:'Toque los números en orden: 1, 2, 3… hasta 10.'},
    ()=>{const pos=shuffle([...Array(20).keys()]).slice(0,10);const cells=Array(20).fill(null).map(()=>({h:'',tg:false,empty:true}));pos.forEach((p,i)=>cells[p]={h:String(i+1),tg:true,n:i+1});return{cells,order:true}},{time:40})
 ];
-const PSY_Q=[PSY_ALL[0],PSY_ALL[2],PSY_ALL[6],PSY_ALL[9],PSY_ALL[10],PSY_ALL[14],PSY_ALL[15],PSY_ALL[18],PSY_ALL[20],PSY_ALL[21],...PSY_TAP];
+const PSY_Q=[...PSY_TAP,PSY_ALL[0],PSY_ALL[2],PSY_ALL[6],PSY_ALL[9],PSY_ALL[10],PSY_ALL[14],PSY_ALL[15],PSY_ALL[18],PSY_ALL[20],PSY_ALL[21]];
 function tapBody(q){
   if(!q._st){const g=q.gen();q._st={cells:g.cells,order:!!g.order,done:new Set(),wrong:0,next:1}}
   const st=q._st,cols=st.order?5:6;
