@@ -4756,6 +4756,8 @@ async function genOnb(id){
   try{await DBX.doc('codes/'+c).set({candId:id,exp,used:false,createdAt:now(),onboard:true});await candRef(id).update({onboardCode:c,onboardCodeAt:now()});
     const x=CANDS.find(k=>k.id===id);if(x){x.onboardCode=c;x.onboardCodeAt=now()}render()}catch(e){alertBox(PL('saveErr'))}
 }
+/* link direto para testar só o Onboard: .../skill-station/?onboard */
+(function(){try{const u=new URL(location.href);if(u.searchParams.has('onboard')){u.searchParams.delete('onboard');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(()=>onbStart({preview:true}),300)}}catch(e){}})();
 
 render();
 </script>
