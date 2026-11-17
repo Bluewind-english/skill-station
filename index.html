@@ -5546,17 +5546,19 @@ const SHOWL={
  zh:{t:'安全入职培训',s:'新员工培训演示',mods:'7个模块',start:'开始',endT:'欢迎加入！',endS:'有疑问？请联系组长或安全团队。',em:'紧急情况',full:'全屏',exit:'退出',next:'下一页',prev:'上一页',btn:'🖥️ 演示',idx:'培训内容'}};
 let showI=0,showFrom='home';
 (function(){const st=document.createElement('style');st.textContent=`
- .slideshow{position:fixed;inset:0;display:flex;flex-direction:column;z-index:2;color:#eaf4ff}
+ .slideshow{position:fixed;inset:0;display:flex;flex-direction:column;z-index:2;color:#fff;background:radial-gradient(ellipse at 50% 35%,#2f6fb3 0%,#1f5592 45%,#163f73 100%)}
+ .slideshow::before{content:'';position:absolute;inset:0;background:url(${ONB_LOGO}) center 42%/min(96vh,88vw) no-repeat;opacity:.55;pointer-events:none;-webkit-mask:radial-gradient(closest-side,#000 35%,transparent 100%) center 42%/min(96vh,88vw) min(96vh,88vw) no-repeat;mask:radial-gradient(closest-side,#000 35%,transparent 100%) center 42%/min(96vh,88vw) min(96vh,88vw) no-repeat}
+ .slideshow>*{position:relative}
  .slideshow .shStage{flex:1 1 auto;min-height:0;display:flex;align-items:safe center;overflow-y:auto;justify-content:center;padding:clamp(14px,3vw,48px) clamp(16px,6vw,110px)}
  .slideshow .shSlide{width:100%;max-width:1400px;animation:shIn .35s ease}
  @keyframes shIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
  .slideshow h1{font-size:clamp(26px,min(4.4vw,7.5vh),70px);line-height:1.08;margin:0 0 .35em;font-weight:800}
- .slideshow h2{font-size:clamp(18px,2.4vw,34px);color:#9cc6ef;font-weight:600;margin:0}
+ .slideshow h2{font-size:clamp(18px,2.4vw,34px);color:#d6e9ff;font-weight:600;margin:0}
  .slideshow ul{margin:0;padding-left:1.1em}
  .slideshow li{font-size:clamp(16px,min(2.1vw,3.9vh),34px);line-height:1.32;margin:.4em 0}
  .slideshow .ico{font-size:clamp(40px,6vw,96px);line-height:1}
- .slideshow .num{display:inline-block;background:rgba(56,189,248,.18);border:1px solid rgba(56,189,248,.45);color:#7dd3fc;border-radius:999px;padding:.2em .8em;font-size:clamp(13px,1.5vw,22px);font-weight:700;letter-spacing:.06em;margin-bottom:.6em}
- .slideshow .shBar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(3,11,24,.72);backdrop-filter:blur(8px);border-top:1px solid rgba(148,197,255,.18)}
+ .slideshow .num{display:inline-block;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.45);color:#fff;border-radius:999px;padding:.2em .8em;font-size:clamp(13px,1.5vw,22px);font-weight:700;letter-spacing:.06em;margin-bottom:.6em}
+ .slideshow .shBar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(10,35,70,.55);backdrop-filter:blur(8px);border-top:1px solid rgba(255,255,255,.2)}
  .slideshow .shBar .pg{flex:1;text-align:center;color:#9cc6ef;font-size:15px}
  .slideshow .dots{display:flex;gap:6px;justify-content:center;margin-top:6px}
  .slideshow .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}.slideshow .dots i.on{background:#38bdf8}
@@ -5564,7 +5566,7 @@ let showI=0,showFrom='home';
  .slideshow .shCover{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(16px,4vw,70px);align-items:center}
  .slideshow .shCover img{width:100%;max-height:68vh;object-fit:contain;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
  .slideshow .grid7{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:.6em}
- .slideshow .grid7 div{background:rgba(255,255,255,.06);border:1px solid rgba(148,197,255,.2);border-radius:16px;padding:.6em .8em;font-size:clamp(16px,1.9vw,28px)}
+ .slideshow .grid7 div{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:.6em .8em;font-size:clamp(16px,1.9vw,28px)}
  @media (orientation:portrait){.slideshow .shCover{grid-template-columns:1fr}.slideshow .shCover img{max-height:42vh}}
  #navBack.hideShow{display:none}`;document.head.appendChild(st)})();
 
@@ -5584,7 +5586,7 @@ function onbShow(){
      <div style="display:flex;gap:.5em;align-items:center;margin-bottom:.3em"><span class="ico">${m.ico}</span><h1 style="margin:0">${m.t[lang]}</h1></div>
      <ul>${m.pts[lang].map(p=>`<li>${p}</li>`).join('')}</ul>`}
   else h=`<div style="text-align:center"><div class="ico">✈️</div><h1>${S.endT}</h1><h2>${S.endS}</h2>
-     <p style="margin-top:1.2em;font-size:clamp(22px,3vw,44px);font-weight:800;color:#fca5a5">🚨 ${S.em}: 911</p></div>`;
+     <p style="margin-top:1.2em;font-size:clamp(22px,3vw,44px);font-weight:800;color:#ffd1d1">🚨 ${S.em}: 911</p></div>`;
   app.innerHTML=`<div class="slideshow" data-noswipe>
     <div class="shStage" id="shStage"><div class="shSlide">${h}</div></div>
     <div class="shBar"><button class="btn ghost small" onclick="showExit()">✕ ${S.exit}</button>
