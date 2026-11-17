@@ -4726,7 +4726,7 @@ function onbNext(){
 }
 async function onbSave(){
   if(!onb||onb.preview||!onb.id)return;
-  const patch={onboardDone:true,onboardAt:now(),onboardLang:lang,onboardErr:onbErr,onboardWrong:Object.values(onbErr).reduce((s,v)=>s+v,0),onboardVer:'2026-11-16'};
+  const patch={onboardDone:true,onboardAt:now(),onboardLang:lang,onboardErr:onbErr,onboardWrong:Object.values(onbErr).reduce((s,v)=>s+v,0),onboardTotal:ONB.reduce((s,m)=>s+m.q.length,0),onboardVer:'2026-11-16'};
   try{
     if(SB_ON&&onb.token){const r=await SB.rpc('onboard_patch',{p_id:onb.id,p_token:onb.token,p_patch:patch});if(r.error)throw r.error}
     else await candRef(onb.id).update(patch);
@@ -5422,14 +5422,14 @@ Object.assign(PLD.pt,{seg:'Safety',segT:'Painel de Segurança (Safety)',segOnb:'
   segNoCode:'Sem código',segSent:'Código enviado',segDone:'Concluído',segExp:'vence',segExpired:'Código vencido',
   segErr:'Erros por módulo',segCrit:'Errou pergunta(s) crítica(s) de segurança no teste da profissão',segPos:'Função',
   segAlNote:'Candidatos que erraram perguntas críticas de segurança no teste da profissão. Vale reforçar esses pontos no treinamento.',
-  segK1:'Contratados',segK2:'Onboard concluído',segK3:'Aguardando',segWho:'Quem vai entrar?',
+  segScore:'Nota no teste de segurança do Onboard',segK4:'Nota média',segK1:'Contratados',segK2:'Onboard concluído',segK3:'Aguardando',segWho:'Quem vai entrar?',
   segNew:'🔄 Gerar novo código',segMaster:'Modo de demonstração: dados de exemplo, nada é salvo.',segCodeHint:'Entregue o código ao funcionário. Ele digita na tela inicial (Toque para começar) ou lê o QR Code.'});
 Object.assign(PLD.en,{seg:'Safety',segT:'Safety Dashboard',segOnb:'New hire Onboard',segAl:'Safety alerts',
   segNone:'No new hires yet. When HR approves someone, they show up here.',segNoAl:'No safety alerts.',
   segNoCode:'No code',segSent:'Code sent',segDone:'Completed',segExp:'expires',segExpired:'Code expired',
   segErr:'Errors per module',segCrit:'Missed critical safety question(s) on the position test',segPos:'Position',
   segAlNote:'Candidates who missed critical safety questions on the position test. Worth reinforcing these points in training.',
-  segK1:'New hires',segK2:'Onboard completed',segK3:'Pending',segWho:'Who is signing in?',
+  segScore:'Onboard safety test score',segK4:'Average score',segK1:'New hires',segK2:'Onboard completed',segK3:'Pending',segWho:'Who is signing in?',
   segNew:'🔄 New code',segMaster:'Demo mode: sample data, nothing is saved.',segCodeHint:'Give the code to the employee. They type it on the start screen (Tap to start) or scan the QR code.'});
 
 /* login: 3 botões (RH, Diretoria, Safety) */
@@ -5461,25 +5461,28 @@ enterMaster=function(){const who=loginWho;enterMasterBaseSeg();
     const extra={
       seg1:{name:'Paulo Lima',role:'laminador',status:'aprovado',createdAt:d-5*86400000,onboardCode:'9417',onboardCodeAt:d,onboardDone:true,onboardAt:d+3600000,onboardLang:'pt',onboardErr:{m1:1,m2:0,m3:2,m4:0,m5:1,m6:0,m7:0}},
       seg2:{name:'Kevin Brooks',role:'montador',status:'aprovado',createdAt:d-3*86400000,onboardCode:'9582',onboardCodeAt:now()-7200000},
-      seg3:{name:'Rafael Costa',role:'laminador',status:'aprovado',createdAt:d-86400000,crit:true}};
+      seg3:{name:'Rafael Costa',role:'laminador',status:'aprovado',createdAt:d-86400000}};
     Object.entries(extra).forEach(([id,x])=>DBX.doc('candidates/'+id).set(x));
     viewRole='seg';panelTab='geral';detail=null;render()}};
 
 /* painel */
 const panelBaseSeg=panel;
 panel=function(){if(viewRole==='seg')return segPanel();return panelBaseSeg()};
-function segHires(){return segData().filter(c=>c.status==='aprovado'||c.onboardCode||c.onboardDone).sort((a,b)=>(a.onboardDone?1:0)-(b.onboardDone?1:0)||(b.createdAt||0)-(a.createdAt||0))}
+function segHires(){return segData().filter(c=>segLive()||c.status==='aprovado'||c.onboardCode||c.onboardDone).sort((a,b)=>(a.onboardDone?1:0)-(b.onboardDone?1:0)||(b.onboardCodeAt||b.createdAt||0)-(a.onboardCodeAt||a.createdAt||0))}
+const onbScore=c=>{if(!c.onboardDone)return null;if(c.onboardScore!=null)return c.onboardScore;const tot=c.onboardTotal||ONB.reduce((s,m)=>s+m.q.length,0);
+  const w=c.onboardWrong!=null?c.onboardWrong:Object.values(c.onboardErr||{}).reduce((s,v)=>s+v,0);return Math.max(0,Math.round(100*(tot-w)/tot))};
 function segRow(c){
-  const p=profBy(c.role);let st,badge;
+  let st,badge;
   if(c.onboardDone){st=`${PL('segDone')} · ${fmtDTL(c.onboardAt)} · ${(c.onboardLang||'').toUpperCase()}`;badge='b-ok'}
   else if(c.onboardCode){const exp=(c.onboardCodeAt||0)+7*24*3600000;st=exp<now()?PL('segExpired'):`${PL('segSent')}: <b>${c.onboardCode}</b> · ${PL('segExp')} ${fmtDTL(exp)}`;badge=exp<now()?'b-bad':'b-mid'}
   else{st=PL('segNoCode');badge='b-mid'}
+  const sc=onbScore(c);
   let h=`<div class="card glass" style="margin:0 0 10px;padding:14px">
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
-      <div><b style="font-size:17px">${esc(c.name||'—')}</b><div class="muted" style="font-size:13px">${p?p.ico+' '+profName(c.role):esc(c.role||'')}</div></div>
+      <b style="font-size:18px">${esc(c.name||'—')}</b>
       <span class="badge ${badge}" style="white-space:normal">${st}</span></div>`;
-  if(c.onboardDone)h+=`<p class="muted" style="font-size:13px;margin-top:8px">${PL('segErr')}: ${ONB.map((m,i)=>`${m.ico} ${(c.onboardErr||{})['m'+(i+1)]||0}`).join(' · ')}</p>`;
-  if(c.crit)h+=`<p style="font-size:13px;margin-top:6px;color:#fca5a5">⚠️ ${PL('segCrit')}</p>`;
+  if(sc!=null)h+=`<div style="display:flex;align-items:center;gap:12px;margin-top:10px"><div style="font-size:34px;font-weight:800;color:${sc>=80?'#86efac':sc>=60?'#fcd34d':'#fca5a5'}">${sc}%</div><div class="muted" style="font-size:13px">${PL('segScore')}</div></div>
+     <p class="muted" style="font-size:13px;margin-top:6px">${PL('segErr')}: ${ONB.map((m,i)=>`${m.ico} ${(c.onboardErr||{})['m'+(i+1)]||0}`).join(' · ')}</p>`;
   if(!c.onboardDone){
     if(c.onboardCode&&(c.onboardCodeAt||0)+7*24*3600000>now()&&segOpen===c.id)h+=`<div style="text-align:center;margin-top:10px"><div class="bigcode">${c.onboardCode}</div>${qrSVG(appURL()+'?c='+c.onboardCode,170)}<p class="muted" style="font-size:13px;margin-top:6px">${PL('segCodeHint')}</p></div>`;
     h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
@@ -5490,24 +5493,18 @@ function segRow(c){
 let segOpen=null;
 function segPanel(){
   if(segLive()&&now()-SEGT>30000)segLoad();
-  const H=segHires(),done=H.filter(c=>c.onboardDone).length,AL=segData().filter(c=>c.crit);
-  const tabs=[['geral','✈️ '+PL('segOnb')],['alertas','⚠️ '+PL('segAl')]];
-  let body='';
-  if(panelTab!=='alertas'){
-    body=`<div class="kpis"><div class="kpi glass"><span>${PL('segK1')}</span><b>${H.length}</b></div><div class="kpi glass"><span>${PL('segK2')}</span><b style="color:#86efac">${done}</b></div><div class="kpi glass"><span>${PL('segK3')}</span><b style="color:#fcd34d">${H.length-done}</b></div></div>
-      ${H.length?H.map(segRow).join(''):`<div class="card glass" style="text-align:center;padding:26px"><div style="font-size:40px">🦺</div><p class="muted" style="margin-top:8px">${PL('segNone')}</p></div>`}
-      <div style="text-align:center;margin:6px 0 20px"><button class="btn ghost small" onclick="onbStart({preview:true})">${PL('onbPrev')}</button></div>`;
-  }else{
-    body=`<p class="muted" style="margin:0 0 10px 4px;font-size:14px">${PL('segAlNote')}</p>`+(AL.length?AL.map(c=>{const p=profBy(c.role);return`<div class="card glass" style="margin:0 0 10px;padding:14px"><b>${esc(c.name||'—')}</b><div class="muted" style="font-size:13px">${p?p.ico+' '+profName(c.role):''} · ${stL(effStatus(c))[0]}</div><p style="font-size:13px;margin-top:6px;color:#fca5a5">⚠️ ${PL('segCrit')}</p></div>`}).join(''):`<div class="card glass" style="text-align:center;padding:26px"><p class="muted">${PL('segNoAl')}</p></div>`);
-  }
+  const H=segHires(),done=H.filter(c=>c.onboardDone),avg=done.length?Math.round(done.reduce((s,c)=>s+onbScore(c),0)/done.length):null;
   app.innerHTML=`<div class="fade">
    <div class="ph glass"><div class="miniLogo">${miniLogo()}<span>${PL('segT')}</span></div>
      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${plFlags()}
        <span class="badge b-mid">🦺 ${PL('seg')}</span>
        <button class="btn ghost small" onclick="logoutPanel()">${PL('exit')}</button></div></div>
    ${MASTER?`<div class="card glass" style="margin:0 0 12px;border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)"><b style="color:#fcd34d">🔑 ${PL('segMaster')}</b></div>`:''}
-   <div class="tabs">${tabs.map(([k,n])=>`<button class="tab ${(panelTab===k||(k==='geral'&&panelTab!=='alertas'))?'on':''}" onclick="panelTab='${k}';render()">${n}</button>`).join('')}</div>
-   ${body}</div>`;
+   <div id="segTop"></div>
+   <h3 style="margin:4px 4px 10px">✈️ ${PL('segOnb')}</h3>
+   <div class="kpis"><div class="kpi glass"><span>${PL('segK1')}</span><b>${H.length}</b></div><div class="kpi glass"><span>${PL('segK2')}</span><b style="color:#86efac">${done.length}</b></div><div class="kpi glass"><span>${PL('segK4')}</span><b style="color:#7dd3fc">${avg==null?'—':avg+'%'}</b></div></div>
+   ${H.length?H.map(segRow).join(''):`<div class="card glass" style="text-align:center;padding:26px"><div style="font-size:40px">🦺</div><p class="muted" style="margin-top:8px">${PL('segNone')}</p></div>`}
+   <div style="text-align:center;margin:6px 0 20px"><button class="btn ghost small" onclick="onbStart({preview:true})">${PL('onbPrev')}</button></div></div>`;
 }
 async function segGen(id){
   if(SB_ON&&!MASTER&&STAFF&&STAFF.role==='seg'){
@@ -5516,6 +5513,9 @@ async function segGen(id){
     const x=segData().find(k=>k.id===id);if(x){x.onboardCode=r.data;x.onboardCodeAt=now()}segOpen=id;render();return}
   await genOnb(id);segOpen=id;render();
 }
+/* RH e Diretoria também veem a nota do Onboard na ficha */
+const onbCardBaseScore=onbCard;
+onbCard=function(c){let h=onbCardBaseScore(c);if(c.onboardDone){const sc=onbScore(c);h=h.replace(`✓ ${PL('onbDone')}</span>`,`✓ ${PL('onbDone')} · ${sc}%</span>`)}return h};
 
 
 /* Onboard: logo Bluewind (fibras) na abertura e como marca d'água atrás de todas as páginas — 17/11/2026 */
@@ -5615,8 +5615,8 @@ const backTargetBaseShow=backTarget;
 backTarget=function(){if(screen==='onbShow')return null;return backTargetBaseShow()};
 /* botão no painel do Safety */
 const segPanelBaseShow=segPanel;
-segPanel=function(){segPanelBaseShow();const S=SHOWL[lang]||SHOWL.en;const tabs=document.querySelector('#app .tabs');
-  if(tabs)tabs.insertAdjacentHTML('beforebegin',`<button class="btn" style="width:100%;margin:0 0 12px;font-size:18px;padding:14px" onclick="showStart('panel')">${(SHOWL[plang]||SHOWL.pt).btn} · ${(SHOWL[plang]||SHOWL.pt).t}</button>`)};
+segPanel=function(){segPanelBaseShow();const S=SHOWL[lang]||SHOWL.en;const tabs=document.querySelector('#segTop');
+  if(tabs)tabs.insertAdjacentHTML('afterbegin',`<button class="btn" style="width:100%;margin:0 0 12px;font-size:18px;padding:14px" onclick="showStart('panel')">${(SHOWL[plang]||SHOWL.pt).btn} · ${(SHOWL[plang]||SHOWL.pt).t}</button>`)};
 /* link direto: .../skill-station/?apresentacao */
 (function(){try{const u=new URL(location.href);if(u.searchParams.has('apresentacao')){u.searchParams.delete('apresentacao');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(()=>showStart('home'),300)}}catch(e){}})();
 

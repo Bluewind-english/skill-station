@@ -1,7 +1,7 @@
 -- =====================================================================
 -- ACESSO SAFETY (segurança do trabalho) — Bluewind Skill Station
 -- Rode uma vez no SQL Editor do banco de dados.
--- O Safety vê só: nome, função, situação, alertas de segurança e Onboard.
+-- O Safety vê só: nome e dados do Onboard (situação, nota e erros por módulo).
 -- Notas da seleção e psicotécnico continuam só para RH e Diretoria.
 -- =====================================================================
 
@@ -15,20 +15,18 @@ create policy "staff le candidatos" on public.candidates for select to authentic
 drop policy if exists "staff le codigos" on public.codes;
 create policy "staff le codigos" on public.codes for select to authenticated using (public.staff_role() in ('rh','dir'));
 
--- 3) Lista do Safety (campos limitados)
+-- 3) Lista do Safety: SÓ nome + dados do Onboard (nada da seleção do RH)
 create or replace function public.safety_list() returns table(id text, doc jsonb)
 language plpgsql stable security definer set search_path = public as $$
 begin
   if public.staff_role() is null then raise exception 'sem permissao'; end if;
   return query
   select c.id,
-         jsonb_strip_nulls(jsonb_build_object(
-           'name', c.doc->'name', 'role', c.doc->'role', 'status', c.doc->'status',
-           'createdAt', c.doc->'createdAt', 'crit', c.doc->'crit'))
+         jsonb_build_object('name', c.doc->'name')
          || coalesce((select jsonb_object_agg(k, v) from jsonb_each(c.doc) e(k, v) where k like 'onboard%'), '{}'::jsonb)
   from public.candidates c
   where coalesce(c.doc->>'demo','false') <> 'true'
-    and (c.doc->>'status' = 'aprovado' or c.doc ? 'onboardCode' or coalesce(c.doc->>'crit','false') not in ('false','0','null'));
+    and (c.doc->>'status' = 'aprovado' or c.doc ? 'onboardCode' or c.doc ? 'onboardDone');
 end $$;
 revoke all on function public.safety_list() from public;
 grant execute on function public.safety_list() to authenticated;
