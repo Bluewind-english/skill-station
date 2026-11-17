@@ -5532,6 +5532,93 @@ const renderBaseLogo=render;
 render=function(){renderBaseLogo();try{document.body.classList.toggle('onbWM',['onboard','onbMod','onbEnd'].includes(screen))}catch(e){}};
 
 
+/* =====================================================================
+   ONBOARD DE APRESENTAÇÃO (slides, sem perguntas) — 17/11/2026
+   O chefe da segurança mostra na TV/projetor. Abre pelo painel do Safety
+   (sem senha) ou pelo link direto .../skill-station/?apresentacao
+   ===================================================================== */
+const SHOWL={
+ pt:{t:'Integração de Segurança',s:'Apresentação para novos integrantes',mods:'7 módulos',start:'Começar',endT:'Bem-vindo a bordo!',endS:'Dúvidas? Fale com o seu líder ou com a equipe de Segurança.',em:'Emergência',full:'Tela cheia',exit:'Sair',next:'Avançar',prev:'Voltar',btn:'🖥️ Apresentação',idx:'O que vamos ver'},
+ en:{t:'Safety Onboarding',s:'Presentation for new team members',mods:'7 modules',start:'Start',endT:'Welcome aboard!',endS:'Questions? Talk to your lead or to the Safety team.',em:'Emergency',full:'Full screen',exit:'Exit',next:'Next',prev:'Back',btn:'🖥️ Presentation',idx:'What we will cover'},
+ es:{t:'Integración de Seguridad',s:'Presentación para nuevos integrantes',mods:'7 módulos',start:'Comenzar',endT:'¡Bienvenido a bordo!',endS:'¿Dudas? Hable con su líder o con el equipo de Seguridad.',em:'Emergencia',full:'Pantalla completa',exit:'Salir',next:'Siguiente',prev:'Atrás',btn:'🖥️ Presentación',idx:'Lo que vamos a ver'},
+ de:{t:'Sicherheitseinweisung',s:'Präsentation für neue Mitarbeitende',mods:'7 Module',start:'Starten',endT:'Willkommen an Bord!',endS:'Fragen? Wenden Sie sich an Ihren Teamleiter oder an das Sicherheitsteam.',em:'Notfall',full:'Vollbild',exit:'Beenden',next:'Weiter',prev:'Zurück',btn:'🖥️ Präsentation',idx:'Was wir behandeln'},
+ tr:{t:'İş Güvenliği Oryantasyonu',s:'Yeni ekip üyeleri için sunum',mods:'7 modül',start:'Başla',endT:'Aramıza hoş geldiniz!',endS:'Sorunuz mu var? Liderinizle veya Güvenlik ekibiyle konuşun.',em:'Acil durum',full:'Tam ekran',exit:'Çıkış',next:'İleri',prev:'Geri',btn:'🖥️ Sunum',idx:'Neleri göreceğiz'},
+ zh:{t:'安全入职培训',s:'新员工培训演示',mods:'7个模块',start:'开始',endT:'欢迎加入！',endS:'有疑问？请联系组长或安全团队。',em:'紧急情况',full:'全屏',exit:'退出',next:'下一页',prev:'上一页',btn:'🖥️ 演示',idx:'培训内容'}};
+let showI=0,showFrom='home';
+(function(){const st=document.createElement('style');st.textContent=`
+ .slideshow{position:fixed;inset:0;display:flex;flex-direction:column;z-index:2;color:#eaf4ff}
+ .slideshow .shStage{flex:1 1 auto;min-height:0;display:flex;align-items:safe center;overflow-y:auto;justify-content:center;padding:clamp(14px,3vw,48px) clamp(16px,6vw,110px)}
+ .slideshow .shSlide{width:100%;max-width:1400px;animation:shIn .35s ease}
+ @keyframes shIn{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:none}}
+ .slideshow h1{font-size:clamp(26px,min(4.4vw,7.5vh),70px);line-height:1.08;margin:0 0 .35em;font-weight:800}
+ .slideshow h2{font-size:clamp(18px,2.4vw,34px);color:#9cc6ef;font-weight:600;margin:0}
+ .slideshow ul{margin:0;padding-left:1.1em}
+ .slideshow li{font-size:clamp(16px,min(2.1vw,3.9vh),34px);line-height:1.32;margin:.4em 0}
+ .slideshow .ico{font-size:clamp(40px,6vw,96px);line-height:1}
+ .slideshow .num{display:inline-block;background:rgba(56,189,248,.18);border:1px solid rgba(56,189,248,.45);color:#7dd3fc;border-radius:999px;padding:.2em .8em;font-size:clamp(13px,1.5vw,22px);font-weight:700;letter-spacing:.06em;margin-bottom:.6em}
+ .slideshow .shBar{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:10px 14px;background:rgba(3,11,24,.72);backdrop-filter:blur(8px);border-top:1px solid rgba(148,197,255,.18)}
+ .slideshow .shBar .pg{flex:1;text-align:center;color:#9cc6ef;font-size:15px}
+ .slideshow .dots{display:flex;gap:6px;justify-content:center;margin-top:6px}
+ .slideshow .dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.22)}.slideshow .dots i.on{background:#38bdf8}
+ .slideshow .arrow{min-width:56px;height:52px;border-radius:14px;font-size:24px}
+ .slideshow .shCover{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:clamp(16px,4vw,70px);align-items:center}
+ .slideshow .shCover img{width:100%;max-height:68vh;object-fit:contain;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+ .slideshow .grid7{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:.6em}
+ .slideshow .grid7 div{background:rgba(255,255,255,.06);border:1px solid rgba(148,197,255,.2);border-radius:16px;padding:.6em .8em;font-size:clamp(16px,1.9vw,28px)}
+ @media (orientation:portrait){.slideshow .shCover{grid-template-columns:1fr}.slideshow .shCover img{max-height:42vh}}
+ #navBack.hideShow{display:none}`;document.head.appendChild(st)})();
+
+function showSlides(){
+  const S=SHOWL[lang]||SHOWL.en;
+  const sl=[{k:'cover'},{k:'idx'},...ONB.map((m,i)=>({k:'mod',i})),{k:'end'}];
+  return{S,sl};
+}
+function onbShow(){
+  const {S,sl}=showSlides();showI=Math.max(0,Math.min(showI,sl.length-1));const x=sl[showI];let h='';
+  if(x.k==='cover')h=`<div class="shCover"><img src="${ONB_LOGO}" alt="BlueWind · technology in composites">
+     <div><span class="num">🦺 SAFETY</span><h1>${S.t}</h1><h2>${S.s}</h2>
+     <div style="margin-top:1.4em">${flagRow('onbShow')}</div>
+     <button class="btn" style="margin-top:.6em;font-size:clamp(16px,1.8vw,24px);padding:.7em 1.6em" onclick="showGo(1)">▶ ${S.start}</button></div></div>`;
+  else if(x.k==='idx')h=`<span class="num">${S.mods}</span><h1>${S.idx}</h1><div class="grid7">${ONB.map((m,i)=>`<div>${m.ico} <b>${i+1}.</b> ${m.t[lang]}</div>`).join('')}</div>`;
+  else if(x.k==='mod'){const m=ONB[x.i];h=`<span class="num">${(ONBL[lang]||ONBL.en).mod} ${x.i+1} / ${ONB.length}</span>
+     <div style="display:flex;gap:.5em;align-items:center;margin-bottom:.3em"><span class="ico">${m.ico}</span><h1 style="margin:0">${m.t[lang]}</h1></div>
+     <ul>${m.pts[lang].map(p=>`<li>${p}</li>`).join('')}</ul>`}
+  else h=`<div style="text-align:center"><div class="ico">✈️</div><h1>${S.endT}</h1><h2>${S.endS}</h2>
+     <p style="margin-top:1.2em;font-size:clamp(22px,3vw,44px);font-weight:800;color:#fca5a5">🚨 ${S.em}: 911</p></div>`;
+  app.innerHTML=`<div class="slideshow" data-noswipe>
+    <div class="shStage" id="shStage"><div class="shSlide">${h}</div></div>
+    <div class="shBar"><button class="btn ghost small" onclick="showExit()">✕ ${S.exit}</button>
+      <button class="btn ghost arrow" onclick="showGo(-1)" aria-label="${S.prev}" ${showI===0?'disabled':''}>‹</button>
+      <div class="pg">${showI+1} / ${sl.length}<div class="dots">${sl.map((_,i)=>`<i class="${i===showI?'on':''}"></i>`).join('')}</div></div>
+      <button class="btn arrow" onclick="showGo(1)" aria-label="${S.next}" ${showI===sl.length-1?'disabled':''}>›</button>
+      <button class="btn ghost small" onclick="showFull()">⛶ <span class="hide-s">${S.full}</span></button></div></div>`;
+}
+function showGo(d){const n=showSlides().sl.length;const k=showI+d;if(k<0||k>=n)return;showI=k;render()}
+function showFull(){try{const d=document;if(d.fullscreenElement)d.exitFullscreen();else d.documentElement.requestFullscreen()}catch(e){}}
+function showExit(){try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}
+  if(showFrom==='panel'){screen='panel';render()}else go('home')}
+function showStart(from){showFrom=from||'home';showI=0;screen='onbShow';render()}
+/* teclado (computador ligado na TV) e arrastar o dedo */
+document.addEventListener('keydown',e=>{if(screen!=='onbShow')return;
+  if(['ArrowRight','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();showGo(1)}
+  else if(['ArrowLeft','PageUp','Backspace'].includes(e.key)){e.preventDefault();showGo(-1)}
+  else if(e.key==='Escape'&&!document.fullscreenElement)showExit()});
+(function(){let sx=0,sy=0;document.addEventListener('touchstart',e=>{if(screen!=='onbShow')return;sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',e=>{if(screen!=='onbShow')return;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(Math.abs(dx)>60&&Math.abs(dy)<Math.abs(dx)*.6)showGo(dx<0?1:-1)},{passive:true})})();
+/* render e voltar */
+const renderBaseShow=render;
+render=function(){if(screen==='onbShow'){onbShow();try{document.body.classList.add('onbWM');const b=document.getElementById('navBack');if(b)b.remove()}catch(e){}return}renderBaseShow()};
+const backTargetBaseShow=backTarget;
+backTarget=function(){if(screen==='onbShow')return null;return backTargetBaseShow()};
+/* botão no painel do Safety */
+const segPanelBaseShow=segPanel;
+segPanel=function(){segPanelBaseShow();const S=SHOWL[lang]||SHOWL.en;const tabs=document.querySelector('#app .tabs');
+  if(tabs)tabs.insertAdjacentHTML('beforebegin',`<button class="btn" style="width:100%;margin:0 0 12px;font-size:18px;padding:14px" onclick="showStart('panel')">${(SHOWL[plang]||SHOWL.pt).btn} · ${(SHOWL[plang]||SHOWL.pt).t}</button>`)};
+/* link direto: .../skill-station/?apresentacao */
+(function(){try{const u=new URL(location.href);if(u.searchParams.has('apresentacao')){u.searchParams.delete('apresentacao');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(()=>showStart('home'),300)}}catch(e){}})();
+
+
 render();
 </script>
 </body>
