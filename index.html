@@ -5660,6 +5660,219 @@ const setOrbBaseAeo=setOrb;setOrb=function(st){setOrbBaseAeo(st);aeolusTagFix()}
 const renderBaseAeo=render;render=function(){renderBaseAeo();aeolusTagFix()};
 
 
+
+/* =====================================================================
+   18/11/2026: sem botão Voltar (só o dedo: direita = voltar, esquerda = avançar);
+   Aeolus no cabeçalho do painel; Apresentação em destaque no painel do Safety;
+   Onboard: resposta certa + explicação no erro, nota mínima 80% (refaz só os
+   módulos com erro), assinatura com o dedo e certificado em PDF; capa só com o avião
+   ===================================================================== */
+(function(){const st=document.createElement('style');st.textContent=`
+#navBack,.navBack{display:none!important}
+body{padding-bottom:20px}
+.ph{position:relative}
+.ph .tbFab.inHead{position:absolute;right:12px;top:50%;bottom:auto;transform:translateY(-50%);z-index:3;flex-direction:column;gap:6px;padding:10px 10px 8px;border-radius:20px;box-shadow:0 0 18px rgba(34,211,238,.3)}
+.ph .tbFab.inHead .orb{width:46px;height:46px}.ph .tbFab.inHead .aeolusTxt{font-size:11px;letter-spacing:.12em}
+.ph:has(.tbFab.inHead){padding-right:96px}
+.segHero{position:relative;overflow:hidden;border-radius:22px;padding:20px;margin:0 0 16px;color:#fff;
+  background:radial-gradient(ellipse at 80% 20%,#3d8cf0 0%,#1f5fd0 40%,#123a8a 100%);border:1px solid rgba(255,255,255,.25);box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.segHero .tag{font-size:12px;letter-spacing:.28em;color:#bfe0ff;font-weight:700}
+.segHero h2{font-size:clamp(24px,6vw,34px);line-height:1.1;margin:8px 0 6px;font-weight:800}
+.segHero p{color:#d6e9ff;margin:0 0 16px;font-size:15px}
+.segHero .play{width:100%;font-size:20px;padding:16px;border-radius:16px;background:#fff;color:#123a8a;font-weight:800;border:0}
+.segHero .wm{position:absolute;right:-30px;top:-20px;font-size:140px;opacity:.12;pointer-events:none}
+.onbSigBox{background:#fff;border-radius:14px;touch-action:none;width:100%;height:170px;display:block}
+`;document.head.appendChild(st)})();
+
+/* ---------- 1) Navegação só com o dedo ---------- */
+updBack=function(){const b=document.getElementById('navBack');if(b)b.remove()};
+let NAVF=null;
+const navSnap=()=>JSON.stringify({s:screen,d:typeof detail==='undefined'?null:detail,t:typeof panelTab==='undefined'?null:panelTab,i:onbI,g:onbStage,q:onbQ});
+const navBackBase18=navBack;
+navBack=function(){const before=navSnap(),bs=screen;navBackBase18();
+  NAVF=['panel','onbMod'].includes(bs)?{before:JSON.parse(before),after:navSnap()}:null};
+function navFwd(){if(!NAVF)return;let now_=navSnap();
+  if(now_!==NAVF.after){NAVF=null;return}
+  const b=NAVF.before;NAVF=null;try{speechSynthesis.cancel()}catch(e){}
+  screen=b.s;if(b.s==='panel'){detail=b.d;panelTab=b.t}else{onbI=b.i;onbStage=b.g;onbQ=b.q;onbPick=null;onbOrd=null}
+  render();window.scrollTo(0,0)}
+(function(){const standalone=window.navigator.standalone||(window.matchMedia&&matchMedia('(display-mode: standalone)').matches);
+  let sx=0,sy=0,st=0,on=false;
+  const hScroll=el=>{for(;el&&el!==document.body;el=el.parentElement){if(el.scrollWidth>el.clientWidth+4&&/(auto|scroll)/.test(getComputedStyle(el).overflowX))return true}return false};
+  document.addEventListener('touchstart',e=>{if(e.touches.length!==1){on=false;return}const t=e.touches[0];sx=t.clientX;sy=t.clientY;st=Date.now();
+    on=!(!standalone&&sx>innerWidth-24)&&!document.getElementById('showPro')&&!e.target.closest('#sig,#adjCv,#onbSig,input,textarea,select,.tapArea,[data-noswipe]')&&!hScroll(e.target)},{passive:true});
+  document.addEventListener('touchend',e=>{if(!on)return;on=false;const t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;
+    if(dx<-90&&Math.abs(dy)<Math.abs(dx)*.5&&Date.now()-st<800)navFwd()},{passive:true});
+})();
+
+/* ---------- 2) Aeolus no cabeçalho do painel ---------- */
+const renderBase18=render;
+render=function(){
+  if(screen==='onbFail'){onbFailV();onbWMOn();return}
+  if(screen==='onbSign'){onbSignV();onbWMOn();return}
+  renderBase18();
+  try{const f=document.querySelector('#app .tbFab'),h=document.querySelector('#app .ph');if(f&&h){h.appendChild(f);f.classList.add('inHead')}}catch(e){}
+};
+function onbWMOn(){try{document.body.classList.add('onbWM');updBack()}catch(e){}}
+
+/* ---------- 3) Safety: Apresentação em destaque ---------- */
+const SEGH={pt:{tag:'APRESENTAÇÃO',t:'Integração de Segurança',s:'Integration Orientation · 26 slides. Abra e mostre na TV ou no projetor para os novos funcionários.',b:'▶  Apresentar',lock:'🔒 Só abre com o login do Safety'},
+ en:{tag:'PRESENTATION',t:'Safety Onboarding',s:'Integration Orientation · 26 slides. Open it and show it on the TV or projector to new employees.',b:'▶  Present',lock:'🔒 Opens only with the Safety login'}};
+const segPanelBase18=segPanel;
+segPanel=function(){segPanelBase18();const L=SEGH[plang]||SEGH.pt,top=document.getElementById('segTop');if(!top)return;
+  top.innerHTML=`<div class="segHero"><div class="wm">🖥️</div><div class="tag">🦺 ${L.tag}</div><h2>${L.t}</h2><p>${L.s}</p>
+   <button class="play" onclick="showStart('panel')">${L.b}</button>${MASTER?`<p style="margin:10px 0 0;font-size:13px;color:#fde68a">${L.lock}</p>`:''}</div>`};
+
+/* ---------- 4) Onboard ---------- */
+const ONB_MIN=80;
+const ONBX={
+ pt:{wrongIs:'Resposta errada. A certa é:',score:'Você acertou',min:'O mínimo para concluir é 80%.',redoT:'Vamos rever alguns módulos',redoS:'Você vai refazer só os módulos em que errou:',redoB:'Refazer esses módulos',
+  signT:'Confirmação do treinamento',ack:'Declaro que recebi e entendi o treinamento de integração de segurança da BlueWind Technology, e que vou seguir as regras de segurança e usar os EPIs corretamente.',agree:'Li e concordo',signHere:'Assine com o dedo no quadro abaixo',clear:'Limpar',confirm:'Confirmar e concluir',needSign:'Marque “Li e concordo” e assine para continuar.',name:'Nome'},
+ en:{wrongIs:'Wrong answer. The correct one is:',score:'You scored',min:'The minimum to finish is 80%.',redoT:'Let’s review some modules',redoS:'You will redo only the modules where you made mistakes:',redoB:'Redo these modules',
+  signT:'Training acknowledgment',ack:'I declare that I received and understood BlueWind Technology’s safety onboarding training, and that I will follow the safety rules and use PPE correctly.',agree:'I have read and agree',signHere:'Sign with your finger in the box below',clear:'Clear',confirm:'Confirm and finish',needSign:'Check “I have read and agree” and sign to continue.',name:'Name'},
+ es:{wrongIs:'Respuesta incorrecta. La correcta es:',score:'Usted acertó',min:'El mínimo para terminar es 80%.',redoT:'Vamos a repasar algunos módulos',redoS:'Usted va a rehacer solo los módulos en los que se equivocó:',redoB:'Rehacer estos módulos',
+  signT:'Confirmación del entrenamiento',ack:'Declaro que recibí y entendí el entrenamiento de integración de seguridad de BlueWind Technology, y que seguiré las reglas de seguridad y usaré el EPP correctamente.',agree:'Leí y estoy de acuerdo',signHere:'Firme con el dedo en el cuadro de abajo',clear:'Borrar',confirm:'Confirmar y terminar',needSign:'Marque “Leí y estoy de acuerdo” y firme para continuar.',name:'Nombre'},
+ de:{wrongIs:'Falsche Antwort. Richtig ist:',score:'Ihr Ergebnis',min:'Zum Abschluss sind mindestens 80 % nötig.',redoT:'Wir wiederholen einige Module',redoS:'Sie wiederholen nur die Module mit Fehlern:',redoB:'Diese Module wiederholen',
+  signT:'Bestätigung der Schulung',ack:'Ich bestätige, dass ich die Sicherheitseinweisung von BlueWind Technology erhalten und verstanden habe und dass ich die Sicherheitsregeln befolge und die PSA richtig benutze.',agree:'Gelesen und einverstanden',signHere:'Unterschreiben Sie mit dem Finger im Feld unten',clear:'Löschen',confirm:'Bestätigen und abschließen',needSign:'Markieren Sie „Gelesen und einverstanden“ und unterschreiben Sie, um fortzufahren.',name:'Name'},
+ tr:{wrongIs:'Yanlış cevap. Doğrusu:',score:'Başarı oranınız',min:'Tamamlamak için en az %80 gerekir.',redoT:'Bazı modülleri tekrar edelim',redoS:'Yalnızca hata yaptığınız modülleri tekrar edeceksiniz:',redoB:'Bu modülleri tekrar et',
+  signT:'Eğitim onayı',ack:'BlueWind Technology güvenlik oryantasyon eğitimini aldığımı ve anladığımı, güvenlik kurallarına uyacağımı ve KKD’yi doğru kullanacağımı beyan ederim.',agree:'Okudum ve kabul ediyorum',signHere:'Aşağıdaki kutuya parmağınızla imzalayın',clear:'Temizle',confirm:'Onayla ve bitir',needSign:'Devam etmek için “Okudum ve kabul ediyorum” kutusunu işaretleyin ve imzalayın.',name:'Ad'},
+ zh:{wrongIs:'回答错误。正确答案是：',score:'您的得分',min:'完成培训至少需要 80%。',redoT:'我们来复习几个模块',redoS:'您只需重做答错的模块：',redoB:'重做这些模块',
+  signT:'培训确认',ack:'本人确认已接受并理解 BlueWind Technology 的安全入职培训，并将遵守安全规定、正确使用个人防护装备。',agree:'我已阅读并同意',signHere:'请用手指在下方方框内签名',clear:'清除',confirm:'确认并完成',needSign:'请勾选“我已阅读并同意”并签名后继续。',name:'姓名'}};
+const OX=()=>ONBX[lang]||ONBX.en;
+let onbList=null,onbTries=1,onbSigOk=false;
+const onbStartBase18=onbStart;
+onbStart=function(o){onbList=null;onbTries=1;onbSigOk=false;onbStartBase18(o)};
+/* capa: só a imagem do avião (sem o logo de fibras) */
+onboard=onboardBaseLogo;
+onbGo=function(){onbList=ONB.map((_,i)=>i);onbI=0;onbStage='learn';onbQ=0;onbPick=null;onbOrd=null;go('onbMod')};
+const onbLst=()=>onbList||ONB.map((_,i)=>i);
+onbMod=function(){
+  const L=ONBL[lang]||ONBL.en,X=OX(),lst=onbLst(),pos=Math.max(0,lst.indexOf(onbI)),m=ONB[onbI],n=lst.length;
+  const tot=lst.reduce((s,i)=>s+ONB[i].q.length,0),gq=lst.slice(0,pos).reduce((s,i)=>s+ONB[i].q.length,0)+(onbStage==='q'?onbQ+1:0);
+  const top=`<div class="topbar glass"><div class="miniLogo">${miniLogo()}<span class="hide-s">Onboard</span></div><div class="prog"><i style="width:${gq/tot*100}%"></i></div><span class="muted" style="font-size:13px">${onbStage==='q'?gq+'/'+tot:L.mod+' '+(pos+1)+'/'+n}</span></div>`;
+  if(onbStage==='learn'){
+    app.innerHTML=`<div class="fade">${top}<div class="qcard glass">
+     <div class="qmeta"><span class="muted">${L.mod} ${pos+1} ${L.of} ${n}</span><button class="audio glass" onclick="onbSpeak()">🔊 ${L.listen}</button></div>
+     <h2 style="font-size:26px;margin:6px 0 12px">${m.ico} ${m.t[lang]}</h2>
+     <ul style="margin:0 0 0 20px;font-size:17px;line-height:1.55">${m.pts[lang].map(p=>`<li style="margin:8px 0">${p}</li>`).join('')}</ul>
+     ${pos===n-1?`<p class="muted" style="margin-top:14px;font-size:13px">ℹ️ ${L.note}</p>`:''}
+     <div class="qfoot"><span></span><button class="btn" onclick="onbStage='q';onbQ=0;onbPick=null;onbOrd=null;render()">${L.learn} →</button></div></div></div>`;
+    return;
+  }
+  const q=m.q[onbQ];if(!onbOrd)onbOrd=shuffle(q.o[lang].map((_,i)=>i));
+  const ok=onbPick===q.ans;
+  const fb=onbPick===null?'':ok?`<div class="card" style="margin-top:12px;border:1px solid #22c55e;background:rgba(34,197,94,.12)"><b style="color:#86efac">✓ ${L.right}</b> ${q.why[lang]}</div>`
+    :`<div class="card" style="margin-top:12px;border:1px solid #ef4444;background:rgba(239,68,68,.12)"><b style="color:#fca5a5">✗ ${X.wrongIs}</b> <b style="color:#86efac">${q.o[lang][q.ans]}</b><p style="margin:8px 0 0">💡 ${q.why[lang]}</p></div>`;
+  const last=onbQ===m.q.length-1,lastMod=pos===n-1;
+  const btn=onbPick===null?'':`<button class="btn" onclick="onbNext()">${last?(lastMod?L.endB:L.nextMod):L.next} →</button>`;
+  app.innerHTML=`<div class="fade">${top}<div class="qcard glass">
+   <div class="qmeta"><span class="muted">${m.ico} ${m.t[lang]} · ${L.q} ${gq} ${L.of} ${tot}</span></div>
+   <div class="qtext">${q.t[lang]}</div>
+   <div class="opts">${onbOrd.map((oi,k)=>{let s='';if(onbPick!==null&&oi===q.ans)s='border-color:#22c55e;background:rgba(34,197,94,.18)';else if(onbPick===oi)s='border-color:#ef4444;background:rgba(239,68,68,.18)';
+     return `<button class="opt glass" ${onbPick!==null?'disabled':''} style="${s}" onclick="onbAns(${oi})"><span class="letter">${'ABCD'[k]}</span><span>${q.o[lang][oi]}</span></button>`}).join('')}</div>
+   ${fb}<div class="qfoot"><span></span>${btn}</div></div></div>`;
+};
+onbNext=function(){
+  onbPick=null;onbOrd=null;const m=ONB[onbI],lst=onbLst(),pos=lst.indexOf(onbI);
+  if(onbQ<m.q.length-1){onbQ++;return render()}
+  if(pos<lst.length-1){onbI=lst[pos+1];onbStage='learn';onbQ=0;window.scrollTo(0,0);return render()}
+  window.scrollTo(0,0);go(onbScoreNow()>=ONB_MIN?'onbSign':'onbFail');
+};
+function onbScoreNow(){const tot=ONB.reduce((s,m)=>s+m.q.length,0),w=Object.values(onbErr).reduce((s,v)=>s+v,0);return Math.max(0,Math.round(100*(tot-w)/tot))}
+function onbFailV(){const X=OX(),sc=onbScoreNow(),bad=ONB.map((m,i)=>i).filter(i=>(onbErr['m'+(i+1)]||0)>0);
+  app.innerHTML=`<div class="center fade"><div class="glass" style="padding:26px">
+   <div style="font-size:54px">📚</div><h2 style="font-size:26px;margin-top:6px">${X.redoT}</h2>
+   <p style="margin-top:12px;font-size:20px">${X.score} <b style="color:#fcd34d;font-size:30px">${sc}%</b></p>
+   <p class="muted" style="margin-top:6px">${X.min}</p>
+   <p style="margin-top:16px;text-align:left">${X.redoS}</p>
+   <ul style="text-align:left;margin:8px 0 0 20px;line-height:1.7">${bad.map(i=>`<li>${ONB[i].ico} ${ONB[i].t[lang]}</li>`).join('')}</ul>
+   <button class="btn" style="width:100%;margin-top:20px" onclick="onbRedo()">↺ ${X.redoB}</button></div></div>`}
+function onbRedo(){const bad=ONB.map((m,i)=>i).filter(i=>(onbErr['m'+(i+1)]||0)>0);if(!bad.length)return go('onbSign');
+  bad.forEach(i=>{delete onbErr['m'+(i+1)]});onbTries++;onbList=bad;onbI=bad[0];onbStage='learn';onbQ=0;onbPick=null;onbOrd=null;window.scrollTo(0,0);go('onbMod')}
+function onbSignV(){const X=OX();onbSigOk=false;
+  app.innerHTML=`<div class="center fade" style="max-width:560px"><div class="glass" style="padding:22px;text-align:left">
+   <h2 style="font-size:24px;margin:0 0 12px">✍️ ${X.signT}</h2>
+   ${onb&&onb.name?`<p style="margin:0 0 10px"><span class="muted">${X.name}:</span> <b>${escH(onb.name)}</b></p>`:''}
+   <p style="line-height:1.55;margin:0 0 14px;font-size:16px">${X.ack}</p>
+   <label style="display:flex;gap:10px;align-items:center;font-size:17px;margin:0 0 14px"><input type="checkbox" id="onbAgree" style="width:24px;height:24px" onchange="onbSignChk()"> ${X.agree}</label>
+   <p class="muted" style="margin:0 0 6px;font-size:14px">${X.signHere}</p>
+   <canvas id="onbSig" class="onbSigBox" data-noswipe></canvas>
+   <div style="display:flex;gap:10px;margin-top:10px"><button class="btn ghost small" onclick="onbSignV()">${X.clear}</button><span style="flex:1"></span></div>
+   <p class="muted" id="onbSigMsg" style="font-size:13px;margin:10px 0 0">${X.needSign}</p>
+   <button class="btn" id="onbSigBtn" style="width:100%;margin-top:12px;opacity:.5" onclick="onbSignDone()">✓ ${X.confirm}</button></div></div>`;
+  const c=document.getElementById('onbSig'),r=c.getBoundingClientRect(),dpr=Math.min(2,window.devicePixelRatio||1);
+  c.width=r.width*dpr;c.height=r.height*dpr;const g=c.getContext('2d');g.scale(dpr,dpr);g.lineWidth=2.6;g.lineCap='round';g.lineJoin='round';g.strokeStyle='#0b2a66';
+  let dn=false,len=0,lx=0,ly=0;const P=e=>{const b=c.getBoundingClientRect();return[e.clientX-b.left,e.clientY-b.top]};
+  c.onpointerdown=e=>{dn=true;[lx,ly]=P(e);try{c.setPointerCapture(e.pointerId)}catch(_){}};
+  c.onpointermove=e=>{if(!dn)return;const[x,y]=P(e);g.beginPath();g.moveTo(lx,ly);g.lineTo(x,y);g.stroke();len+=Math.hypot(x-lx,y-ly);lx=x;ly=y;if(len>60){onbSigOk=true;onbSignChk()}};
+  c.onpointerup=c.onpointercancel=()=>{dn=false};
+}
+function onbSignChk(){const a=document.getElementById('onbAgree'),ok=a&&a.checked&&onbSigOk,b=document.getElementById('onbSigBtn'),m=document.getElementById('onbSigMsg');
+  if(b)b.style.opacity=ok?1:.5;if(m)m.style.display=ok?'none':'block';return ok}
+function onbSigData(){const c=document.getElementById('onbSig'),o=document.createElement('canvas');o.width=360;o.height=Math.round(360*c.height/c.width);
+  const g=o.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,o.width,o.height);g.drawImage(c,0,0,o.width,o.height);return o.toDataURL('image/jpeg',.6)}
+async function onbSignDone(){if(!onbSignChk())return;const sig=onbSigData();await onbSave(sig);go('onbEnd')}
+onbSave=async function(sig){
+  if(!onb||onb.preview||!onb.id)return;
+  const patch={onboardDone:true,onboardAt:now(),onboardLang:lang,onboardErr:onbErr,onboardWrong:Object.values(onbErr).reduce((s,v)=>s+v,0),
+    onboardTotal:ONB.reduce((s,m)=>s+m.q.length,0),onboardScore:onbScoreNow(),onboardTries:onbTries,onboardAck:true,onboardSig:sig||'',onboardVer:'2026-11-18'};
+  try{
+    if(SB_ON&&onb.token){const r=await SB.rpc('onboard_patch',{p_id:onb.id,p_token:onb.token,p_patch:patch});if(r.error)throw r.error}
+    else await candRef(onb.id).update(patch);
+  }catch(e){console.warn('onboard save fail',e)}
+};
+
+/* ---------- 5) Certificado (RH, Diretoria e Safety) ---------- */
+const CERTL={pt:{b:'🖨️ Certificado (PDF)',tries:'tentativa(s)',noSig:'(concluído antes da assinatura digital)'},en:{b:'🖨️ Certificate (PDF)',tries:'attempt(s)',noSig:'(completed before digital signature)'}};
+function onbCertFind(id){return (typeof CANDS!=='undefined'&&CANDS.find(x=>x.id===id))||(typeof segData==='function'&&segData().find(x=>x.id===id))||null}
+function onbCert(id){const c=onbCertFind(id);if(!c)return;const P=CERTL[plang]||CERTL.pt,sc=onbScore(c),d=new Date(c.onboardAt||now());
+  const mods=ONB.map((m,i)=>`<li>${m.ico} ${m.t.en}${(c.onboardErr||{})['m'+(i+1)]?` <small>(${c.onboardErr['m'+(i+1)]} ✗)</small>`:''}</li>`).join('');
+  const h=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Certificate – ${escH(c.name||'')}</title><style>
+   @page{size:letter;margin:14mm}body{font-family:Arial,Helvetica,sans-serif;color:#0b2a66;margin:0}
+   .b{border:3px solid #1f5fd0;border-radius:14px;padding:26px 30px}.t{letter-spacing:.3em;font-size:12px;color:#1f5fd0;font-weight:700}
+   h1{font-size:30px;margin:6px 0 4px}h2{font-size:17px;color:#335;font-weight:normal;margin:0 0 18px}.n{font-size:28px;font-weight:700;border-bottom:2px solid #1f5fd0;padding-bottom:6px;margin:10px 0 16px}
+   table{border-collapse:collapse;font-size:14px;margin:0 0 14px}td{padding:4px 18px 4px 0}ul{columns:2;font-size:13px;margin:6px 0 16px;padding-left:18px}
+   .ack{font-size:13px;line-height:1.5;background:#f2f6ff;border-radius:8px;padding:10px 12px}.sg{display:flex;gap:40px;margin-top:22px;align-items:flex-end}
+   .sg div{flex:1;border-top:1px solid #0b2a66;padding-top:4px;font-size:12px}.sg img{height:70px;display:block;margin-bottom:4px}.lg{float:right;font-weight:800;font-size:22px}.lg span{color:#1f5fd0}
+   @media print{button{display:none}}</style></head><body><div class="b">
+   <div class="lg">Blue<span>Wind</span><div style="font-size:10px;font-weight:normal;color:#335">technology in composites</div></div>
+   <div class="t">BLUEWIND TECHNOLOGY · PENSACOLA, FL</div><h1>Certificate of Safety Onboarding</h1><h2>Certificado de Integração de Segurança</h2>
+   <div>This certifies that / Certificamos que</div><div class="n">${escH(c.name||'—')}</div>
+   <table><tr><td><b>Completed on / Concluído em</b></td><td>${d.toLocaleString('en-US')}</td></tr>
+   <tr><td><b>Score / Nota</b></td><td>${sc}% (minimum ${ONB_MIN}%) · ${c.onboardTries||1} ${P.tries}</td></tr>
+   <tr><td><b>Language / Idioma</b></td><td>${(c.onboardLang||'').toUpperCase()}</td></tr></table>
+   <b style="font-size:14px">Modules / Módulos (OSHA-based safety topics)</b><ul>${mods}</ul>
+   <div class="ack">${ONBX.en.ack}${c.onboardLang&&c.onboardLang!=='en'&&ONBX[c.onboardLang]?`<br><i>${ONBX[c.onboardLang].ack}</i>`:''}</div>
+   <div class="sg"><div>${c.onboardSig?`<img src="${c.onboardSig}" alt="">`:`<i style="font-size:11px">${P.noSig}</i><br>`}Employee signature / Assinatura do funcionário</div>
+   <div>&nbsp;<br><br>Safety representative / Responsável pela segurança</div></div></div>
+   <p style="text-align:center;margin-top:14px"><button onclick="print()" style="font-size:16px;padding:10px 20px">🖨️ Print / Save PDF</button></p></body></html>`;
+  const w=window.open('','_blank');if(!w){alertBox&&alertBox('Pop-up blocked');return}w.document.open();w.document.write(h);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){}},500)}
+const onbCardBase18=onbCard;
+onbCard=function(c){let h=onbCardBase18(c);if(c.onboardDone){const P=CERTL[plang]||CERTL.pt;
+  h=h.replace(/<\/div>\s*$/,`<button class="btn ghost small" style="margin-top:8px" onclick="onbCert('${c.id}')">${P.b}</button></div>`)}return h};
+const segRowBase18=segRow;
+segRow=function(c){let h=segRowBase18(c);if(c.onboardDone){const P=CERTL[plang]||CERTL.pt;
+  h=h.replace(/<\/div>\s*$/,`<div style="margin-top:10px"><button class="btn ghost small" onclick="onbCert('${c.id}')">${P.b}</button></div></div>`)}return h};
+
+/* ---------- 6) Safety: imprimir os códigos do Onboard (nome + código + QR) — 18/11/2026 ---------- */
+const PRTL={pt:{b:'🖨️ Imprimir códigos',none:'Nenhum código ativo. Gere os códigos primeiro (botão “Gerar código do Onboard” de cada pessoa).'},en:{b:'🖨️ Print codes',none:'No active codes. Generate the codes first (“Generate Onboard code” button for each person).'}};
+function segPrintCodes(){const P=PRTL[plang]||PRTL.pt;
+  const L=segHires().filter(c=>!c.onboardDone&&c.onboardCode&&(c.onboardCodeAt||0)+7*24*3600000>now());
+  if(!L.length){alertBox(P.none);return}
+  const cards=L.map(c=>`<div class="c"><div class="lg">Blue<span>Wind</span> · Onboard</div><div class="n">${escH(c.name||'—')}</div>
+    <div class="q">${qrSVG(appURL()+'?c='+c.onboardCode,150)}</div><div class="k">${c.onboardCode}</div>
+    <p>📱 Scan the QR code with your phone camera, or open the app and type the code.<br>Leia o QR Code com a câmera do celular, ou abra o app e digite o código.<br>Escanee el código QR con la cámara, o abra la app y escriba el código.</p>
+    <small>Valid until / Válido até: ${new Date((c.onboardCodeAt||0)+7*24*3600000).toLocaleDateString('en-US')}</small></div>`).join('');
+  const h=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Onboard codes</title><style>@page{size:letter;margin:10mm}body{font-family:Arial,sans-serif;margin:0;color:#0b2a66}
+   .g{display:grid;grid-template-columns:1fr 1fr;gap:0}.c{border:1.5px dashed #6b7fa8;padding:14px;text-align:center;break-inside:avoid;page-break-inside:avoid}
+   .lg{font-weight:800;font-size:14px}.lg span{color:#1f5fd0}.n{font-size:20px;font-weight:700;margin:6px 0}.q svg{width:150px;height:150px}.k{font-size:34px;font-weight:800;letter-spacing:.15em;margin:4px 0}
+   p{font-size:11px;line-height:1.4;margin:6px 0}small{font-size:10px;color:#445}@media print{button{display:none}}</style></head><body>
+   <p style="text-align:center"><button onclick="print()" style="font-size:16px;padding:10px 20px">🖨️ Print / Imprimir</button></p><div class="g">${cards}</div></body></html>`;
+  const w=window.open('','_blank');if(!w)return;w.document.open();w.document.write(h);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){}},500)}
+const segPanelBasePrt=segPanel;
+segPanel=function(){segPanelBasePrt();const P=PRTL[plang]||PRTL.pt,h3=[...document.querySelectorAll('#app h3')].find(x=>x.textContent.includes('✈️'));
+  if(h3)h3.insertAdjacentHTML('afterend',`<button class="btn ghost" style="width:100%;margin:0 0 12px" onclick="segPrintCodes()">${P.b}</button>`)};
+
 render();
 </script>
 </body>
