@@ -5535,7 +5535,7 @@ render=function(){renderBaseLogo();try{document.body.classList.toggle('onbWM',['
 /* =====================================================================
    ONBOARD DE APRESENTAÇÃO (slides, sem perguntas) — 17/11/2026
    O chefe da segurança mostra na TV/projetor. Abre pelo painel do Safety
-   (sem senha) ou pelo link direto .../skill-station/?apresentacao
+   (só com login RH/Diretoria/Safety — conteúdo protegido no banco, ver abaixo)
    ===================================================================== */
 const SHOWL={
  pt:{t:'Integração de Segurança',s:'Apresentação para novos integrantes',mods:'7 módulos',start:'Começar',endT:'Bem-vindo a bordo!',endS:'Dúvidas? Fale com o seu líder ou com a equipe de Segurança.',em:'Emergência',full:'Tela cheia',exit:'Sair',next:'Avançar',prev:'Voltar',btn:'🖥️ Apresentação',idx:'O que vamos ver'},
@@ -5617,8 +5617,30 @@ backTarget=function(){if(screen==='onbShow')return null;return backTargetBaseSho
 const segPanelBaseShow=segPanel;
 segPanel=function(){segPanelBaseShow();const S=SHOWL[lang]||SHOWL.en;const tabs=document.querySelector('#segTop');
   if(tabs)tabs.insertAdjacentHTML('afterbegin',`<button class="btn" style="width:100%;margin:0 0 12px;font-size:18px;padding:14px" onclick="showStart('panel')">${(SHOWL[plang]||SHOWL.pt).btn} · ${(SHOWL[plang]||SHOWL.pt).t}</button>`)};
-/* link direto: .../skill-station/?apresentacao */
-(function(){try{const u=new URL(location.href);if(u.searchParams.has('apresentacao')){u.searchParams.delete('apresentacao');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(()=>showStart('home'),300)}}catch(e){}})();
+/* =====================================================================
+   APRESENTAÇÃO PROTEGIDA — Integration Orientation da empresa (18/11/2026)
+   O conteúdo (26 slides + fotos) NÃO está neste código: fica só no banco,
+   tabela safety_show, que só abre para quem entrou com login RH, Diretoria
+   ou Safety. No modo demonstração (000) aparece só um aviso.
+   ===================================================================== */
+const SHOWP={pt:{lock:'🔒 Apresentação protegida',demo:'O conteúdo real da apresentação só abre com o login do Safety, RH ou Diretoria. No modo demonstração (000) ele não é exibido.',err:'Não foi possível carregar a apresentação. Verifique a internet e o login.',load:'Carregando apresentação…',ok:'Entendi'},
+ en:{lock:'🔒 Protected presentation',demo:'The real presentation only opens with the Safety, HR or Management login. It is not shown in demo mode (000).',err:'Could not load the presentation. Check the internet and the login.',load:'Loading presentation…',ok:'OK'}};
+function showMsgBox(txt){const L=SHOWP[plang]||SHOWP.pt;showClose();const d=document.createElement('div');d.id='showPro';
+  d.style.cssText='position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(5,15,35,.82);padding:20px';
+  d.innerHTML=`<div style="max-width:460px;background:#10294d;border:1px solid rgba(255,255,255,.2);border-radius:18px;padding:22px;color:#e8f1ff;text-align:center"><h3 style="margin:0 0 10px">${L.lock}</h3><p style="margin:0 0 16px;line-height:1.45">${txt}</p>${txt===L.load?'':`<button class="btn" onclick="showClose()">${L.ok}</button>`}</div>`;
+  document.body.appendChild(d)}
+function showClose(){try{if(document.fullscreenElement)document.exitFullscreen()}catch(e){}const d=document.getElementById('showPro');if(d)d.remove()}
+async function showStart(from){showFrom=from||'home';const L=SHOWP[plang]||SHOWP.pt;
+  if(!(SB_ON&&SB&&!MASTER&&STAFF&&['seg','rh','dir'].includes(STAFF.role)))return showMsgBox(L.demo);
+  showMsgBox(L.load);
+  try{const r=await SB.from('safety_show').select('html').eq('id',1).maybeSingle();
+    if(r.error||!r.data||!r.data.html)throw r.error||new Error('vazio');
+    showClose();const d=document.createElement('div');d.id='showPro';d.style.cssText='position:fixed;inset:0;z-index:9999;background:#0b2a66';
+    const f=document.createElement('iframe');f.setAttribute('allow','fullscreen');f.allowFullscreen=true;
+    f.style.cssText='border:0;width:100%;height:100%;display:block';f.srcdoc=r.data.html;d.appendChild(f);document.body.appendChild(d);
+    f.onload=()=>{try{f.contentWindow.focus()}catch(e){}}}
+  catch(e){showMsgBox(L.err)}}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById('showPro')&&!document.fullscreenElement)showClose()});
 
 
 /* Nome AEOLUS na fonte do "NEXT PHASE" (Michroma, licença OFL) com efeito cromado — 17/11/2026 */
