@@ -5712,6 +5712,7 @@ render=function(){
   if(screen==='onbSign'){onbSignV();onbWMOn();return}
   renderBase18();
   try{const f=document.querySelector('#app .tbFab'),h=document.querySelector('#app .ph');if(f&&h){h.appendChild(f);f.classList.add('inHead')}}catch(e){}
+  try{document.querySelectorAll('#app button').forEach(b=>{if(b.textContent.trim().startsWith('←'))b.remove()})}catch(e){}
 };
 function onbWMOn(){try{document.body.classList.add('onbWM');updBack()}catch(e){}}
 
