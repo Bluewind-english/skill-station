@@ -5436,7 +5436,8 @@ Object.assign(PLD.en,{seg:'Safety',segT:'Safety Dashboard',segOnb:'New hire Onbo
 function setWho(k){loginWho=k;['rh','dir','seg'].forEach(x=>{const b=document.getElementById('lgW_'+x);if(b)b.classList.toggle('on',x===k)})}
 const loginBaseSeg=login;
 login=function(){
-  if(SB_ON&&STAFF){viewRole=STAFF.role==='rh'?'rh':STAFF.role==='seg'?'seg':'dir';panelTab='geral';detail=null;screen='panel';return render()}
+  // 25/11/2026: sempre pede senha — se ficou alguém conectado (ex.: Safety), sai antes de mostrar o login
+  if(SB_ON&&STAFF){try{window.__signingOut=SB.auth.signOut().catch(()=>{})}catch(e){}STAFF=null;CANDS=[];detail=null;viewRole='rh'}
   loginBaseSeg();
   const r=SB_ON?document.querySelector('#app form .role'):null;
   if(r){const names={rh:PL('rh'),dir:{pt:'Diretoria',en:'Management'}[plang]||'Diretoria',seg:'🦺 Safety'};
@@ -5902,6 +5903,9 @@ const panelBaseRHO=panel;
 panel=function(){panelBaseRHO();try{if(viewRole==='seg'||detail)return;const L=RHO[plang]||RHO.pt,ph=document.querySelector('#app .fade > .ph');if(!ph||document.getElementById('rhoHero'))return;
   ph.insertAdjacentHTML('afterend',`<div class="segHero" id="rhoHero"><div class="wm">🧾</div><div class="tag">👥 ${L.tag}</div><h2>${L.t}</h2><p>${L.s}</p>
    <button class="play" onclick="showStart('rh',1)">${L.b}</button>${MASTER?`<p style="margin:10px 0 0;font-size:13px;color:#fde68a">${L.lock}</p>`:''}</div>`)}catch(e){}};
+
+/* 25/11/2026: espera terminar a saída do usuário anterior antes de entrar com a senha nova */
+const doLoginBaseWait=doLoginBase;doLoginBase=async function(){try{if(window.__signingOut)await window.__signingOut}catch(e){}window.__signingOut=null;return doLoginBaseWait()};
 </script>
 </body>
 </html>
