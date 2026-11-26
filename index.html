@@ -4740,7 +4740,7 @@ function onbEnd(){
 /* abrir o Onboard a partir do código 0000 (teste) */
 function demoProf(){
   demoProfBase();
-  const g=document.querySelector('#app .glass');if(g)g.insertAdjacentHTML('beforeend',`<button class="btn ghost" style="width:100%;margin-top:14px" onclick="onbStart({preview:true})">✈️ ${t('viewOnb')}</button>`);
+  // 25/11/2026: sem prévia do Onboard
 }
 
 /* ---------- PAINEL: código do Onboard e situação ---------- */
@@ -4755,7 +4755,7 @@ function onbCard(c){
   else if(ap)h+=`<p class="muted" style="margin-top:6px">${PL('onbWait')}</p>`;
   else h+=`<p class="muted" style="margin-top:6px">${PL('onbOnly')}</p>`;
   if(c.onboardCode&&!c.onboardDone)h+=`<div style="text-align:center;margin-top:10px"><p class="muted">${PL('onbCode')}</p><div class="bigcode">${c.onboardCode}</div>${qrSVG(appURL()+'?c='+c.onboardCode,180)}<p class="muted" style="font-size:13px;margin-top:8px">${PL('onbHint')}</p></div>`;
-  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${ap&&viewRole==='rh'&&!c.onboardDone?`<button class="btn small" onclick="genOnb('${c.id}')">${PL('onbGen')}</button>`:''}<button class="btn ghost small" onclick="onbStart({preview:true,fromPanel:true,name:(CANDS.find(x=>x.id==='${c.id}')||{}).name})">${PL('onbPrev')}</button></div></div>`;
+  h+=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">${ap&&viewRole==='rh'&&!c.onboardDone?`<button class="btn small" onclick="genOnb('${c.id}')">${PL('onbGen')}</button>`:''}</div></div>`;
   return h;
 }
 async function genOnb(id){
@@ -4765,7 +4765,7 @@ async function genOnb(id){
     const x=CANDS.find(k=>k.id===id);if(x){x.onboardCode=c;x.onboardCodeAt=now()}render()}catch(e){alertBox(PL('saveErr'))}
 }
 /* link direto para testar só o Onboard: .../skill-station/?onboard */
-(function(){try{const u=new URL(location.href);if(u.searchParams.has('onboard')){u.searchParams.delete('onboard');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash);setTimeout(()=>onbStart({preview:true}),300)}}catch(e){}})();
+/* 25/11/2026: link ?onboard sem código não abre mais prévia */
 
 
 /* =====================================================================
@@ -5503,7 +5503,7 @@ function segPanel(){
    <h3 style="margin:4px 4px 10px">✈️ ${PL('segOnb')}</h3>
    <div class="kpis"><div class="kpi glass"><span>${PL('segK1')}</span><b>${H.length}</b></div><div class="kpi glass"><span>${PL('segK2')}</span><b style="color:#86efac">${done.length}</b></div><div class="kpi glass"><span>${PL('segK4')}</span><b style="color:#7dd3fc">${avg==null?'—':avg+'%'}</b></div></div>
    ${H.length?H.map(segRow).join(''):`<div class="card glass" style="text-align:center;padding:26px"><div style="font-size:40px">🦺</div><p class="muted" style="margin-top:8px">${PL('segNone')}</p></div>`}
-   <div style="text-align:center;margin:6px 0 20px"><button class="btn ghost small" onclick="onbStart({preview:true})">${PL('onbPrev')}</button></div></div>`;
+   </div>`; // 25/11/2026: sem prévia do Onboard — só pelo código do contratado
 }
 async function segGen(id){
   if(SB_ON&&!MASTER&&STAFF&&STAFF.role==='seg'){
