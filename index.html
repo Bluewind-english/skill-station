@@ -4689,7 +4689,7 @@ function onboard(){
     <img src="${ONB_COVER}" alt="Welcome to BlueWind" style="display:block;width:100%;height:auto" onclick="onbGo()">
     <button aria-label="${L.start}" onclick="onbGo()" style="position:absolute;left:18%;right:18%;bottom:8.5%;height:9%;background:transparent;border:0;border-radius:999px;cursor:pointer"></button></div>
    ${onb&&onb.name?`<p style="margin-top:14px;font-size:18px">👋 <b>${escH(onb.name)}</b></p>`:''}
-   <button class="btn" style="width:100%;margin-top:12px" onclick="onbGo()">✈️ ${L.start} →</button></div>`;
+   </div>`; // 25/11/2026: só o botão "Start Your Journey" da imagem
 }
 function onbGo(){onbI=0;onbStage='learn';onbQ=0;go('onbMod')}
 function onbSpeak(){try{const m=ONB[onbI];const u=new SpeechSynthesisUtterance(m.t[lang]+'. '+m.pts[lang].join(' '));u.lang=SPK[lang];speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}}
