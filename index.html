@@ -1572,7 +1572,6 @@ async function kp(k){
   codeUpd(typed,'');kpBusy=true;const c=typed;typed='';
   try{
     await dbReady;if(!DBX)throw 0;
-    if(c==='0000'){kpBusy=false;go('demoProf');return}
     const s=await DBX.doc('codes/'+c).get();
     if(!s.exists){kpBusy=false;return codeUpd('',t('badCode'))}
     const d=s.data();
@@ -2466,7 +2465,6 @@ async function kp(k){
   codeUpd(typed,'');kpBusy=true;const c=typed;typed='';
   try{
     await dbReady;
-    if(c==='0000'){kpBusy=false;go('demoProf');return}
     if(!SB_ON){
       const s=await DBX.doc('codes/'+c).get();if(!s.exists){kpBusy=false;return codeUpd('',t('badCode'))}
       const d=s.data();if(d.used){kpBusy=false;return codeUpd('',t('codeUsed'))}if(d.exp&&d.exp<now()){kpBusy=false;return codeUpd('',t('codeExp'))}
@@ -4319,8 +4317,8 @@ function enterMaster(){
   DBX=mem;mem.collection('candidates').onSnapshot(s=>{if(!MASTER)return;CANDS=s.docs.map(d=>({id:d.id,...d.data()}));if(screen==='panel'&&!document.activeElement?.matches?.('input,textarea,select'))render()});
   viewRole='rh';panelTab='geral';detail=null;rkMode='tec';go('panel');
 }
-async function doLogin(){const p=document.getElementById('lgP').value;if(p==='0000'||p==='000')return enterMaster();return doLoginBase()}
-async function pinKey(k){if(k!=='del'&&pinTyped.length===3&&pinTyped+k==='0000'){pinTyped='';return enterMaster()}return pinKeyBase(k)}
+async function doLogin(){return doLoginBase()} // 25/11/2026: senha master 000/0000 desligada
+async function pinKey(k){return pinKeyBase(k)} // 25/11/2026: modo demonstração desligado
 async function logoutPanel(){if(MASTER){MASTER=false;DBX=MASTER_PREV;CANDS=[];detail=null;newCode=null;return go('home')}return logoutPanelBase()}
 function panel(){
   panelBase();
@@ -5482,7 +5480,7 @@ function segRow(c){
     <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
       <b style="font-size:18px">${esc(c.name||'—')}</b>
       <span class="badge ${badge}" style="white-space:normal">${st}</span></div>`;
-  if(sc!=null)h+=`<div style="display:flex;align-items:center;gap:12px;margin-top:10px"><div style="font-size:34px;font-weight:800;color:${sc>=80?'#86efac':sc>=60?'#fcd34d':'#fca5a5'}">${sc}%</div><div class="muted" style="font-size:13px">${PL('segScore')}</div></div>
+  if(sc!=null)h+=`<div style="display:flex;align-items:center;gap:12px;margin-top:10px"><div style="font-size:34px;font-weight:800;color:${sc>=ONB_MIN?'#86efac':sc>=40?'#fcd34d':'#fca5a5'}">${sc}%</div><div class="muted" style="font-size:13px">${PL('segScore')}</div></div>
      <p class="muted" style="font-size:13px;margin-top:6px">${PL('segErr')}: ${ONB.map((m,i)=>`${m.ico} ${(c.onboardErr||{})['m'+(i+1)]||0}`).join(' · ')}</p>`;
   if(!c.onboardDone){
     if(c.onboardCode&&(c.onboardCodeAt||0)+7*24*3600000>now()&&segOpen===c.id)h+=`<div style="text-align:center;margin-top:10px"><div class="bigcode">${c.onboardCode}</div>${qrSVG(appURL()+'?c='+c.onboardCode,170)}<p class="muted" style="font-size:13px;margin-top:6px">${PL('segCodeHint')}</p></div>`;
@@ -5726,19 +5724,19 @@ segPanel=function(){segPanelBase18();const L=SEGH[plang]||SEGH.pt,top=document.g
    <button class="play" onclick="showStart('panel')">${L.b}</button>${MASTER?`<p style="margin:10px 0 0;font-size:13px;color:#fde68a">${L.lock}</p>`:''}</div>`};
 
 /* ---------- 4) Onboard ---------- */
-const ONB_MIN=80;
+const ONB_MIN=60;
 const ONBX={
- pt:{wrongIs:'Resposta errada. A certa é:',score:'Você acertou',min:'O mínimo para concluir é 80%.',redoT:'Vamos rever alguns módulos',redoS:'Você vai refazer só os módulos em que errou:',redoB:'Refazer esses módulos',
+ pt:{wrongIs:'Resposta errada. A certa é:',score:'Você acertou',min:'O mínimo para concluir é 60%.',redoT:'Vamos rever alguns módulos',redoS:'Você vai refazer só os módulos em que errou:',redoB:'Refazer esses módulos',
   signT:'Confirmação do treinamento',ack:'Declaro que recebi e entendi o treinamento de integração de segurança da BlueWind Technology, e que vou seguir as regras de segurança e usar os EPIs corretamente.',agree:'Li e concordo',signHere:'Assine com o dedo no quadro abaixo',clear:'Limpar',confirm:'Confirmar e concluir',needSign:'Marque “Li e concordo” e assine para continuar.',name:'Nome'},
- en:{wrongIs:'Wrong answer. The correct one is:',score:'You scored',min:'The minimum to finish is 80%.',redoT:'Let’s review some modules',redoS:'You will redo only the modules where you made mistakes:',redoB:'Redo these modules',
+ en:{wrongIs:'Wrong answer. The correct one is:',score:'You scored',min:'The minimum to finish is 60%.',redoT:'Let’s review some modules',redoS:'You will redo only the modules where you made mistakes:',redoB:'Redo these modules',
   signT:'Training acknowledgment',ack:'I declare that I received and understood BlueWind Technology’s safety onboarding training, and that I will follow the safety rules and use PPE correctly.',agree:'I have read and agree',signHere:'Sign with your finger in the box below',clear:'Clear',confirm:'Confirm and finish',needSign:'Check “I have read and agree” and sign to continue.',name:'Name'},
- es:{wrongIs:'Respuesta incorrecta. La correcta es:',score:'Usted acertó',min:'El mínimo para terminar es 80%.',redoT:'Vamos a repasar algunos módulos',redoS:'Usted va a rehacer solo los módulos en los que se equivocó:',redoB:'Rehacer estos módulos',
+ es:{wrongIs:'Respuesta incorrecta. La correcta es:',score:'Usted acertó',min:'El mínimo para terminar es 60%.',redoT:'Vamos a repasar algunos módulos',redoS:'Usted va a rehacer solo los módulos en los que se equivocó:',redoB:'Rehacer estos módulos',
   signT:'Confirmación del entrenamiento',ack:'Declaro que recibí y entendí el entrenamiento de integración de seguridad de BlueWind Technology, y que seguiré las reglas de seguridad y usaré el EPP correctamente.',agree:'Leí y estoy de acuerdo',signHere:'Firme con el dedo en el cuadro de abajo',clear:'Borrar',confirm:'Confirmar y terminar',needSign:'Marque “Leí y estoy de acuerdo” y firme para continuar.',name:'Nombre'},
- de:{wrongIs:'Falsche Antwort. Richtig ist:',score:'Ihr Ergebnis',min:'Zum Abschluss sind mindestens 80 % nötig.',redoT:'Wir wiederholen einige Module',redoS:'Sie wiederholen nur die Module mit Fehlern:',redoB:'Diese Module wiederholen',
+ de:{wrongIs:'Falsche Antwort. Richtig ist:',score:'Ihr Ergebnis',min:'Zum Abschluss sind mindestens 60 % nötig.',redoT:'Wir wiederholen einige Module',redoS:'Sie wiederholen nur die Module mit Fehlern:',redoB:'Diese Module wiederholen',
   signT:'Bestätigung der Schulung',ack:'Ich bestätige, dass ich die Sicherheitseinweisung von BlueWind Technology erhalten und verstanden habe und dass ich die Sicherheitsregeln befolge und die PSA richtig benutze.',agree:'Gelesen und einverstanden',signHere:'Unterschreiben Sie mit dem Finger im Feld unten',clear:'Löschen',confirm:'Bestätigen und abschließen',needSign:'Markieren Sie „Gelesen und einverstanden“ und unterschreiben Sie, um fortzufahren.',name:'Name'},
- tr:{wrongIs:'Yanlış cevap. Doğrusu:',score:'Başarı oranınız',min:'Tamamlamak için en az %80 gerekir.',redoT:'Bazı modülleri tekrar edelim',redoS:'Yalnızca hata yaptığınız modülleri tekrar edeceksiniz:',redoB:'Bu modülleri tekrar et',
+ tr:{wrongIs:'Yanlış cevap. Doğrusu:',score:'Başarı oranınız',min:'Tamamlamak için en az %60 gerekir.',redoT:'Bazı modülleri tekrar edelim',redoS:'Yalnızca hata yaptığınız modülleri tekrar edeceksiniz:',redoB:'Bu modülleri tekrar et',
   signT:'Eğitim onayı',ack:'BlueWind Technology güvenlik oryantasyon eğitimini aldığımı ve anladığımı, güvenlik kurallarına uyacağımı ve KKD’yi doğru kullanacağımı beyan ederim.',agree:'Okudum ve kabul ediyorum',signHere:'Aşağıdaki kutuya parmağınızla imzalayın',clear:'Temizle',confirm:'Onayla ve bitir',needSign:'Devam etmek için “Okudum ve kabul ediyorum” kutusunu işaretleyin ve imzalayın.',name:'Ad'},
- zh:{wrongIs:'回答错误。正确答案是：',score:'您的得分',min:'完成培训至少需要 80%。',redoT:'我们来复习几个模块',redoS:'您只需重做答错的模块：',redoB:'重做这些模块',
+ zh:{wrongIs:'回答错误。正确答案是：',score:'您的得分',min:'完成培训至少需要 60%。',redoT:'我们来复习几个模块',redoS:'您只需重做答错的模块：',redoB:'重做这些模块',
   signT:'培训确认',ack:'本人确认已接受并理解 BlueWind Technology 的安全入职培训，并将遵守安全规定、正确使用个人防护装备。',agree:'我已阅读并同意',signHere:'请用手指在下方方框内签名',clear:'清除',confirm:'确认并完成',needSign:'请勾选“我已阅读并同意”并签名后继续。',name:'姓名'}};
 const OX=()=>ONBX[lang]||ONBX.en;
 let onbList=null,onbTries=1,onbSigOk=false;
