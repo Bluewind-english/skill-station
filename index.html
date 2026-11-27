@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https://yhotsbrhomnvoksijysm.supabase.co; media-src 'self' data: blob: mediastream:; connect-src 'self' https://yhotsbrhomnvoksijysm.supabase.co wss://yhotsbrhomnvoksijysm.supabase.co; manifest-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Bluewind Skill Station</title>
 <link rel="manifest" href="manifest.webmanifest">
@@ -186,8 +188,8 @@ h1,h2,h3{font-weight:700;letter-spacing:-.01em}
 
 /* KEYPAD */
 .center{max-width:520px;margin:6vh auto 0;text-align:center}
-.codeBoxes{display:flex;gap:12px;justify-content:center;margin:26px 0}
-.cb{width:64px;height:76px;border-radius:16px;display:grid;place-items:center;font-size:36px;font-weight:700}
+.codeBoxes{display:flex;gap:8px;justify-content:center;margin:26px 0}
+.cb{width:clamp(38px,12vw,56px);height:clamp(50px,15vw,70px);border-radius:14px;display:grid;place-items:center;font-size:32px;font-weight:700}
 .cb.f{border-color:var(--cyan);box-shadow:0 0 18px rgba(34,211,238,.35)}
 .keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:360px;margin:0 auto}
 .key{height:66px;border-radius:18px;font-size:26px;font-weight:600}
@@ -311,7 +313,7 @@ tr.click:hover td{background:rgba(34,211,238,.05)}
 <div id="app"></div>
 
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.88.0"></script>
 <script>
 const SB_URL='https://yhotsbrhomnvoksijysm.supabase.co';
 const SB_KEY='sb_publishable_brLxJUP9A6mtwJIHfCC42w_DRWDgl0Z';
@@ -1485,6 +1487,7 @@ const app=document.getElementById('app');
 const t=k=>L[lang][k];
 const now=()=>Date.now();
 const fmtDT=ms=>ms?new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';
+const imgOk=v=>/^data:image\/(png|jpe?g|webp);base64,[A-Za-z0-9+\/=]+$/.test(String(v||''))?v:'';
 const escH=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* ---------- BANCO DE DADOS (nuvem do Claude, ou memória local se indisponível) ---------- */
@@ -1562,13 +1565,14 @@ function codeBase(err){
      <button class="key glass" onclick="go('home')" style="font-size:22px">✕</button><button class="key glass" onclick="kp('0')">0</button><button class="key glass" onclick="kp('del')" style="font-size:22px">⌫</button></div>
    <div class="err" id="cErr">${err||''}</div><div class="hint muted">${t('hint')}</div>${dbMode==='local'?'<div class="hint" style="color:#fcd34d;font-size:12px">Modo local: o banco de dados na nuvem não está disponível neste aparelho.</div>':''}</div>`;
 }
-function boxes(v){return [0,1,2,3].map(i=>`<div class="cb glass ${v[i]?'f':''}">${v[i]?'•':''}</div>`).join('')}
+const CODE_LEN=6;
+function boxes(v){return [0,1,2,3,4,5].map(i=>`<div class="cb glass ${v[i]?'f':''}">${v[i]?'•':''}</div>`).join('')}
 function codeUpd(v,err){const b=document.getElementById('cBoxes');if(b)b.innerHTML=boxes(v);const e=document.getElementById('cErr');if(e&&err!==undefined)e.textContent=err}
 let kpBusy=false;
 async function kp(k){
   if(kpBusy)return;
-  if(k==='del')typed=typed.slice(0,-1);else if(typed.length<4)typed+=k;
-  if(typed.length<4)return codeUpd(typed,'');
+  if(k==='del')typed=typed.slice(0,-1);else if(typed.length<CODE_LEN)typed+=k;
+  if(typed.length<CODE_LEN)return codeUpd(typed,'');
   codeUpd(typed,'');kpBusy=true;const c=typed;typed='';
   try{
     await dbReady;if(!DBX)throw 0;
@@ -1762,7 +1766,7 @@ function genOut(){return `<div style="margin-top:20px;text-align:center"><p clas
 async function gen(){
   const name=(document.getElementById('nn').value||'').trim();
   if(!name){alertBox('Digite o nome do candidato.');return}if(!newProf){alertBox('Escolha a profissão.');return}
-  let c,tries=0;do{c=String(1000+Math.floor(Math.random()*9000));tries++}while(tries<20&&(await DBX.doc('codes/'+c).get()).exists);
+  let c,tries=0;do{c=String(100000+(crypto.getRandomValues(new Uint32Array(1))[0]%800000));tries++}while(tries<20&&(await DBX.doc('codes/'+c).get()).exists);
   const id='c'+now().toString(36)+Math.random().toString(36).slice(2,6);const exp=now()+8*3600000;
   try{
     await candRef(id).set({name,role:newProf,code:c,status:'aguardando',createdAt:now(),codeExp:exp,attempts:[]});
@@ -1789,7 +1793,7 @@ let delAsk=false;
 function candDetail(){
   const c=CANDS.find(x=>x.id===detail);if(!c){detail=null;return panel()}
   const s=effStatus(c),p=profBy(c.role),rh=viewRole==='rh',fs=finalScore(c);
-  const ph=c.photo?`<img src="${c.photo}" class="cPhoto" alt="">`:`<div class="cPhoto ini">${escH((c.name||'?')[0])}</div>`;
+  const ph=c.photo?`<img src="${imgOk(c.photo)}" class="cPhoto" alt="">`:`<div class="cPhoto ini">${escH((c.name||'?')[0])}</div>`;
   let testBlock='';
   if(hasTest(c)){
     const m=c.modules||{};const weak=Object.entries(m).filter(([k,v])=>v<(REF[k]||80)).sort((a,b)=>a[1]-b[1]).map(([k])=>MOD[k]);
@@ -1835,7 +1839,7 @@ async function prDone(id){const c=CANDS.find(x=>x.id===id);const items=((c.pract
 async function setSt(id,st){await saveCand(id,{status:st,decidedAt:now()});const c=CANDS.find(x=>x.id===id);if(c){c.status=st;render()}}
 async function delCand(id){const c=CANDS.find(x=>x.id===id);try{await candRef(id).delete();if(c&&c.code)await DBX.doc('codes/'+c.code).delete()}catch(e){}detail=null;delAsk=false;render()}
 async function reissue(id){
-  const c=CANDS.find(x=>x.id===id);let code,tries=0;do{code=String(1000+Math.floor(Math.random()*9000));tries++}while(tries<20&&(await DBX.doc('codes/'+code).get()).exists);
+  const c=CANDS.find(x=>x.id===id);let code,tries=0;do{code=String(100000+(crypto.getRandomValues(new Uint32Array(1))[0]%800000));tries++}while(tries<20&&(await DBX.doc('codes/'+code).get()).exists);
   const exp=now()+8*3600000;const attempts=(c.attempts||[]).concat([{abandonedAt:c.abandonedAt||now(),lastQ:c.lastQ||0,reason:c.abandonReason||'',answers:(c.answers||[]).length}]);
   await saveCand(id,{status:'aguardando',code,codeExp:exp,attempts,answers:[],lastQ:0,startedAt:null,abandonedAt:null});
   await DBX.doc('codes/'+code).set({candId:id,exp,used:false,createdAt:now(),reissue:true});
@@ -2056,7 +2060,7 @@ function genOutBase(){return `<div style="margin-top:20px;text-align:center"><p 
 async function gen(){
   const name=(document.getElementById('nn').value||'').trim();
   if(!name){alertBox(PL('needName'));return}if(!newProf){alertBox(PL('needProf'));return}
-  let c,tries=0;do{c=String(1000+Math.floor(Math.random()*8000));tries++}while(tries<20&&(c==='0000'||(await DBX.doc('codes/'+c).get()).exists));
+  let c,tries=0;do{c=String(100000+(crypto.getRandomValues(new Uint32Array(1))[0]%800000));tries++}while(tries<20&&(c==='0000'||(await DBX.doc('codes/'+c).get()).exists));
   const id='c'+now().toString(36)+Math.random().toString(36).slice(2,6);const exp=now()+8*3600000;
   try{
     await candRef(id).set({name,role:newProf,code:c,status:'aguardando',createdAt:now(),codeExp:exp,attempts:[]});
@@ -2081,7 +2085,7 @@ async function savePins(){const a=document.getElementById('p1').value.trim(),b=d
 function candDetailBase(){
   const c=CANDS.find(x=>x.id===detail);if(!c){detail=null;return panel()}
   const s=effStatus(c),p=profBy(c.role),rh=viewRole==='rh',fs=finalScore(c);const [sl,sb]=stL(s);
-  const ph=c.photo?`<img src="${c.photo}" class="cPhoto" alt="">`:`<div class="cPhoto ini">${escH((c.name||'?')[0])}</div>`;
+  const ph=c.photo?`<img src="${imgOk(c.photo)}" class="cPhoto" alt="">`:`<div class="cPhoto ini">${escH((c.name||'?')[0])}</div>`;
   let testBlock='';
   if(hasTest(c)){
     const m=c.modules||{};const weak=Object.entries(m).filter(([k,v])=>v<(REF[k]||80)).sort((a,b)=>a[1]-b[1]).map(([k])=>modL(k));
@@ -2123,7 +2127,7 @@ function candDetailBase(){
   </div>`;
 }
 async function reissue(id){
-  const c=CANDS.find(x=>x.id===id);let code,tries=0;do{code=String(1000+Math.floor(Math.random()*9000));tries++}while(tries<20&&(code==='0000'||(await DBX.doc('codes/'+code).get()).exists));
+  const c=CANDS.find(x=>x.id===id);let code,tries=0;do{code=String(100000+(crypto.getRandomValues(new Uint32Array(1))[0]%800000));tries++}while(tries<20&&(code==='0000'||(await DBX.doc('codes/'+code).get()).exists));
   const exp=now()+8*3600000;const attempts=(c.attempts||[]).concat([{abandonedAt:c.abandonedAt||now(),lastQ:c.lastQ||0,reason:c.abandonReason||'',answers:(c.answers||[]).length}]);
   await saveCand(id,{status:'aguardando',code,codeExp:exp,attempts,answers:[],lastQ:0,startedAt:null,abandonedAt:null});
   await DBX.doc('codes/'+code).set({candId:id,exp,used:false,createdAt:now(),reissue:true});
@@ -2460,8 +2464,8 @@ async function loadStaff(){const u=(await SB.auth.getUser()).data.user;if(!u){ST
 /* candidato: código (uso único), código de teste 0000 e salvamento com "token" */
 async function kp(k){
   if(kpBusy)return;
-  if(k==='del')typed=typed.slice(0,-1);else if(typed.length<4)typed+=k;
-  if(typed.length<4)return codeUpd(typed,'');
+  if(k==='del')typed=typed.slice(0,-1);else if(typed.length<CODE_LEN)typed+=k;
+  if(typed.length<CODE_LEN)return codeUpd(typed,'');
   codeUpd(typed,'');kpBusy=true;const c=typed;typed='';
   try{
     await dbReady;
@@ -2474,7 +2478,7 @@ async function kp(k){
     }
     const r=await SB.rpc('redeem_code',{p_code:c});
     if(r.error)throw r.error;const d=r.data||{};
-    if(d.error){kpBusy=false;return codeUpd('',t(d.error==='used'?'codeUsed':d.error==='expired'?'codeExp':'badCode'))}
+    if(d.error){kpBusy=false;if(d.error==='locked')return codeUpd('',({pt:'Muitas tentativas erradas. Aguarde 15 minutos ou fale com o RH.',en:'Too many wrong attempts. Wait 15 minutes or talk to HR.',es:'Demasiados intentos fallidos. Espere 15 minutos o hable con RR. HH.',de:'Zu viele falsche Versuche. Warten Sie 15 Minuten oder wenden Sie sich an die Personalabteilung.',tr:'Çok fazla hatalı deneme. 15 dakika bekleyin veya İnsan Kaynakları ile konuşun.',zh:'错误次数过多。请等待15分钟或联系人力资源部。'})[lang]||'Too many attempts.');return codeUpd('',t(d.error==='used'?'codeUsed':d.error==='expired'?'codeExp':'badCode'))}
     if(c[0]==='9'){kpBusy=false;candToken=null;cand=null;return onbStart({id:d.id,name:d.name,token:d.token})}
     cand={id:d.id,name:d.name,role:d.role,code:c};candToken=d.token;kpBusy=false;go('confirm');
   }catch(e){kpBusy=false;codeUpd('',t('noConn'))}
@@ -4220,9 +4224,9 @@ function genOut(){
 }
 function code(err){
   codeBase(err);
-  if(pendingCode&&/^\d{4}$/.test(pendingCode)){const c=pendingCode;pendingCode='';typed='';setTimeout(()=>{for(const d of c)kp(d)},250)}
+  if(pendingCode&&/^\d{6}$/.test(pendingCode)){const c=pendingCode;pendingCode='';typed='';setTimeout(()=>{for(const d of c)kp(d)},250)}
 }
-(function(){try{const u=new URL(location.href),c=u.searchParams.get('c');if(c&&/^\d{4}$/.test(c)){pendingCode=c;u.searchParams.delete('c');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}}catch(e){}})();
+(function(){try{const u=new URL(location.href),c=u.searchParams.get('c');if(c&&/^\d{6}$/.test(c)){pendingCode=c;u.searchParams.delete('c');history.replaceState(null,'',u.pathname+(u.search||'')+u.hash)}}catch(e){}})();
 
 /* ---------- PAINEL: ranking do psicotécnico, ficha com contato/termo/psicotécnico ---------- */
 function pRank(){
@@ -4271,7 +4275,7 @@ function candDetail(){
   if(c.address||c.phone)h+=`<div class="card glass"><h3>📇 ${PL('contactT')}</h3><p style="margin-top:6px"><span class="muted">${PL('addr')}:</span> ${escH(c.address||'—')}</p><p style="margin-top:4px"><span class="muted">${PL('phone')}:</span> ${c.phone?`<a href="tel:${escH(c.phone.replace(/[^\d+]/g,''))}" style="color:var(--cyan)">${escH(c.phone)}</a>`:'—'}</p></div>`;
   const cs=c.consent;
   h+=`<div class="card glass"><h3>📝 ${PL('termT')}</h3>${cs&&cs.accepted?`<p style="margin-top:6px"><span class="badge b-ok">✓ ${PL('termOk')}</span> <span class="muted" style="font-size:13px">${fmtDTL(cs.at)} · ${(cs.lang||'pt').toUpperCase()} · ${PL('termVer')} ${escH(cs.ver||'')}</span></p>
-     ${cs.sig?`<img src="${cs.sig}" alt="" style="margin-top:10px;max-width:320px;width:100%;border-radius:10px;background:#fff">`:''}
+     ${cs.sig?`<img src="${imgOk(cs.sig)}" alt="" style="margin-top:10px;max-width:320px;width:100%;border-radius:10px;background:#fff">`:''}
      <div><button class="btn small" style="margin-top:10px" onclick="printConsent('${c.id}')">${PL('termPrint')}</button></div>`:`<p class="muted" style="margin-top:6px">${PL('termNo')}</p>`}</div>`;
   head.insertAdjacentHTML('afterend',h);
 }
@@ -4280,7 +4284,7 @@ function printConsent(id){
   const d=new Date(cs.at).toLocaleString(SPK[cs.lang||'pt']);
   const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${T.title} – ${escH(c.name)}</title><style>body{font-family:Arial,sans-serif;max-width:720px;margin:30px auto;color:#111;line-height:1.45;font-size:14px}h1{font-size:22px;margin:0}li{margin:6px 0}.sig{border-top:1px solid #999;margin-top:24px;padding-top:10px}</style></head><body>
    <h1>${T.title}</h1><p style="color:#555">${T.sub}</p><p>${T.intro}</p><ol>${T.items.map(([h,x])=>`<li><b>${h}.</b> ${x}</li>`).join('')}</ol><p><b>${T.decl}</b></p>
-   <div class="sig"><p>☑ ${T.agree}</p>${cs.sig?`<img src="${cs.sig}" style="width:300px;border:1px solid #ddd">`:''}<p>${T.signedBy}: <b>${escH(c.name)}</b> ${T.on} ${d}<br>${escH(profName(c.role))} · ${TERMS_VER}</p></div>
+   <div class="sig"><p>☑ ${T.agree}</p>${cs.sig?`<img src="${imgOk(cs.sig)}" style="width:300px;border:1px solid #ddd">`:''}<p>${T.signedBy}: <b>${escH(c.name)}</b> ${T.on} ${d}<br>${escH(profName(c.role))} · ${TERMS_VER}</p></div>
    <script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>`;
   const w=window.open('','_blank');if(!w){alertBox('Pop-up bloqueado.');return}w.document.write(html);w.document.close();
 }
@@ -4297,7 +4301,7 @@ function demoCands(){
     const prof=PROFS.find(p=>p.id===role)?role:PROFS[i%PROFS.length].id;
     const pa=PSY_Q.map((q,k)=>q.type==='tap'?{q:q.t.pt,qL:q.t,mod:q.mod,blk:'tap',ok:!!okv[k],frac:okv[k]?.9:.45,hits:okv[k]?8:5,wrong:okv[k]?0:2,miss:okv[k]?1:3,targets:9,given:'',givenL:{pt:'',en:'',es:''},right:'',rightL:{pt:'',en:'',es:''},s:20+k}:({q:q.t.pt,qL:q.t,mod:q.mod,blk:q.blk,ok:!!okv[k],given:q.o.pt[okv[k]?q.ans:(q.ans+1)%4],givenL:{pt:q.o.pt[okv[k]?q.ans:(q.ans+1)%4],en:q.o.en[okv[k]?q.ans:(q.ans+1)%4],es:q.o.es[okv[k]?q.ans:(q.ans+1)%4]},right:q.o.pt[q.ans],rightL:{pt:q.o.pt[q.ans],en:q.o.en[q.ans],es:q.o.es[q.ans]},s:8+((k*7)%20)}));
     const ps=Math.round(pa.reduce((s,a)=>s+itemVal(a),0)/pa.length*100),pass=ps>=PSY_MIN;
-    const base={name,role:prof,code:String(4100+i),createdAt:now()-(i+1)*3600000,attempts:[],address:['123 Main St, Pensacola, FL 32501','45 Palafox Pl, Pensacola, FL 32502','780 Gulf Breeze Pkwy, Gulf Breeze, FL 32561','12 Davis Hwy, Pensacola, FL 32503','300 Nine Mile Rd, Pensacola, FL 32514'][i],
+    const base={name,role:prof,code:String(410000+i),createdAt:now()-(i+1)*3600000,attempts:[],address:['123 Main St, Pensacola, FL 32501','45 Palafox Pl, Pensacola, FL 32502','780 Gulf Breeze Pkwy, Gulf Breeze, FL 32561','12 Davis Hwy, Pensacola, FL 32503','300 Nine Mile Rd, Pensacola, FL 32514'][i],
       phone:['(850) 555-0123','(850) 555-0188','(850) 555-0142','(850) 555-0199','(850) 555-0107'][i],consent:{accepted:true,at:now()-(i+1)*3500000,lang:['pt','es','en','pt','es'][i],ver:TERMS_VER,sig},
       psyAnswers:pa,psyScore:ps,psyModules:psyBlocks(pa),psyPass:pass,psyAt:now()-(i+1)*3400000,startedAt:now()-(i+1)*3500000,exits:i%2};
     if(tq<0){out['demo'+i]={...base,status:'em_andamento',answers:[],lastQ:25,total:45};return}
@@ -4759,7 +4763,7 @@ function onbCard(c){
   return h;
 }
 async function genOnb(id){
-  let c,tries=0;do{c='9'+String(100+Math.floor(Math.random()*900));tries++}while(tries<20&&(await DBX.doc('codes/'+c).get()).exists);
+  let c,tries=0;do{c='9'+String(10000+(crypto.getRandomValues(new Uint32Array(1))[0]%90000));tries++}while(tries<20&&(await DBX.doc('codes/'+c).get()).exists);
   const exp=now()+7*24*3600000;
   try{await DBX.doc('codes/'+c).set({candId:id,exp,used:false,createdAt:now(),onboard:true});await candRef(id).update({onboardCode:c,onboardCodeAt:now()});
     const x=CANDS.find(k=>k.id===id);if(x){x.onboardCode=c;x.onboardCodeAt=now()}render()}catch(e){alertBox(PL('saveErr'))}
@@ -5843,7 +5847,7 @@ function onbCert(id){const c=onbCertFind(id);if(!c)return;const P=CERTL[plang]||
    <tr><td><b>Language / Idioma</b></td><td>${(c.onboardLang||'').toUpperCase()}</td></tr></table>
    <b style="font-size:14px">Modules / Módulos (OSHA-based safety topics)</b><ul>${mods}</ul>
    <div class="ack">${ONBX.en.ack}${c.onboardLang&&c.onboardLang!=='en'&&ONBX[c.onboardLang]?`<br><i>${ONBX[c.onboardLang].ack}</i>`:''}</div>
-   <div class="sg"><div>${c.onboardSig?`<img src="${c.onboardSig}" alt="">`:`<i style="font-size:11px">${P.noSig}</i><br>`}Employee signature / Assinatura do funcionário</div>
+   <div class="sg"><div>${c.onboardSig?`<img src="${imgOk(c.onboardSig)}" alt="">`:`<i style="font-size:11px">${P.noSig}</i><br>`}Employee signature / Assinatura do funcionário</div>
    <div>&nbsp;<br><br>Safety representative / Responsável pela segurança</div></div></div>
    <p style="text-align:center;margin-top:14px"><button onclick="print()" style="font-size:16px;padding:10px 20px">🖨️ Print / Save PDF</button></p></body></html>`;
   const w=window.open('','_blank');if(!w){alertBox&&alertBox('Pop-up blocked');return}w.document.open();w.document.write(h);w.document.close();setTimeout(()=>{try{w.focus();w.print()}catch(e){}},500)}
